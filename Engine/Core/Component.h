@@ -32,8 +32,6 @@ public:
     bool IsEnabled() const { return enabled; }
 
     virtual void DebugDraw() {}
-
-    // ===== 충돌 이벤트 (Unity 스타일) =====
     
     // OnCollision: 물리 연산 O, 관통 X, 실제 충돌 처리 (Rigidbody 추가 시 반발력 적용)
     virtual void OnCollisionEnter(BaseCollider* other) {}

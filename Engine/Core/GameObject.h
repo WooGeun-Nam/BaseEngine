@@ -16,6 +16,7 @@ public:
     void Update(float deltaTime);
     void LateUpdate(float deltaTime);
     void Render();
+    void DebugRender();
 
     void SetApplication(Application* app) { application = app; }
 
@@ -67,12 +68,6 @@ public:
             }
         }
 	}
-
-    void DebugRender()
-    {
-        for (auto* c : components)
-            c->DebugDraw();
-    }
 
     const std::vector<Component*>& GetComponents() const
     {

@@ -16,23 +16,45 @@ void GameObject::AddComponent(Component* comp)
 void GameObject::FixedUpdate(float fixedDelta)
 {
     for (auto* comp : components)
+    {
+        if (!comp->IsEnabled()) continue;
         comp->FixedUpdate(fixedDelta);
+    }
+        
 }
 
 void GameObject::Update(float deltaTime)
 {
     for (auto* comp : components)
+    {
+        if (!comp->IsEnabled()) continue;
         comp->Update(deltaTime);
+    }
 }
 
 void GameObject::LateUpdate(float deltaTime)
 {
     for (auto* comp : components)
+    {
+        if (!comp->IsEnabled()) continue;
         comp->LateUpdate(deltaTime);
+    }
 }
 
 void GameObject::Render()
 {
     for (auto* comp : components)
+    {
+        if (!comp->IsEnabled()) continue;
         comp->Render();
+    }
+}
+
+void GameObject::DebugRender()
+{
+    for (auto* comp : components)
+    {
+        if (!comp->IsEnabled()) continue;
+        comp->DebugDraw();
+    }
 }

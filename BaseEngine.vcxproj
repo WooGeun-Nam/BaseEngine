@@ -48,6 +48,7 @@
     <ClCompile Include="Engine\Resource\SpriteSheet.cpp" />
     <ClCompile Include="Engine\Resource\Texture.cpp" />
     <ClCompile Include="Game\main.cpp" />
+    <ClCompile Include="Game\Scenes\AnimationScene.cpp" />
     <ClCompile Include="Game\Scenes\MyScene.cpp" />
     <ClCompile Include="Game\Scenes\TestScene.cpp" />
     <ClCompile Include="Game\Scripts\MovementController.cpp" />
@@ -90,11 +91,13 @@
     <ClInclude Include="Engine\Resource\SpriteSheet.h" />
     <ClInclude Include="Engine\Resource\Texture.h" />
     <ClInclude Include="Game\RegisterScenes.h" />
+    <ClInclude Include="Game\Scenes\AnimationScene.h" />
     <ClInclude Include="Game\Scenes\MyScene.h" />
     <ClInclude Include="Game\Scenes\TestScene.h" />
     <ClInclude Include="Game\Scripts\CollisionTest.h" />
     <ClInclude Include="Game\Scripts\MovementController.h" />
     <ClInclude Include="Game\Scripts\Player.h" />
+    <ClInclude Include="Game\Scripts\SceneController.h" />
     <ClInclude Include="Tool\AnimationImporter.h" />
     <ClInclude Include="Tool\SpriteImporter.h" />
   </ItemGroup>

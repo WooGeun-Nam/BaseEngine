@@ -18,7 +18,7 @@ void Animator::Play(std::shared_ptr<AnimationClip> clip, bool loop)
 
     if (spriteRenderer && currentClip)
     {
-        auto sheet = currentClip->GetSpriteSheet();
+        auto sheet = currentClip->GetSpriteSheet(currentFrameIndex);
         int frameIdx = currentClip->GetFrameIndex(currentFrameIndex);
         spriteRenderer->SetSpriteSheet(sheet, frameIdx);
     }
@@ -56,7 +56,7 @@ void Animator::Update(float deltaTime)
 
     if (spriteRenderer && currentClip)
     {
-        auto sheet = currentClip->GetSpriteSheet();
+        auto sheet = currentClip->GetSpriteSheet(currentFrameIndex);
         int frameIdx = currentClip->GetFrameIndex(currentFrameIndex);
         spriteRenderer->SetSpriteSheet(sheet, frameIdx);
     }

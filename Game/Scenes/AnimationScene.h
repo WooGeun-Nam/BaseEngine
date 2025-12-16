@@ -6,13 +6,13 @@
 #include "Graphics/SpriteRenderDevice.h"
 #include "Graphics/Camera2D.h"
 
-class MyScene : public SceneBase
+class AnimationScene : public SceneBase
 {
 public:
-    MyScene(Application* app) : app(app) {
+    AnimationScene(Application* app) : app(app) {
         // 2D 카메라 세팅
         camera.InitializeDefault();
-		float x = (float)(app->GetWindowWidth() / 2 * -1);
+        float x = (float)(app->GetWindowWidth() / 2 * -1);
         float y = (float)(app->GetWindowHeight() / 2 * -1);
         camera.SetPosition(x, y);
     }

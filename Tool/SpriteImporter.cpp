@@ -56,7 +56,7 @@ bool SpriteImporter::ImportSheet(
     json data;
     data["texture"] = textureFilenameUtf8;
     
-    json frames = json::array();
+    json sprites = json::array();
     for (int rowIndex = 0; rowIndex < rows; rowIndex++)
     {
         for (int columnIndex = 0; columnIndex < columns; columnIndex++)
@@ -72,11 +72,11 @@ bool SpriteImporter::ImportSheet(
             rect["right"] = right;
             rect["bottom"] = bottom;
             
-            frames.push_back(rect);
+            sprites.push_back(rect);
         }
     }
     
-    data["frames"] = frames;
+    data["sprites"] = sprites;
     
     std::wstring outputFilename = resolvedBaseName + L".sheet";
     std::filesystem::path outputPath = std::filesystem::path(outSheetsFolder) / outputFilename;

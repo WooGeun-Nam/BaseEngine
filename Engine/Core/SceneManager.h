@@ -8,6 +8,9 @@
 class SceneManager
 {
 public:
+    SceneManager();
+    ~SceneManager();
+
     // 씬 추가
     void AddScene(const std::string& name, std::unique_ptr<SceneBase> scene);
 
@@ -29,6 +32,8 @@ public:
     void DebugRender();
 
 private:
+    void ProcessPendingSceneChange();  // 지연된 Scene 전환 처리
+
     // 씬 저장: 순서 보존
     std::vector<std::unique_ptr<SceneBase>> sceneList;
 
@@ -41,4 +46,8 @@ private:
     // 현재 씬
     SceneBase* currentScene = nullptr;
     int currentIndex = -1;
+
+    // 지연 전환용 변수
+    bool pendingSceneChange = false;
+    int pendingSceneIndex = -1;
 };

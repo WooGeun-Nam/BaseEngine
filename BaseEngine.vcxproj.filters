@@ -76,6 +76,9 @@
     <Filter Include="소스 파일\Engine\Physics">
       <UniqueIdentifier>{b5be5258-2e14-4fe4-9218-00fe6d45ce91}</UniqueIdentifier>
     </Filter>
+    <Filter Include="문서">
+      <UniqueIdentifier>{fb80fa62-e15f-46a1-bbe4-6efb710c131e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -113,9 +116,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Core\SceneManager.cpp">
       <Filter>소스 파일\Engine\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Scenes\TestScene.cpp">
-      <Filter>소스 파일\Game\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Core\Transform.cpp">
       <Filter>소스 파일\Engine\Core</Filter>
@@ -180,8 +180,14 @@
     <ClCompile Include="Engine\Physics\Rigidbody2D.cpp">
       <Filter>소스 파일\Engine\Physics</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Scenes\TestScene.cpp">
+      <Filter>소스 파일\Game\Scenes</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Physics\Quadtree.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Scenes\AnimationScene.cpp">
+      <Filter>소스 파일\Game\Scenes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -305,8 +311,14 @@
     <ClInclude Include="Engine\Physics\Rigidbody2D.h">
       <Filter>헤더 파일\Engine\Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Scripts\SceneController.h">
+      <Filter>헤더 파일\Game\Scripts</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Physics\Quadtree.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Scenes\AnimationScene.h">
+      <Filter>헤더 파일\Game\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -316,8 +328,14 @@
     <None Include="Game\Shaders\DebugLine.hlsl">
       <Filter>리소스 파일\Shaders</Filter>
     </None>
-    <None Include="Docs\PhysicsSystem.md" />
-    <None Include="Docs\Rigidbody2D.md" />
-    <None Include="Docs\CCD_and_SpatialPartitioning.md" />
+    <None Include="Docs\CCD_and_SpatialPartitioning.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include="Docs\PhysicsSystem.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include="Docs\Rigidbody2D.md">
+      <Filter>문서</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ bool SpriteSheet::Load(const std::wstring& path)
     std::wstring textureFilename = textureFilenameUtf8.wstring();
     std::wstring textureBaseKey = textureFilenameUtf8.stem().wstring();
 
-    // 텍스처 경로 규칙: Assets/Textures/
+    // 텍스처 로드 규칙: Assets/Textures/
     std::wstring fullTexturePath = L"Assets/Textures/" + textureFilename;
 
     std::shared_ptr<Texture> loadedTexture = Resources::Get<Texture>(textureBaseKey);
@@ -37,15 +37,15 @@ bool SpriteSheet::Load(const std::wstring& path)
 
     texture = loadedTexture;
 
-    // 필수: frames 배열
-    if (!data.contains("frames") || !data["frames"].is_array())
+    // 필수: sprites 배열
+    if (!data.contains("sprites") || !data["sprites"].is_array())
         return false;
 
-    const json& framesArray = data["frames"];
+    const json& spritesArray = data["sprites"];
     frames.clear();
-    frames.reserve(framesArray.size());
+    frames.reserve(spritesArray.size());
 
-    for (const auto& frameJson : framesArray)
+    for (const auto& frameJson : spritesArray)
     {
         FrameInfo frameInfo;
         frameInfo.sourceRect.left = frameJson.value("left", 0);

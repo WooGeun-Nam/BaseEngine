@@ -1,17 +1,25 @@
 #pragma once
 #include "Core/SceneBase.h"
 #include "Core/Application.h"
-#include "Input/Input.h"
+#include "Core/GameObject.h"
+#include "Graphics/SpriteRenderer.h"
+#include "Graphics/SpriteRenderDevice.h"
+#include "Graphics/Camera2D.h"
 
 class TestScene : public SceneBase
 {
 public:
-    TestScene(Application* app) : app(app) {}
+    TestScene(Application* app) : app(app) {
+        // 2D 카메라 세팅
+        camera.InitializeDefault();
+        float x = (float)(app->GetWindowWidth() / 2 * -1);
+        float y = (float)(app->GetWindowHeight() / 2 * -1);
+        camera.SetPosition(x, y);
+    }
 
-    void OnEnter() override {}
-    void OnExit() override {}
-    void Update(float deltaTime) override;
+    void OnEnter() override;
 
 private:
     Application* app;
+    Camera2D camera;
 };

@@ -17,32 +17,22 @@
 #include "Physics/CircleCollider.h"
 #include "Physics/Rigidbody2D.h"
 #include "Scripts/CollisionTest.h"
-
-static bool showed = false;
+#include "Scripts/SceneController.h"
 
 void MyScene::OnEnter()
 {
-    // 1. 스프라이트 시트 임포트 (하나의 .sheet 파일 생성)
-    SpriteImporter::ImportSheet(
-        L"Assets/Textures/animTest.png",
-        L"Assets/Sheets/",
-        64, 64,
-        L"animTest"
-    );
+    // 씬 전환 후 카메라를 렌더 디바이스에 다시 설정
+    SpriteRenderDevice::Instance().SetCamera(&camera);
+    DebugRenderer::Instance().SetCamera(&camera);
 
-    // 2. 애니메이션 임포트 (sheet 참조 + frame indices)
-    AnimationImporter::ImportAnimationFromSheet(
-        L"attack",
-        L"animTest",  // sheet 베이스명
-        L"Assets/Animations/animTest_attack.anim",
-        4, 10,  // 시트 내 프레임 인덱스 범위
-        12.0f
-    );
+    auto sc = new GameObject();
+    sc->SetApplication(app);
+    auto s = sc->AddComponent<SceneController>();
+    s->SetCamera(&camera);
+    AddGameObject(sc);
 
     // 3. 모든 에셋 로드 (.sheet, .anim, .png 파일들)
     Resources::LoadAllAssetsFromFolder(L"Assets");
-
-    showed = false;
 
     // ===== 바닥과 벽 먼저 생성 (공이 떨어질 공간) =====
     
@@ -132,75 +122,4 @@ void MyScene::OnEnter()
         
         AddGameObject(obj);
     }
-
-    // ===== Player1: 조작 가능한 오브젝트 =====
-    obj = new GameObject();
-    obj->SetName(L"Player1");
-    obj->SetApplication(app);
-    spr = obj->AddComponent<SpriteRenderer>();
-    spr->SetTexture(Resources::Get<Texture>(L"test"));
-    col = obj->AddComponent<BoxCollider2D>();
-    col->FitToTexture();
-    
-    auto rb = obj->AddComponent<Rigidbody2D>();
-    rb->mass = 1.0f;
-    rb->gravityScale = 1.0f;
-    rb->restitution = 0.3f;
-    rb->useGravity = true;
-    rb->useCCD = true;
-
-    obj->AddComponent<MovementController>();
-
-    obj->transform.SetPosition(0, 0);  // 중앙
-    obj->transform.SetScale(5, 5);
-
-    // AddGameObject(obj);
-
-    // ===== 애니메이션 오브젝트 =====
-    auto attack = Resources::Get<AnimationClip>(L"animTest_attack");
-    if (!attack)
-    {
-        MessageBoxA(0, "Failed to load AnimationClip", "Asset Error", 0);
-        return;
-    }
-
-    GameObject* animatedObject = new GameObject();
-    animatedObject->SetApplication(app);
-
-    auto spriteRenderer = animatedObject->AddComponent<SpriteRenderer>();
-    auto animator = animatedObject->AddComponent<Animator>();
-    animator->Play(attack, true);
-
-    animatedObject->transform.SetPosition(500, 200);
-    animatedObject->transform.SetScale(2.f, 2.f);
-
-    AddGameObject(animatedObject);
-}
-
-void MyScene::Update(float deltaTime)
-{
-    for (auto* obj : gameObjects)
-        obj->Update(deltaTime);
-
-    Input& input = app->GetInput();
-    float speed = 200.0f * deltaTime;
-
-    if (input.IsKeyDown('J'))
-    {
-        float x = camera.GetPosition().x;
-        float y = camera.GetPosition().y;
-
-        x -= speed;
-        camera.SetPosition(x, y);
-    }
-
-    if (app->GetInput().WasKeyPressed('2'))
-        app->GetSceneManager().SetActiveScene(1);
-}
-
-void MyScene::OnExit()
-{
-    for (auto* o : gameObjects)
-        delete o;
-    gameObjects.clear();
 }

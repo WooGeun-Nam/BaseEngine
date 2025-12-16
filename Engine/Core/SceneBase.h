@@ -9,7 +9,7 @@ public:
     virtual ~SceneBase() {}
 
     virtual void OnEnter() {}
-    virtual void OnExit() {}
+    virtual void OnExit();
 
     virtual void FixedUpdate(float fixedDelta);
     virtual void Update(float deltaTime);
