@@ -62,25 +62,19 @@ void Application::run()
     const float maxDelta = 0.1f;              // 최대 deltaTime (100ms)
     float fixedAccumulator = 0.0f;
 
-    bool running = true;
-
-    while (running)
+    while (true)
     {
-        // 메시지 처리 (비차단)
-        if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
+        while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             if (msg.message == WM_QUIT)
             {
-                running = false;
-                break;
+                // COM 해제
+                CoUninitialize();
+                return;
             }
 
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
-            
-            // WM_PAINT나 WM_TIMER가 아니면 게임 로직 스킵 (메시지 처리 우선)
-            if (msg.message != WM_PAINT && msg.message != WM_TIMER)
-                continue;
         }
 
         timer.Update();
@@ -121,7 +115,4 @@ void Application::run()
 
         d3dDevice.endFrame();
     }
-
-    // COM 해제
-    CoUninitialize();
 }
