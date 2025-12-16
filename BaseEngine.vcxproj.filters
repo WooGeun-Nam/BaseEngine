@@ -79,6 +79,12 @@
     <Filter Include="문서">
       <UniqueIdentifier>{fb80fa62-e15f-46a1-bbe4-6efb710c131e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Engine\Audio">
+      <UniqueIdentifier>{fb93200d-f16e-4965-ac00-86eabdefe487}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Engine\Audio">
+      <UniqueIdentifier>{5034a495-f6d9-43a2-b0cd-6e5c532339d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -188,6 +194,15 @@
     </ClCompile>
     <ClCompile Include="Game\Scenes\AnimationScene.cpp">
       <Filter>소스 파일\Game\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Audio\AudioClip.cpp">
+      <Filter>소스 파일\Engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Audio\AudioManager.cpp">
+      <Filter>소스 파일\Engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Audio\AudioSource.cpp">
+      <Filter>소스 파일\Engine\Audio</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -320,6 +335,15 @@
     <ClInclude Include="Game\Scenes\AnimationScene.h">
       <Filter>헤더 파일\Game\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Audio\AudioClip.h">
+      <Filter>헤더 파일\Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Audio\AudioManager.h">
+      <Filter>헤더 파일\Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Audio\AudioSource.h">
+      <Filter>헤더 파일\Engine\Audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Game\Shaders\Sprite.hlsl">
@@ -335,6 +359,9 @@
       <Filter>문서</Filter>
     </None>
     <None Include="Docs\Rigidbody2D.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include="Docs\DevelopmentRoadmap.md">
       <Filter>문서</Filter>
     </None>
   </ItemGroup>

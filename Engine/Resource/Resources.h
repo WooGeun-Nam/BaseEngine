@@ -9,6 +9,7 @@
 class Texture;
 class AnimationClip;
 class SpriteSheet;
+class AudioClip;
 
 class Resources final
 {
@@ -23,6 +24,8 @@ public:
             return base + L".anim";
         if constexpr (std::is_same_v<T, SpriteSheet>)
             return base + L".sheet";
+        if constexpr (std::is_same_v<T, AudioClip>)
+            return base;  // AudioClip은 확장자 없이 stem만 사용 (.wav/.mp3 모두 지원)
 
         return base;
     }

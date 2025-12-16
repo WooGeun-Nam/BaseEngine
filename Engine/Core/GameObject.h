@@ -31,6 +31,7 @@ public:
         components.push_back(comp);
         comp->SetOwner(this);
         comp->SetApplication(application);
+        comp->Awake();  // 생성 직후 초기화 호출
         
         return comp;
     }
@@ -59,9 +60,9 @@ public:
         for (auto it = components.begin(); it != components.end(); ++it)
         {
             T* casted = dynamic_cast<T*>(*it);
-			if
-                (casted != nullptr)
+			if (casted != nullptr)
             {
+                casted->OnDestroy();  // 정리 작업
                 delete *it;
                 components.erase(it);
                 return;

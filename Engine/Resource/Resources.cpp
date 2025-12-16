@@ -2,6 +2,7 @@
 #include "Resource/Texture.h"
 #include "Resource/SpriteSheet.h"
 #include "Resource/AnimationClip.h"
+#include "Audio/AudioClip.h"
 
 #include <filesystem>
 
@@ -29,6 +30,7 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         std::wstring extension = path.extension().wstring();
         std::wstring stem = path.stem().wstring();
 
+        // 확장자 기반 로딩
         if (extension == L".png")
         {
             Load<Texture>(stem, path.wstring());
@@ -40,6 +42,10 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         else if (extension == L".anim")
         {
             Load<AnimationClip>(stem, path.wstring());
+        }
+        else if (extension == L".wav" || extension == L".mp3")
+        {
+            Load<AudioClip>(stem, path.wstring());
         }
     }
 }

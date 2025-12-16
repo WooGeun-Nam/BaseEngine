@@ -3,7 +3,10 @@
 GameObject::~GameObject()
 {
     for (auto* comp : components)
+    {
+        comp->OnDestroy();  // 정리 작업
         delete comp;
+    }
     components.clear();
 }
 

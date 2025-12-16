@@ -13,7 +13,7 @@ public:
     void SetOwner(GameObject* owner) { gameObject = owner; }
     void SetApplication(Application* app) { application = app; }
 
-    virtual void Start() {}
+    virtual void Awake() {}  // AddComponent 직후 호출 (초기화)
     virtual void FixedUpdate(float fixedDelta) {}
     virtual void Update(float delta) {}
     virtual void LateUpdate(float delta) {}
@@ -42,6 +42,8 @@ public:
     virtual void OnTriggerEnter(BaseCollider* other) {}
     virtual void OnTriggerStay(BaseCollider* other) {}
     virtual void OnTriggerExit(BaseCollider* other) {}
+    
+    virtual void OnDestroy() {}  // Component 삭제 전 호출 (정리)
 
 protected:
     // 컴포넌트 활성화/비활성화 이벤트

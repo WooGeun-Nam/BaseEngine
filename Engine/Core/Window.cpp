@@ -125,8 +125,28 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         }
     }
 
-    if (msg == WM_DESTROY)
+    switch (msg)
     {
+    case WM_ENTERSIZEMOVE:
+        // 창 드래그/리사이즈 시작 - 타이머로 렌더링 지속
+        SetTimer(hwnd, 1, 16, nullptr);  // 60 FPS (16ms)
+        return 0;
+
+    case WM_EXITSIZEMOVE:
+        // 창 드래그/리사이즈 종료 - 타이머 제거
+        KillTimer(hwnd, 1);
+        return 0;
+
+    case WM_TIMER:
+        // 타이머 이벤트 - 렌더링 강제 트리거
+        if (wParam == 1)
+        {
+            // WM_PAINT 메시지 전송하여 렌더링 유도
+            InvalidateRect(hwnd, nullptr, FALSE);
+        }
+        return 0;
+
+    case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
     }

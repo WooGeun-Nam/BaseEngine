@@ -18,6 +18,7 @@
 #include "Physics/Rigidbody2D.h"
 #include "Scripts/CollisionTest.h"
 #include "Scripts/SceneController.h"
+#include "Audio/AudioSource.h"
 
 void MyScene::OnEnter()
 {
@@ -31,8 +32,25 @@ void MyScene::OnEnter()
     s->SetCamera(&camera);
     AddGameObject(sc);
 
-    // 3. 모든 에셋 로드 (.sheet, .anim, .png 파일들)
-    Resources::LoadAllAssetsFromFolder(L"Assets");
+    // BGM 설정
+    auto bgmObj = new GameObject();
+    bgmObj->SetName(L"BGM");
+    bgmObj->SetApplication(app);
+    AddGameObject(bgmObj);
+    
+    // AudioSource 추가 (Awake 시점에는 clip이 없음)
+    auto bgmSource = bgmObj->AddComponent<AudioSource>();
+    
+    // 오디오 설정
+    bgmSource->clip = Resources::Get<AudioClip>(L"test");
+    bgmSource->loop = true;
+    bgmSource->volume = 0.5f;
+    
+    // 수동으로 재생
+    if (bgmSource->clip)
+    {
+        bgmSource->Play();
+    }
 
     // ===== 바닥과 벽 먼저 생성 (공이 떨어질 공간) =====
     
