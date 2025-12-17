@@ -94,18 +94,14 @@ void SceneManager::LateUpdate(float dt)
 
 void SceneManager::Render()
 {
-    if (!currentScene)
-        return;
+    if (currentScene)
+        currentScene->Render();
+}
 
-    // 씬 고유 렌더링 (카메라 디버그 등)
-    currentScene->Render();
-
-    // 게임오브젝트 렌더링
-    const auto& objs = currentScene->GetGameObjects();
-    for (auto* obj : objs)
-    {
-        obj->Render();
-    }
+void SceneManager::RenderUI()
+{
+    if (currentScene)
+        currentScene->RenderUI();
 }
 
 void SceneManager::DebugRender()

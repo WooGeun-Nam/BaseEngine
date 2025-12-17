@@ -19,9 +19,15 @@ public:
     void DebugRender();
 
     void SetApplication(Application* app) { application = app; }
+    Application* GetApplication() const { return application; }
 
-    // 직접 new 해서 넣는 방식 제거
-    // void AddComponent(Component* comp);
+    // 부모-자식 관계
+    void SetParent(GameObject* parent);
+    GameObject* GetParent() const { return parent; }
+    
+    void AddChild(GameObject* child);
+    void RemoveChild(GameObject* child);
+    const std::vector<GameObject*>& GetChildren() const { return children; }
 
     // AddComponent 템플릿
     template<typename T>
@@ -31,7 +37,7 @@ public:
         components.push_back(comp);
         comp->SetOwner(this);
         comp->SetApplication(application);
-        comp->Awake();  // 생성 직후 초기화 호출
+        comp->Awake();
         
         return comp;
     }
@@ -62,7 +68,7 @@ public:
             T* casted = dynamic_cast<T*>(*it);
 			if (casted != nullptr)
             {
-                casted->OnDestroy();  // 정리 작업
+                casted->OnDestroy();
                 delete *it;
                 components.erase(it);
                 return;
@@ -81,4 +87,8 @@ public:
 private:
     Application* application = nullptr;
     std::vector<Component*> components;
+    
+    // 계층 구조
+    GameObject* parent = nullptr;
+    std::vector<GameObject*> children;
 };

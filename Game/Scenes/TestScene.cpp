@@ -3,10 +3,17 @@
 #include "Graphics/SpriteRenderer.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
+#include "Resource/FontFile.h"
 #include "Input/Input.h"
 #include "Scripts/SceneController.h"
 #include "Physics/BoxCollider2D.h"
 #include "Scripts/MovementController.h"
+#include "UI/RectTransform.h"
+#include "UI/Canvas.h"
+#include "UI/Image.h"
+#include "UI/Button.h"
+#include "UI/Text.h"
+#include "UI/TextRenderer.h"
 
 void TestScene::OnEnter()
 {
@@ -35,4 +42,91 @@ void TestScene::OnEnter()
     obj->transform.SetScale(5, 5);
 
     AddGameObject(obj);
+
+    // ===== Canvas 생성 =====
+    auto canvasObj = new GameObject();
+    canvasObj->SetName(L"Canvas");
+    canvasObj->SetApplication(app);
+    
+    auto canvas = canvasObj->AddComponent<Canvas>();
+    canvas->SetScreenSize(1280, 720);
+    
+    AddGameObject(canvasObj);
+    SetCanvas(canvas);  // Scene에 Canvas 등록
+
+    // ===== UI Image 생성 =====
+    auto imageObj = new GameObject();
+    imageObj->SetName(L"UI_Image");
+    imageObj->SetApplication(app);
+    imageObj->SetParent(canvasObj);  // Canvas의 자식으로 설정
+    
+    auto imageRect = imageObj->AddComponent<RectTransform>();
+    imageRect->anchor = RectTransform::Anchor::TopLeft;
+    imageRect->anchoredPosition = {50, 50};
+    imageRect->sizeDelta = {100, 100};
+    
+    auto image = imageObj->AddComponent<Image>();
+    image->SetTexture(Resources::Get<Texture>(L"icon"));
+    image->SetColor({1, 1, 1, 1});
+
+    // ===== TextRenderer 생성 (TTF 사용) ? =====
+    auto textRendererObj = new GameObject();
+    textRendererObj->SetName(L"UI_TextRenderer");
+    textRendererObj->SetApplication(app);
+    textRendererObj->SetParent(canvasObj);
+    
+    auto textRendererRect = textRendererObj->AddComponent<RectTransform>();
+    textRendererRect->anchor = RectTransform::Anchor::TopLeft;
+    textRendererRect->anchoredPosition = {50, 200};
+    
+    auto textRenderer = textRendererObj->AddComponent<TextRenderer>();
+    // Resources를 통해 FontFile 로드
+    textRenderer->SetFont(Resources::Get<FontFile>(L"NanumGothic"), 48.0f);
+    textRenderer->SetText(L"폰트 테스트");
+    textRenderer->SetColor({1, 0.5f, 0, 1});  // 주황색
+
+    // ===== UI Text 생성 (Bitmap Font) =====
+    auto textObj = new GameObject();
+    textObj->SetName(L"UI_Text");
+    textObj->SetApplication(app);
+    textObj->SetParent(canvasObj);
+    
+    auto textRect = textObj->AddComponent<RectTransform>();
+    textRect->anchor = RectTransform::Anchor::TopLeft;
+    textRect->anchoredPosition = {50, 300};
+    
+    auto text = textObj->AddComponent<Text>();
+    text->SetText(L"Score: 12345");
+    text->SetColor({1, 1, 0, 1});  // 노란색
+    text->characterSize = 32.0f;
+    text->characterSpacing = 5.0f;
+
+    // ===== UI Button 생성 (Canvas의 자식) =====
+    auto btnObj = new GameObject();
+    btnObj->SetName(L"UI_Button");
+    btnObj->SetApplication(app);
+    btnObj->SetParent(canvasObj);  // Canvas의 자식으로 설정
+    
+    auto btnRect = btnObj->AddComponent<RectTransform>();
+    btnRect->anchor = RectTransform::Anchor::Center;
+    btnRect->anchoredPosition = {0, -200};
+    btnRect->sizeDelta = {200, 80};
+    
+    auto button = btnObj->AddComponent<Button>();
+    button->SetTexture(Resources::Get<Texture>(L"button"));
+    
+    // 버튼 색상 설정
+    button->normalColor = {0.8f, 0.8f, 0.8f, 1.0f};
+    button->hoverColor = {1.0f, 1.0f, 0.5f, 1.0f};    // 노란색
+    button->pressedColor = {0.5f, 0.5f, 0.5f, 1.0f};
+    
+    // 버튼 이벤트
+    button->onClick = [textRenderer]() {
+        // OutputDebugStringA("[Button] Clicked!\n");
+        textRenderer->SetText(L"버튼 클릭!");
+    };
+    
+    button->onHover = []() {
+        // OutputDebugStringA("[Button] Hover!\n");
+    };
 }

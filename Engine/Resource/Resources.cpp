@@ -2,6 +2,8 @@
 #include "Resource/Texture.h"
 #include "Resource/SpriteSheet.h"
 #include "Resource/AnimationClip.h"
+#include "Resource/Font.h"
+#include "Resource/FontFile.h"
 #include "Audio/AudioClip.h"
 
 #include <filesystem>
@@ -46,6 +48,14 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         else if (extension == L".wav" || extension == L".mp3")
         {
             Load<AudioClip>(stem, path.wstring());
+        }
+        else if (extension == L".spritefont")
+        {
+            Load<Font>(stem, path.wstring());
+        }
+        else if (extension == L".ttf" || extension == L".otf")
+        {
+            Load<FontFile>(stem, path.wstring());
         }
     }
 }

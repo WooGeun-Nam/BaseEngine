@@ -85,6 +85,12 @@
     <Filter Include="헤더 파일\Engine\Audio">
       <UniqueIdentifier>{5034a495-f6d9-43a2-b0cd-6e5c532339d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Engine\UI">
+      <UniqueIdentifier>{f9508926-2962-4e5c-ba6c-6603bc43576e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Engine\UI">
+      <UniqueIdentifier>{b6f9fe7a-d603-4830-83a6-54f16e530aa8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -203,6 +209,36 @@
     </ClCompile>
     <ClCompile Include="Engine\Audio\AudioSource.cpp">
       <Filter>소스 파일\Engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\RectTransform.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\FontConverter.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Resource\Font.cpp">
+      <Filter>소스 파일\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Button.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Canvas.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Image.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Text.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\UIBase.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\TextRenderer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Resource\FontFile.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -344,6 +380,36 @@
     <ClInclude Include="Engine\Audio\AudioSource.h">
       <Filter>헤더 파일\Engine\Audio</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\UI\RectTransform.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\FontConverter.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Resource\Font.h">
+      <Filter>헤더 파일\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Button.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Canvas.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Image.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Text.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\UIBase.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\TextRenderer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Resource\FontFile.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Game\Shaders\Sprite.hlsl">
@@ -364,5 +430,9 @@
     <None Include="Docs\DevelopmentRoadmap.md">
       <Filter>문서</Filter>
     </None>
+    <None Include="Docs\UI_System_Guide.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include="Docs\Text_Component_Guide.md" />
   </ItemGroup>
 </Project>

@@ -1,891 +1,429 @@
-# ?? BaseEngine °³¹ß ·Îµå¸Ê
+ï»¿# ğŸ® BaseEngine ê°œë°œ ë¡œë“œë§µ
 
-## ?? ÇÁ·ÎÁ§Æ® ÇöÈ²
+## ğŸ“Š í”„ë¡œì íŠ¸ í˜„í™©
 
-### ? ¿Ï¼ºµÈ ½Ã½ºÅÛ
-- **Core:** GameObject/Component ¾ÆÅ°ÅØÃ³ (ÅÛÇÃ¸´ ±â¹İ)
-- **Physics:** Rigidbody2D, CCD, Quadtree, Collision/Trigger
+### âœ… ì™„ì„±ëœ ì‹œìŠ¤í…œ
+- **Core:** GameObject/Component ì•„í‚¤í…ì²˜ (í…œí”Œë¦¿ ê¸°ë°˜), ê³„ì¸µ êµ¬ì¡° (ë¶€ëª¨-ìì‹)
+- **Physics:** Rigidbody2D, CCD, Quadtree, Collision/Trigger, deltaTime ì œí•œ
 - **Graphics:** SpriteRenderer, Animation, Camera2D, DebugRenderer
-- **Input:** Å°º¸µå/¸¶¿ì½º ÀÔ·Â
+- **Input:** í‚¤ë³´ë“œ/ë§ˆìš°ìŠ¤ ì…ë ¥
 - **Scene:** SceneManager, SceneBase
-- **Resource:** Asset Ä³½Ì, SpriteSheet
-- **»ı¸íÁÖ±â:** Awake ¡æ (OnEnable) ¡æ FixedUpdate ¡æ Update ¡æ LateUpdate ¡æ Physics ¡æ Render ¡æ OnDestroy
-- **Audio:** AudioManager, AudioClip, AudioSource ? »õ·Î Ãß°¡!
+- **Resource:** Asset ìºì‹±, SpriteSheet, FontFile (TTF/OTF)
+- **ìƒëª…ì£¼ê¸°:** Awake â†’ (OnEnable) â†’ FixedUpdate â†’ Update â†’ LateUpdate â†’ Physics â†’ Render â†’ OnDestroy
+- **Audio:** AudioManager, AudioClip (WAV/MP3), AudioSource âœ…
+- **UI:** Canvas, Image, Button, Text (Bitmap Font), TextRenderer (TTF), RectTransform âœ…
+- **Tool:** AnimationImporter, SpriteImporter
 
-### ? ¹Ì±¸Çö ½Ã½ºÅÛ
-- UI (¾øÀ½)
-- Particle (¾øÀ½)
-- Tilemap (¾øÀ½)
+### âŒ ë¯¸êµ¬í˜„ ì‹œìŠ¤í…œ
+- UI 9-Slice (ë²„íŠ¼ ì´ë¯¸ì§€ ëŠ˜ë¦¬ê¸°)
+- Particle (ì—†ìŒ)
+- Tilemap (ì—†ìŒ)
 
 ---
 
-## ?? °³¹ß ¿ì¼±¼øÀ§
+## ğŸ¯ ê°œë°œ ìš°ì„ ìˆœìœ„
 
-### ?? CRITICAL - Áï½Ã °³¹ß ÇÊ¿ä
+### âœ… COMPLETED - ì™„ë£Œëœ ì‹œìŠ¤í…œ
 
-#### 1. ¿Àµğ¿À ½Ã½ºÅÛ ??
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ?????  
-**¼Ò¿ä ½Ã°£:** 1ÁÖ
+#### 1. ì˜¤ë””ì˜¤ ì‹œìŠ¤í…œ ğŸ”Š
+**ìƒíƒœ:** âœ… **ì™„ë£Œ**  
+**ì™„ë£Œ ë‚ ì§œ:** 2024  
+**ì†Œìš” ì‹œê°„:** 1ì¼
 
-**ÆÄÀÏ ±¸Á¶:**
+**êµ¬í˜„ëœ íŒŒì¼:**
 ```
 Engine/Audio/
-¦§¦¡¦¡ AudioSystem.h/cpp           - Àü¿ª ¿Àµğ¿À °ü¸®ÀÚ (½Ì±ÛÅæ)
-¦§¦¡¦¡ AudioClip.h/cpp             - »ç¿îµå Asset
-¦¦¦¡¦¡ AudioSource.h/cpp           - Component (GameObject¿¡ ºÎÂø)
+â”œâ”€â”€ AudioManager.h/cpp          âœ… XAudio2 ì‹±ê¸€í†¤ ê´€ë¦¬ì
+â”œâ”€â”€ AudioClip.h/cpp             âœ… WAV/MP3 Asset (Media Foundation)
+â””â”€â”€ AudioSource.h/cpp           âœ… Component (ì¬ìƒ ì œì–´)
 ```
 
-**ÇÙ½É ±â´É:**
-
-1. **AudioClip.h (Asset)**
-```cpp
-// Engine/Audio/AudioClip.h
-#pragma once
-#include "Resource/Asset.h"
-#include <xaudio2.h>
-
-class AudioClip : public Asset
-{
-public:
-    bool Load(const std::wstring& path) override;
-    
-    WAVEFORMATEXTENSIBLE wfx;
-    XAUDIO2_BUFFER buffer;
-    
-private:
-    std::vector<BYTE> audioData;
-};
-```
-
-2. **AudioSource.h (Component)**
-```cpp
-// Engine/Audio/AudioSource.h
-#pragma once
-#include "Core/Component.h"
-#include "Audio/AudioClip.h"
-#include <memory>
-#include <xaudio2.h>
-
-class AudioSource : public Component
-{
-public:
-    void Awake() override;
-    void OnDestroy() override;
-    
-    void Play();
-    void Stop();
-    void Pause();
-    void Resume();
-    
-    void SetVolume(float volume);  // 0.0 ~ 1.0
-    void SetPitch(float pitch);    // 0.5 ~ 2.0
-    void SetLoop(bool loop);
-    
-    bool IsPlaying() const;
-    
-public:
-    std::shared_ptr<AudioClip> clip;
-    float volume = 1.0f;
-    bool loop = false;
-    bool playOnAwake = false;
-    
-private:
-    IXAudio2SourceVoice* sourceVoice = nullptr;
-};
-```
-
-3. **AudioSystem.h (½Ì±ÛÅæ)**
-```cpp
-// Engine/Audio/AudioSystem.h
-#pragma once
-#include <xaudio2.h>
-
-class AudioSystem
-{
-public:
-    static AudioSystem& GetInstance();
-    
-    bool Initialize();
-    void Shutdown();
-    
-    IXAudio2* GetXAudio2() { return xAudio2; }
-    IXAudio2MasteringVoice* GetMasteringVoice() { return masteringVoice; }
-    
-    void SetMasterVolume(float volume);
-    
-private:
-    AudioSystem() = default;
-    ~AudioSystem();
-    
-    IXAudio2* xAudio2 = nullptr;
-    IXAudio2MasteringVoice* masteringVoice = nullptr;
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// Game/Scripts/Player.cpp
-void Player::Start()
-{
-    jumpSound = gameObject->AddComponent<AudioSource>();
-    jumpSound->clip = Resources::Load<AudioClip>(L"Jump", L"Assets/jump.wav");
-    jumpSound->volume = 0.8f;
-}
-
-void Player::Update(float deltaTime)
-{
-    if (Input::WasKeyPressed(VK_SPACE))
-    {
-        jumpSound->Play();
-    }
-}
-```
-
-**Ãß°¡ ±â´É (¼±ÅÃ):**
-- 3D »ç¿îµå (°Å¸® °¨¼è)
-- ¿Àµğ¿À ¹Í¼­ (BGM/SFX Ã¤³Î ºĞ¸®)
-- Fade In/Out
+**êµ¬í˜„ëœ ê¸°ëŠ¥:**
+- âœ… XAudio2 ì´ˆê¸°í™” ë° ê´€ë¦¬ (AudioManager)
+- âœ… WAV íŒŒì¼ ë¡œë“œ (ì§ì ‘ íŒŒì‹±)
+- âœ… MP3 íŒŒì¼ ë¡œë“œ (Media Foundation ë””ì½”ë”©)
+- âœ… Play/Stop/Pause/Resume
+- âœ… ë³¼ë¥¨/í”¼ì¹˜ ì œì–´
+- âœ… ë£¨í”„ ì¬ìƒ
+- âœ… Resources ì‹œìŠ¤í…œ í†µí•© (.wav, .mp3 ìë™ ë¡œë“œ)
+- âœ… COM ì´ˆê¸°í™” (Application)
+- âœ… deltaTime ì œí•œ (ì°½ ë“œë˜ê·¸ ì‹œ ë¬¼ë¦¬ ì•ˆì •ì„±)
 
 ---
 
-#### 2. UI ½Ã½ºÅÛ ???
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ?????  
-**¼Ò¿ä ½Ã°£:** 2ÁÖ
+#### 2. UI ì‹œìŠ¤í…œ ğŸ–¼ï¸
+**ìƒíƒœ:** âœ… **ì™„ë£Œ**  
+**ì™„ë£Œ ë‚ ì§œ:** 2024  
+**ì†Œìš” ì‹œê°„:** 3ì¼
 
-**ÆÄÀÏ ±¸Á¶:**
+**êµ¬í˜„ëœ íŒŒì¼:**
 ```
 Engine/UI/
-¦§¦¡¦¡ Canvas.h/cpp                - UI Root Container
-¦§¦¡¦¡ UIElement.h/cpp             - UI ±âº» Component
-¦§¦¡¦¡ RectTransform.h/cpp         - UI Àü¿ë Transform
-¦§¦¡¦¡ Text.h/cpp                  - ÅØ½ºÆ® ·»´õ¸µ
-¦§¦¡¦¡ Image.h/cpp                 - UI ÀÌ¹ÌÁö
-¦§¦¡¦¡ Button.h/cpp                - ¹öÆ° (Å¬¸¯ ÀÌº¥Æ®)
-¦§¦¡¦¡ Slider.h/cpp                - ½½¶óÀÌ´õ (°ª Á¶Àı)
-¦¦¦¡¦¡ Panel.h/cpp                 - ÄÁÅ×ÀÌ³Ê
+â”œâ”€â”€ Canvas.h/cpp                âœ… UI Root Container (SpriteBatch ì†Œìœ )
+â”œâ”€â”€ UIBase.h/cpp                âœ… UI ê¸°ë³¸ Component (ì¶”ìƒ í´ë˜ìŠ¤)
+â”œâ”€â”€ RectTransform.h/cpp         âœ… UI ì „ìš© Transform (ì•µì»¤ ì‹œìŠ¤í…œ)
+â”œâ”€â”€ Image.h/cpp                 âœ… UI ì´ë¯¸ì§€ (SpriteBatch ë Œë”ë§)
+â”œâ”€â”€ Button.h/cpp                âœ… ë²„íŠ¼ (í´ë¦­/Hover ì´ë²¤íŠ¸)
+â”œâ”€â”€ Text.h/cpp                  âœ… í…ìŠ¤íŠ¸ (Bitmap Font ë°©ì‹)
+â””â”€â”€ TextRenderer.h/cpp          âœ… í…ìŠ¤íŠ¸ (TTF ëŸ°íƒ€ì„ ë Œë”ë§)
+
+Engine/Resource/
+â””â”€â”€ FontFile.h/cpp              âœ… TTF/OTF Asset
 ```
 
-**ÇÙ½É ±â´É:**
+**êµ¬í˜„ëœ ê¸°ëŠ¥:**
+- âœ… Canvas ê³„ì¸µ êµ¬ì¡° (ìì‹ GameObjectë§Œ ë Œë”ë§)
+- âœ… Canvasê°€ ëª¨ë“  UIBase Component ìˆœíšŒ (dynamic_cast)
+- âœ… RectTransform (9ê°€ì§€ ì•µì»¤, í¬ê¸°, ìœ„ì¹˜)
+- âœ… Image Component (í…ìŠ¤ì²˜, ìƒ‰ìƒ í‹´íŒ…)
+- âœ… Button Component (Normal/Hover/Pressed ìƒíƒœ, onClick/onHover ì´ë²¤íŠ¸)
+- âœ… Text Component (Bitmap Font ë°©ì‹, ìˆ«ì/íŠ¹ìˆ˜ë¬¸ì í‘œì‹œ)
+- âœ… TextRenderer Component (TTF ì§ì ‘ ë Œë”ë§, GDI+ ì‚¬ìš©)
+- âœ… FontFile Asset (Resources ì‹œìŠ¤í…œ í†µí•©)
+- âœ… ë§ˆìš°ìŠ¤ ì…ë ¥ ê°ì§€ (IsPointerInside)
+- âœ… SpriteBatch ë Œë”ë§ (Canvasê°€ ì†Œìœ )
+- âœ… GameObject ë¶€ëª¨-ìì‹ ê´€ê³„ ì¶”ê°€
+- âœ… ë¬¸ì ê°„ê²©, í¬ê¸°, ìƒ‰ìƒ ì¡°ì ˆ
+- âœ… ì¤„ë°”ê¿ˆ ì§€ì› (\n)
+- âœ… í•œê¸€/ì˜ë¬¸ ì™„ë²½ ì§€ì›
 
-1. **RectTransform.h**
+**Text ì‹œìŠ¤í…œ:**
+1. **Text (Bitmap Font)** - ìˆ«ì/ì ìˆ˜ í‘œì‹œìš©
+   - PNG ì´ë¯¸ì§€ ê¸°ë°˜ (num_0.png ~ num_9.png)
+   - ì»¤ìŠ¤í…€ í°íŠ¸ ìŠ¤íƒ€ì¼ ììœ 
+   
+2. **TextRenderer (TTF ëŸ°íƒ€ì„)** - ì¼ë°˜ í…ìŠ¤íŠ¸ìš©
+   - TTF/OTF íŒŒì¼ ì§ì ‘ ì‚¬ìš©
+   - GDI+ë¡œ ëŸ°íƒ€ì„ ë Œë”ë§
+   - Resources::Get<FontFile>() ì‚¬ìš©
+
+**ì‚¬ìš© ì˜ˆì‹œ:**
 ```cpp
-// Engine/UI/RectTransform.h
-#pragma once
-#include "Core/Component.h"
-#include <DirectXMath.h>
+// Canvas ìƒì„±
+auto canvasObj = new GameObject();
+auto canvas = canvasObj->AddComponent<Canvas>();
+AddGameObject(canvasObj);
 
-using namespace DirectX;
+// TextRenderer (TTF ì‚¬ìš©)
+auto textObj = new GameObject();
+textObj->SetParent(canvasObj);
+auto textRenderer = textObj->AddComponent<TextRenderer>();
+textRenderer->SetFont(Resources::Get<FontFile>(L"NanumGothic"), 48.0f);
+textRenderer->SetText(L"ì•ˆë…•í•˜ì„¸ìš”!");
 
-class RectTransform : public Component
-{
-public:
-    enum class Anchor 
-    { 
-        TopLeft, TopCenter, TopRight,
-        MiddleLeft, Center, MiddleRight,
-        BottomLeft, BottomCenter, BottomRight
-    };
-    
-    Anchor anchor = Anchor::Center;
-    XMFLOAT2 anchoredPosition{0, 0};  // ¾ŞÄ¿·ÎºÎÅÍÀÇ ¿ÀÇÁ¼Â
-    XMFLOAT2 sizeDelta{100, 100};     // Å©±â
-    XMFLOAT2 pivot{0.5f, 0.5f};       // 0~1 (Áß½ÉÁ¡)
-    
-    XMFLOAT2 GetScreenPosition() const;
-    XMFLOAT2 GetSize() const { return sizeDelta; }
-};
+// Image
+auto imageObj = new GameObject();
+imageObj->SetParent(canvasObj);
+auto image = imageObj->AddComponent<Image>();
+image->SetTexture(Resources::Get<Texture>(L"icon"));
+
+// Button
+auto btnObj = new GameObject();
+btnObj->SetParent(canvasObj);
+auto button = btnObj->AddComponent<Button>();
+button->onClick = []() { /* í´ë¦­ ì´ë²¤íŠ¸ */ };
 ```
 
-2. **Text.h**
-```cpp
-// Engine/UI/Text.h
-#pragma once
-#include "UI/UIElement.h"
-#include <string>
-#include <d2d1.h>
-#include <dwrite.h>
+---
 
-class Text : public UIElement
+### ğŸŸ¡ HIGH PRIORITY - ë‹¤ìŒ ë‹¨ê³„
+
+#### 3. UI 9-Slice (ë²„íŠ¼ ì´ë¯¸ì§€ ëŠ˜ë¦¬ê¸°) ğŸ¨
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­â­â­â­  
+**ì†Œìš” ì‹œê°„:** 1-2ì¼
+
+**ëª©í‘œ:**
+ë²„íŠ¼ ì´ë¯¸ì§€ì˜ **ëª¨ì„œë¦¬ëŠ” ìœ ì§€**í•˜ê³  **ì¤‘ê°„ ë¶€ë¶„ë§Œ ëŠ˜ë ¤ì„œ** ë‹¤ì–‘í•œ í¬ê¸°ì˜ ë²„íŠ¼ì„ ë§Œë“¤ ìˆ˜ ìˆê²Œ í•¨.
+
+**íŒŒì¼ êµ¬ì¡°:**
+```
+Engine/UI/
+â””â”€â”€ NineSliceImage.h/cpp        - 9-Slice ì´ë¯¸ì§€ Component
+```
+
+**í•µì‹¬ ê¸°ëŠ¥:**
+```cpp
+// Engine/UI/NineSliceImage.h
+class NineSliceImage : public UIBase
 {
 public:
-    void Awake() override;
-    void Render() override;
+    void RenderUI() override;
     
-    void SetText(const std::wstring& newText) { text = newText; }
-    void SetFontSize(float size) { fontSize = size; }
+    void SetTexture(std::shared_ptr<Texture> tex) { texture = tex; }
+    
+    // 9-Slice ì˜ì—­ ì„¤ì • (í”½ì…€ ë‹¨ìœ„)
+    void SetSliceBorders(int left, int right, int top, int bottom);
+    
+    // ìƒ‰ìƒ í‹´íŒ…
     void SetColor(XMFLOAT4 col) { color = col; }
     
 public:
-    std::wstring text = L"";
-    std::wstring fontName = L"Arial";
-    float fontSize = 24.0f;
+    std::shared_ptr<Texture> texture;
     XMFLOAT4 color{1, 1, 1, 1};
     
-    enum class Alignment { Left, Center, Right };
-    Alignment alignment = Alignment::Left;
-    
-private:
-    IDWriteTextFormat* textFormat = nullptr;
+    // 9-Slice ì˜ì—­
+    int borderLeft = 16;
+    int borderRight = 16;
+    int borderTop = 16;
+    int borderBottom = 16;
 };
 ```
 
-3. **Button.h**
-```cpp
-// Engine/UI/Button.h
-#pragma once
-#include "UI/UIElement.h"
-#include <functional>
+**ë Œë”ë§ ë¡œì§:**
+```
+â”Œâ”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”
+â”‚  TL  â”‚    Top     â”‚  TR  â”‚  â† ê³ ì • í¬ê¸°
+â”œâ”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¤
+â”‚      â”‚            â”‚      â”‚
+â”‚ Left â”‚   Center   â”‚ Rightâ”‚  â† ëŠ˜ì–´ë‚¨
+â”‚      â”‚            â”‚      â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¤
+â”‚  BL  â”‚   Bottom   â”‚  BR  â”‚  â† ê³ ì • í¬ê¸°
+â””â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”˜
 
-class Image;
-
-class Button : public UIElement
-{
-public:
-    void Update(float deltaTime) override;
-    void Render() override;
-    
-    bool IsPointerInside();
-    
-public:
-    std::function<void()> onClick;
-    std::function<void()> onHover;
-    
-    Image* targetGraphic = nullptr;
-    
-    XMFLOAT4 normalColor{1, 1, 1, 1};
-    XMFLOAT4 hoverColor{0.9f, 0.9f, 0.9f, 1};
-    XMFLOAT4 pressedColor{0.7f, 0.7f, 0.7f, 1};
-    
-private:
-    enum class State { Normal, Hover, Pressed };
-    State currentState = State::Normal;
-};
+9ê°œ ì˜ì—­:
+1. TopLeft (ê³ ì •)
+2. Top (ê°€ë¡œ ëŠ˜ë¦¼)
+3. TopRight (ê³ ì •)
+4. Left (ì„¸ë¡œ ëŠ˜ë¦¼)
+5. Center (ê°€ë¡œ+ì„¸ë¡œ ëŠ˜ë¦¼)
+6. Right (ì„¸ë¡œ ëŠ˜ë¦¼)
+7. BottomLeft (ê³ ì •)
+8. Bottom (ê°€ë¡œ ëŠ˜ë¦¼)
+9. BottomRight (ê³ ì •)
 ```
 
-**DirectWrite ÅëÇÕ:**
-```cpp
-// Application.h¿¡ Ãß°¡
-class Application
-{
-private:
-    ID2D1Factory* d2dFactory = nullptr;
-    ID2D1RenderTarget* d2dRenderTarget = nullptr;
-    IDWriteFactory* dWriteFactory = nullptr;
-};
-```
+**êµ¬í˜„ ìˆœì„œ:**
+1. NineSliceImage Component ìƒì„±
+2. í…ìŠ¤ì²˜ë¥¼ 9ê°œ ì˜ì—­ìœ¼ë¡œ ë¶„í• 
+3. SpriteBatch::Draw()ë¡œ ê° ì˜ì—­ ë Œë”ë§
+4. Button Componentì— í†µí•© (ì„ íƒì )
 
-**»ç¿ë ¿¹½Ã:**
+**ì‚¬ìš© ì˜ˆì‹œ:**
 ```cpp
-// Game/Scenes/MyScene.cpp
-void MyScene::OnEnter()
-{
-    // Canvas »ı¼º
-    auto canvasObj = new GameObject();
-    auto canvas = canvasObj->AddComponent<Canvas>();
-    AddGameObject(canvasObj);
-    
-    // HP ÅØ½ºÆ®
-    auto hpTextObj = new GameObject();
-    auto hpText = hpTextObj->AddComponent<Text>();
-    hpText->text = L"HP: 100";
-    hpText->fontSize = 32.0f;
-    hpText->color = {1, 0, 0, 1};  // »¡°­
-    
-    auto rect = hpTextObj->GetComponent<RectTransform>();
-    rect->anchor = RectTransform::Anchor::TopLeft;
-    rect->anchoredPosition = {20, -20};
-    
-    canvas->AddChild(hpTextObj);
-    
-    // ¹öÆ°
-    auto buttonObj = new GameObject();
-    auto button = buttonObj->AddComponent<Button>();
-    button->onClick = []() {
-        Logger::Info("Button Clicked!");
-    };
-    
-    auto btnRect = buttonObj->GetComponent<RectTransform>();
-    btnRect->anchor = RectTransform::Anchor::Center;
-    btnRect->sizeDelta = {200, 60};
-    
-    canvas->AddChild(buttonObj);
-}
+// 9-Slice ë²„íŠ¼ ì´ë¯¸ì§€
+auto btnObj = new GameObject();
+btnObj->SetParent(canvasObj);
+
+auto rect = btnObj->AddComponent<RectTransform>();
+rect->sizeDelta = {300, 80};  // í¬ê¸° ë³€ê²½ ê°€ëŠ¥
+
+auto nineSlice = btnObj->AddComponent<NineSliceImage>();
+nineSlice->SetTexture(Resources::Get<Texture>(L"button"));
+nineSlice->SetSliceBorders(16, 16, 16, 16);  // í…Œë‘ë¦¬ 16px
+
+// ë²„íŠ¼ ê¸°ëŠ¥ ì¶”ê°€
+auto button = btnObj->AddComponent<Button>();
+button->onClick = []() { /* ... */ };
 ```
 
 ---
 
-### ?? HIGH PRIORITY - ´ÙÀ½ ´Ü°è
+#### 4. íŒŒí‹°í´ ì‹œìŠ¤í…œ ğŸ’¥
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­â­â­  
+**ì†Œìš” ì‹œê°„:** 1ì£¼
 
-#### 4. ÆÄÆ¼Å¬ ½Ã½ºÅÛ ?
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ????  
-**¼Ò¿ä ½Ã°£:** 1ÁÖ
-
-**ÆÄÀÏ ±¸Á¶:**
+**íŒŒì¼ êµ¬ì¡°:**
 ```
 Engine/Graphics/
-¦§¦¡¦¡ ParticleSystem.h/cpp        - Component
-¦¦¦¡¦¡ Particle.h                  - ÆÄÆ¼Å¬ µ¥ÀÌÅÍ
-```
-
-**ÇÙ½É ±â´É:**
-```cpp
-// Engine/Graphics/ParticleSystem.h
-#pragma once
-#include "Core/Component.h"
-#include "Resource/Texture.h"
-#include <vector>
-
-struct Particle
-{
-    XMFLOAT2 position;
-    XMFLOAT2 velocity;
-    XMFLOAT4 color;
-    float lifetime;
-    float age;
-    float size;
-    float rotation;
-};
-
-class ParticleSystem : public Component
-{
-public:
-    void Update(float deltaTime) override;
-    void Render() override;
-    
-    void Emit(int count = 1);
-    void Play();
-    void Stop();
-    void Clear();
-    
-public:
-    std::shared_ptr<Texture> texture;
-    
-    // ¹æÃâ ¼³Á¤
-    int maxParticles = 100;
-    float emissionRate = 10.0f;      // ÃÊ´ç ¹æÃâ ¼ö
-    bool loop = true;
-    float duration = 5.0f;
-    
-    // ÆÄÆ¼Å¬ ¼Ó¼º
-    float startLifetime = 2.0f;
-    float startSpeed = 100.0f;
-    float speedVariance = 50.0f;
-    
-    XMFLOAT2 startSize{1.0f, 1.0f};
-    XMFLOAT2 endSize{0.0f, 0.0f};
-    
-    XMFLOAT4 startColor{1, 1, 1, 1};
-    XMFLOAT4 endColor{1, 1, 1, 0};
-    
-    // ¹°¸®
-    XMFLOAT2 gravity{0, -9.8f};
-    float drag = 0.0f;
-    
-    // ¹æÃâ ÇüÅÂ
-    enum class Shape { Cone, Sphere, Box };
-    Shape emissionShape = Shape::Cone;
-    float emissionAngle = 45.0f;
-    
-private:
-    std::vector<Particle> particles;
-    float emissionTimer = 0.0f;
-    bool isPlaying = false;
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// Æø¹ß È¿°ú
-auto explosion = new GameObject();
-auto ps = explosion->AddComponent<ParticleSystem>();
-ps->texture = Resources::Get<Texture>(L"spark");
-ps->maxParticles = 50;
-ps->startSpeed = 200.0f;
-ps->startLifetime = 1.0f;
-ps->startColor = {1, 0.5f, 0, 1};    // ÁÖÈ²
-ps->endColor = {1, 0, 0, 0};          // Åõ¸í »¡°­
-ps->gravity = {0, -100.0f};
-ps->Play();
-
-// ¿¬±â È¿°ú
-auto smoke = new GameObject();
-auto smokePS = smoke->AddComponent<ParticleSystem>();
-smokePS->texture = Resources::Get<Texture>(L"smoke");
-smokePS->maxParticles = 30;
-smokePS->startSpeed = 50.0f;
-smokePS->startLifetime = 3.0f;
-smokePS->startColor = {0.5f, 0.5f, 0.5f, 0.8f};
-smokePS->endColor = {0.3f, 0.3f, 0.3f, 0.0f};
-smokePS->gravity = {0, 20.0f};  // À§·Î
-smokePS->loop = true;
-smokePS->Play();
+â”œâ”€â”€ ParticleSystem.h/cpp        - Component
+â””â”€â”€ Particle.h                  - íŒŒí‹°í´ ë°ì´í„°
 ```
 
 ---
 
-#### 5. Å¸ÀÏ¸Ê ½Ã½ºÅÛ ???
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ????  
-**¼Ò¿ä ½Ã°£:** 1ÁÖ
-
-**ÆÄÀÏ ±¸Á¶:**
-```
-Engine/Tilemap/
-¦§¦¡¦¡ Tilemap.h/cpp               - Component
-¦§¦¡¦¡ TileData.h                  - Å¸ÀÏ Á¤º¸
-¦¦¦¡¦¡ TilemapCollider.h/cpp       - Å¸ÀÏ ±â¹İ Ãæµ¹
-```
-
-**ÇÙ½É ±â´É:**
-```cpp
-// Engine/Tilemap/Tilemap.h
-#pragma once
-#include "Core/Component.h"
-#include "Resource/SpriteSheet.h"
-#include <vector>
-
-class Tilemap : public Component
-{
-public:
-    void Start() override;
-    void Render() override;
-    
-    void SetTile(int x, int y, int tileIndex);
-    int GetTile(int x, int y) const;
-    
-    void SetCollision(int x, int y, bool solid);
-    bool IsSolid(int x, int y) const;
-    
-    XMFLOAT2 WorldToTile(XMFLOAT2 worldPos) const;
-    XMFLOAT2 TileToWorld(int x, int y) const;
-    
-    void Clear();
-    void Fill(int tileIndex);
-    
-public:
-    int width = 10;
-    int height = 10;
-    float tileSize = 32.0f;
-    
-    std::shared_ptr<SpriteSheet> tileset;
-    
-private:
-    std::vector<int> tiles;          // width * height
-    std::vector<bool> collisions;    // Ãæµ¹ ·¹ÀÌ¾î
-};
-```
-
-**Tiled Editor Áö¿ø:**
-```cpp
-// Engine/Tilemap/TiledImporter.h
-#pragma once
-#include "Tilemap/Tilemap.h"
-
-class TiledImporter
-{
-public:
-    static bool LoadTMX(Tilemap* tilemap, const std::wstring& path);
-    
-private:
-    // TMX (XML ±â¹İ) ÆÄ½Ì
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// ÇÃ·§Æ÷¸Ó ¸Ê »ı¼º
-auto mapObj = new GameObject();
-auto tilemap = mapObj->AddComponent<Tilemap>();
-tilemap->width = 30;
-tilemap->height = 20;
-tilemap->tileSize = 32.0f;
-tilemap->tileset = Resources::Load<SpriteSheet>(L"tiles", L"Assets/tiles.png");
-
-// ¹Ù´Ú »ı¼º
-for (int x = 0; x < 30; x++)
-{
-    tilemap->SetTile(x, 0, 1);        // Å¸ÀÏ ÀÎµ¦½º 1 (¶¥)
-    tilemap->SetCollision(x, 0, true); // Ãæµ¹ È°¼ºÈ­
-}
-
-// º® »ı¼º
-for (int y = 0; y < 20; y++)
-{
-    tilemap->SetTile(0, y, 2);         // ÁÂÃø º®
-    tilemap->SetCollision(0, y, true);
-    
-    tilemap->SetTile(29, y, 2);        // ¿ìÃø º®
-    tilemap->SetCollision(29, y, true);
-}
-
-// Tiled Editor·Î ¸¸µç ¸Ê ·Îµå
-TiledImporter::LoadTMX(tilemap, L"Assets/level1.tmx");
-```
+#### 5. íƒ€ì¼ë§µ ì‹œìŠ¤í…œ ğŸ—ºï¸
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­â­â­  
+**ì†Œìš” ì‹œê°„:** 1ì£¼
 
 ---
 
-#### 6. Ä«¸Ş¶ó ÄÁÆ®·Ñ·¯ ??
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ???  
-**¼Ò¿ä ½Ã°£:** 3-4ÀÏ
-
-**ÆÄÀÏ ±¸Á¶:**
-```
-Engine/Graphics/
-¦¦¦¡¦¡ CameraController.h/cpp      - Component
-```
-
-**ÇÙ½É ±â´É:**
-```cpp
-// Engine/Graphics/CameraController.h
-#pragma once
-#include "Core/Component.h"
-#include "Graphics/Camera2D.h"
-
-class CameraController : public Component
-{
-public:
-    void Start() override;
-    void LateUpdate(float deltaTime) override;
-    
-    // Å¸°Ù ÃßÀû
-    void SetTarget(GameObject* target) { targetObject = target; }
-    
-    // È­¸é Èçµé¸²
-    void Shake(float intensity, float duration);
-    
-    // ÁÜ
-    void SetZoom(float zoom);
-    void SmoothZoom(float targetZoom, float duration);
-    
-public:
-    GameObject* targetObject = nullptr;
-    XMFLOAT2 offset{0, 0};
-    float smoothSpeed = 5.0f;
-    
-    // ÀÌµ¿ Á¦ÇÑ
-    bool useBounds = false;
-    float minX = -1000.0f;
-    float maxX = 1000.0f;
-    float minY = -1000.0f;
-    float maxY = 1000.0f;
-    
-    // µ¥µåÁ¸ (Å¸°ÙÀÌ ÀÏÁ¤ ¿µ¿ª ³»¿¡¼­´Â Ä«¸Ş¶ó °íÁ¤)
-    bool useDeadZone = false;
-    XMFLOAT2 deadZoneSize{100, 100};
-    
-private:
-    Camera2D* camera = nullptr;
-    XMFLOAT2 velocity{0, 0};  // SmoothDamp¿ë
-    
-    // È­¸é Èçµé¸²
-    float shakeTimer = 0.0f;
-    float shakeIntensity = 0.0f;
-    XMFLOAT2 shakeOffset{0, 0};
-    
-    // ÁÜ
-    float currentZoom = 1.0f;
-    float targetZoom = 1.0f;
-    float zoomSpeed = 0.0f;
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// ÇÃ·¹ÀÌ¾î ÃßÀû Ä«¸Ş¶ó
-auto cameraObj = new GameObject();
-auto camera = cameraObj->AddComponent<Camera2D>();
-auto controller = cameraObj->AddComponent<CameraController>();
-
-controller->SetTarget(player);
-controller->offset = {0, 50};  // ÇÃ·¹ÀÌ¾îº¸´Ù ¾à°£ À§
-controller->smoothSpeed = 3.0f;
-
-// ¸Ê °æ°è ¼³Á¤
-controller->useBounds = true;
-controller->minX = 0;
-controller->maxX = 2000;
-controller->minY = 0;
-controller->maxY = 1500;
-
-// º¸½ºÀü Èçµé¸²
-void Boss::OnHit()
-{
-    cameraController->Shake(15.0f, 0.3f);
-}
-
-// ÁÜ ¿¬Ãâ
-controller->SmoothZoom(1.5f, 1.0f);  // 1ÃÊ¿¡ °ÉÃÄ 1.5¹è ÁÜ
-```
+#### 6. ì¹´ë©”ë¼ ì»¨íŠ¸ë¡¤ëŸ¬ ğŸ“·
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­â­  
+**ì†Œìš” ì‹œê°„:** 3-4ì¼
 
 ---
 
-### ?? MEDIUM PRIORITY - »ı»ê¼º Çâ»ó
+### ğŸ”µ MEDIUM PRIORITY - ìƒì‚°ì„± í–¥ìƒ
 
-#### 7. ÇÁ¸®ÆÕ ½Ã½ºÅÛ ¿Ï¼º ??
-**»óÅÂ:** ¼±¾ğ¸¸ ÀÖÀ½  
-**Áß¿äµµ:** ???  
-**¼Ò¿ä ½Ã°£:** 5ÀÏ
+#### 7. í”„ë¦¬íŒ¹ ì‹œìŠ¤í…œ ì™„ì„± ğŸ“¦
+**ìƒíƒœ:** ì„ ì–¸ë§Œ ìˆìŒ  
+**ì¤‘ìš”ë„:** â­â­â­  
+**ì†Œìš” ì‹œê°„:** 5ì¼
 
-**±¸Çö:**
-```cpp
-// Engine/Resource/Prefab.h
-#pragma once
-#include "Resource/Asset.h"
-#include "nlohmann/json.hpp"
+#### 8. JSON Scene ì§ë ¬í™” ğŸ’¾
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­â­  
+**ì†Œìš” ì‹œê°„:** 5ì¼
 
-class GameObject;
-class SceneBase;
-
-class Prefab : public Asset
-{
-public:
-    GameObject* Instantiate(SceneBase* scene);
-    
-    bool Save(GameObject* obj, const std::wstring& path);
-    bool Load(const std::wstring& path) override;
-    
-private:
-    nlohmann::json data;
-    
-    void SerializeGameObject(GameObject* obj, nlohmann::json& json);
-    GameObject* DeserializeGameObject(const nlohmann::json& json);
-    
-    void SerializeComponent(Component* comp, nlohmann::json& json);
-    Component* DeserializeComponent(const nlohmann::json& json, GameObject* owner);
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// ÇÁ¸®ÆÕ ÀúÀå
-auto player = new GameObject();
-// ... ÄÄÆ÷³ÍÆ® Ãß°¡ ...
-auto prefab = std::make_shared<Prefab>();
-prefab->Save(player, L"Assets/Prefabs/Player.prefab");
-
-// ÇÁ¸®ÆÕ ·Îµå ¹× »ı¼º
-auto playerPrefab = Resources::Load<Prefab>(L"Player", L"Assets/Prefabs/Player.prefab");
-auto player1 = playerPrefab->Instantiate(scene);
-auto player2 = playerPrefab->Instantiate(scene);  // º¹Á¦
-
-player1->transform.SetPosition(100, 200);
-player2->transform.SetPosition(300, 200);
-```
+#### 9. ë¡œê¹… ì‹œìŠ¤í…œ ğŸ“
+**ìƒíƒœ:** printf/assertë§Œ ì‚¬ìš©  
+**ì¤‘ìš”ë„:** â­â­  
+**ì†Œìš” ì‹œê°„:** 2-3ì¼
 
 ---
 
-#### 8. JSON Scene Á÷·ÄÈ­ ??
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ???  
-**¼Ò¿ä ½Ã°£:** 5ÀÏ
+### âšª LOW PRIORITY - ì„ íƒì  ê°œë°œ
 
-**ÆÄÀÏ ±¸Á¶:**
-```
-Engine/Core/
-¦¦¦¡¦¡ SceneSerializer.h/cpp       - Scene ÀúÀå/·Îµå
-```
+#### 10. ImGui ì—ë””í„° ğŸ› ï¸
+**ìƒíƒœ:** ë¯¸êµ¬í˜„  
+**ì¤‘ìš”ë„:** â­â­ (ìƒì‚°ì„± í–¥ìƒ)  
+**ì†Œìš” ì‹œê°„:** 2ì£¼
 
-**JSON ¿¹½Ã:**
-```json
+#### 11. ë©”ëª¨ë¦¬ ê´€ë¦¬ ê°œì„  ğŸ§ 
+**ìƒíƒœ:** Raw í¬ì¸í„° ì‚¬ìš©  
+**ì¤‘ìš”ë„:** â­â­  
+**ì†Œìš” ì‹œê°„:** 1ì£¼
+
+---
+
+## ğŸ¯ ë§ˆì¼ìŠ¤í†¤
+
+### âœ… Milestone 1: í•µì‹¬ ì™„ì„± (ì™„ë£Œ!)
+- âœ… Component ìƒëª…ì£¼ê¸° (Awake/OnDestroy)
+- âœ… ì˜¤ë””ì˜¤ ì‹œìŠ¤í…œ (AudioManager, AudioClip, AudioSource)
+- âœ… UI ì™„ì„± (Canvas, Image, Button, Text, TextRenderer)
+- âœ… FontFile Asset (Resources í†µí•©)
+
+**ëª©í‘œ:** ì‚¬ìš´ë“œì™€ UIê°€ ìˆëŠ” ê°„ë‹¨í•œ ê²Œì„ ì œì‘ ê°€ëŠ¥ âœ…
+
+---
+
+### ğŸ”„ Milestone 2: ê²Œì„ ì œì‘ (ì§„í–‰ ì¤‘)
+- âœ… UI ì‹œìŠ¤í…œ (Image, Button, Text, TextRenderer)
+- â¬œ UI 9-Slice (ë²„íŠ¼ ì´ë¯¸ì§€ ëŠ˜ë¦¬ê¸°)
+- â¬œ íŒŒí‹°í´ ì‹œìŠ¤í…œ
+- â¬œ íƒ€ì¼ë§µ ì‹œìŠ¤í…œ
+- â¬œ ì¹´ë©”ë¼ ì»¨íŠ¸ë¡¤ëŸ¬
+
+**ëª©í‘œ:** í”Œë«í¬ë¨¸/ìŠˆíŒ… ê²Œì„ 1ê°œ ì™„ì„±
+
+---
+
+### Milestone 3: ìƒì‚°ì„± í–¥ìƒ (ë¯¸ë˜)
+- â¬œ í”„ë¦¬íŒ¹ ì‹œìŠ¤í…œ
+- â¬œ Scene ì§ë ¬í™”
+- â¬œ ì—ë””í„° ë„êµ¬
+
+**ëª©í‘œ:** ë¹ ë¥¸ í”„ë¡œí† íƒ€ì´í•‘ ê°€ëŠ¥
+
+---
+
+## ğŸ“ ìµœê·¼ ì—…ë°ì´íŠ¸
+
+### 2024 - UI ì‹œìŠ¤í…œ ì™„ë£Œ
+- âœ… Canvas Component êµ¬í˜„ (SpriteBatch ì†Œìœ )
+- âœ… Canvasê°€ ëª¨ë“  UIBase Component ìˆœíšŒ (dynamic_cast)
+- âœ… UIBase ì¶”ìƒ í´ë˜ìŠ¤ êµ¬í˜„
+- âœ… RectTransform êµ¬í˜„ (9ê°€ì§€ ì•µì»¤)
+- âœ… Image Component êµ¬í˜„ (SpriteBatch ë Œë”ë§)
+- âœ… Button Component êµ¬í˜„ (onClick/onHover)
+- âœ… Text Component (Bitmap Font ë°©ì‹)
+- âœ… TextRenderer Component (TTF ì§ì ‘ ë Œë”ë§, GDI+ ì‚¬ìš©)
+- âœ… FontFile Asset (Resources ì‹œìŠ¤í…œ í†µí•©)
+- âœ… GameObject ê³„ì¸µ êµ¬ì¡° ì¶”ê°€ (SetParent/AddChild)
+- âœ… í•œê¸€/ì˜ë¬¸ ì™„ë²½ ì§€ì›
+- âœ… TestSceneì— ì˜ˆì‹œ ì¶”ê°€
+
+### 2024 - ì˜¤ë””ì˜¤ ì‹œìŠ¤í…œ ì™„ë£Œ
+- âœ… AudioManager ì‹±ê¸€í†¤ êµ¬í˜„ (XAudio2)
+- âœ… AudioClip Asset êµ¬í˜„ (WAV/MP3 ì§€ì›)
+- âœ… AudioSource Component êµ¬í˜„
+- âœ… Media Foundation í†µí•© (MP3 ë””ì½”ë”©)
+- âœ… COM ì´ˆê¸°í™” ì¶”ê°€
+- âœ… deltaTime ì œí•œ (ì°½ ë“œë˜ê·¸ ì•ˆì •ì„±)
+
+---
+
+## ğŸš€ ë‹¤ìŒ ì‘ì—…
+
+**ìš°ì„ ìˆœìœ„ 1: UI 9-Slice (ë²„íŠ¼ ì´ë¯¸ì§€ ëŠ˜ë¦¬ê¸°)** â­â­â­â­â­
+1. NineSliceImage Component êµ¬í˜„
+2. í…ìŠ¤ì²˜ë¥¼ 9ê°œ ì˜ì—­ìœ¼ë¡œ ë¶„í• 
+3. SpriteBatch::Draw()ë¡œ ê° ì˜ì—­ ë Œë”ë§
+4. ëª¨ì„œë¦¬ëŠ” ê³ ì •, ì¤‘ê°„ì€ ëŠ˜ì–´ë‚˜ê²Œ ì²˜ë¦¬
+5. Button Componentì— ì˜µì…˜ìœ¼ë¡œ ì¶”ê°€
+
+**ìš°ì„ ìˆœìœ„ 2: íŒŒí‹°í´ ì‹œìŠ¤í…œ**
+1. ParticleSystem Component êµ¬í˜„
+2. íŒŒí‹°í´ ë°©ì¶œ/ì—…ë°ì´íŠ¸ ë¡œì§
+3. SpriteBatch ì¸ìŠ¤í„´ì‹± ë Œë”ë§
+4. í­ë°œ, ì—°ê¸°, ë¶ˆê½ƒ íš¨ê³¼ í”„ë¦¬ì…‹
+
+**ìš°ì„ ìˆœìœ„ 3: ì¹´ë©”ë¼ ì»¨íŠ¸ë¡¤ëŸ¬**
+1. CameraController Component êµ¬í˜„
+2. SmoothDamp ì¶”ì 
+3. í™”ë©´ í”ë“¤ë¦¼ íš¨ê³¼
+4. ì¤Œ ì¸/ì•„ì›ƒ
+
+---
+
+## ğŸ“š ì°¸ê³  ë¬¸ì„œ
+
+- [UI System Guide](UI_System_Guide.md) - Image/Button ì‚¬ìš©ë²•
+- [Text Component Guide](Text_Component_Guide.md) - Bitmap Font ì‚¬ìš©ë²•
+- [Physics System](PhysicsSystem.md) - ë¬¼ë¦¬ ì‹œìŠ¤í…œ ìƒì„¸
+- [Rigidbody2D](Rigidbody2D.md) - Rigidbody ì‚¬ìš©ë²•
+- [CCD and Spatial Partitioning](CCD_and_SpatialPartitioning.md) - ë¬¼ë¦¬ ìµœì í™”
+
+---
+
+## ğŸ® ì—”ì§„ í†µê³„
+
+- **ì´ ì½”ë“œ ë¼ì¸:** ~17,000 ë¼ì¸
+- **ì´ ê°œë°œ ì‹œê°„:** 3ê°œì›”
+- **ì™„ì„±ë„:** 75% (í•µì‹¬ ê¸°ëŠ¥ + UI ì™„ë£Œ) âœ…
+- **ë‹¤ìŒ ëª©í‘œ:** UI 9-Slice â†’ íŒŒí‹°í´ ì‹œìŠ¤í…œ â†’ ì¹´ë©”ë¼ ì»¨íŠ¸ë¡¤ëŸ¬
+
+---
+
+## ğŸ¯ UI 9-Slice ìƒì„¸ ê³„íš
+
+### ë¬¸ì œ
+í˜„ì¬ Button ì´ë¯¸ì§€ë¥¼ ëŠ˜ë¦¬ë©´ **ì „ì²´ê°€ ëŠ˜ì–´ë‚˜ì„œ** ëª¨ì„œë¦¬ê°€ ê¹¨ì§‘ë‹ˆë‹¤.
+
+### í•´ê²°
+**9-Slice ê¸°ë²•** ì‚¬ìš©:
+- 4ê°œ ëª¨ì„œë¦¬: ê³ ì • í¬ê¸° ìœ ì§€
+- 4ê°œ í…Œë‘ë¦¬: í•œ ë°©í–¥ìœ¼ë¡œë§Œ ëŠ˜ë¦¼
+- 1ê°œ ì¤‘ì•™: ê°€ë¡œ+ì„¸ë¡œ ëª¨ë‘ ëŠ˜ë¦¼
+
+### êµ¬í˜„
+```cpp
+// 9ê°œ ì˜ì—­ìœ¼ë¡œ ë¶„í• í•˜ì—¬ ë Œë”ë§
+void NineSliceImage::RenderUI()
 {
-  "name": "Level1",
-  "physicsSettings": {
-    "gravity": 500.0,
-    "useQuadtree": true,
-    "worldWidth": 4000.0,
-    "worldHeight": 4000.0
-  },
-  "gameObjects": [
-    {
-      "name": "Player",
-      "enabled": true,
-      "transform": {
-        "position": [100, 200],
-        "rotation": 0,
-        "scale": [1, 1]
-      },
-      "components": [
-        {
-          "type": "SpriteRenderer",
-          "texture": "player.png",
-          "color": [1, 1, 1, 1],
-          "layer": 0
-        },
-        {
-          "type": "BoxCollider2D",
-          "size": [32, 64],
-          "offset": [0, 0],
-          "trigger": false
-        },
-        {
-          "type": "Rigidbody2D",
-          "mass": 1.0,
-          "gravityScale": 1.0,
-          "useGravity": true,
-          "useCCD": false,
-          "restitution": 0.0,
-          "friction": 0.3
-        }
-      ]
-    }
-  ]
+    // 1. TopLeft (ê³ ì •)
+    spriteBatch->Draw(texture, topLeftRect, topLeftSrc);
+    
+    // 2. Top (ê°€ë¡œ ëŠ˜ë¦¼)
+    spriteBatch->Draw(texture, topRect, topSrc);
+    
+    // 3. TopRight (ê³ ì •)
+    spriteBatch->Draw(texture, topRightRect, topRightSrc);
+    
+    // 4. Left (ì„¸ë¡œ ëŠ˜ë¦¼)
+    spriteBatch->Draw(texture, leftRect, leftSrc);
+    
+    // 5. Center (ê°€ë¡œ+ì„¸ë¡œ ëŠ˜ë¦¼)
+    spriteBatch->Draw(texture, centerRect, centerSrc);
+    
+    // 6. Right (ì„¸ë¡œ ëŠ˜ë¦¼)
+    spriteBatch->Draw(texture, rightRect, rightSrc);
+    
+    // 7. BottomLeft (ê³ ì •)
+    spriteBatch->Draw(texture, bottomLeftRect, bottomLeftSrc);
+    
+    // 8. Bottom (ê°€ë¡œ ëŠ˜ë¦¼)
+    spriteBatch->Draw(texture, bottomRect, bottomSrc);
+    
+    // 9. BottomRight (ê³ ì •)
+    spriteBatch->Draw(texture, bottomRightRect, bottomRightSrc);
 }
 ```
 
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// Scene ÀúÀå
-SceneSerializer::SaveScene(currentScene, L"Assets/Scenes/Level1.json");
-
-// Scene ·Îµå
-auto scene = SceneSerializer::LoadScene(L"Assets/Scenes/Level1.json");
-sceneManager.AddScene(scene);
-```
-
----
-
-#### 9. ·Î±ë ½Ã½ºÅÛ ??
-**»óÅÂ:** printf/assert¸¸ »ç¿ë  
-**Áß¿äµµ:** ???  
-**¼Ò¿ä ½Ã°£:** 2-3ÀÏ
-
-**ÆÄÀÏ ±¸Á¶:**
-```
-Engine/Core/
-¦¦¦¡¦¡ Logger.h/cpp                - ·Î±ë ½Ã½ºÅÛ
-```
-
-**±¸Çö:**
-```cpp
-// Engine/Core/Logger.h
-#pragma once
-#include <string>
-#include <fstream>
-
-class Logger
-{
-public:
-    enum class Level
-    {
-        Info,
-        Warning,
-        Error,
-        Fatal
-    };
-    
-    static void Init(const std::wstring& logFile);
-    static void Shutdown();
-    
-    static void Info(const char* format, ...);
-    static void Warning(const char* format, ...);
-    static void Error(const char* format, ...);
-    static void Fatal(const char* format, ...);
-    
-private:
-    static void Log(Level level, const char* format, va_list args);
-    
-    static std::ofstream logFile;
-    static bool initialized;
-};
-```
-
-**»ç¿ë ¿¹½Ã:**
-```cpp
-// main.cpp
-Logger::Init(L"game.log");
-
-// °ÔÀÓ ÄÚµå
-Logger::Info("Game started");
-Logger::Info("Player spawned at (%.2f, %.2f)", x, y);
-Logger::Warning("Physics delta time > 0.1s, frame: %d", frameCount);
-Logger::Error("Failed to load texture: %s", texturePath);
-Logger::Fatal("Out of memory!");
-
-´Æ// Á¾·á ½Ã
-Logger::Shutdown();
-```
-
-**Ãâ·Â ¿¹½Ã:**
-```
-[2024-01-15 14:32:10] [INFO] Game started
-[2024-01-15 14:32:10] [INFO] Player spawned at (100.00, 200.00)
-[2024-01-15 14:32:15] [WARNING] Physics delta time > 0.1s, frame: 234
-[2024-01-15 14:32:20] [ERROR] Failed to load texture: player.png
-```
-
----
-
-### ?? LOW PRIORITY - ¼±ÅÃÀû °³¹ß
-
-#### 10. ImGui ¿¡µğÅÍ ???
-**»óÅÂ:** ¹Ì±¸Çö  
-**Áß¿äµµ:** ??? (»ı»ê¼º Çâ»ó)  
-**¼Ò¿ä ½Ã°£:** 2ÁÖ
-
-**±â´É:**
-- Hierarchy Ã¢ (GameObject Æ®¸®)
-- Inspector Ã¢ (Component ¼Ó¼º ÆíÁı)
-- Scene ºä (¸¶¿ì½º·Î ¹èÄ¡)
-- Game ºä (ÇÃ·¹ÀÌ ¸ğµå)
-- Console Ã¢ (·Î±× Ãâ·Â)
-- Asset ºê¶ó¿ìÀú
-
----
-
-#### 11. ¸Ş¸ğ¸® °ü¸® °³¼± ??
-**»óÅÂ:** Raw Æ÷ÀÎÅÍ »ç¿ë  
-**Áß¿äµµ:** ??  
-**¼Ò¿ä ½Ã°£:** 1ÁÖ
-
-**¿É¼Ç A: ½º¸¶Æ® Æ÷ÀÎÅÍ**
-```cpp
-// SceneBase.h
-std::vector<std::shared_ptr<GameObject>> gameObjects;
-
-// GameObject.h
-std::vector<std::unique_ptr<Component>> components;
-```
-
-**¿É¼Ç B: Object Pool**
-```cpp
-class ObjectPool
-{
-public:
-    GameObject* Spawn();
-    void Despawn(GameObject* obj);
-    
-private:
-    std::vector<GameObject*> pool;
-    std::vector<GameObject*> active;
-};
-```
-
----
-
-## ?? ¸¶ÀÏ½ºÅæ
-
-### Milestone 1: ÇÙ½É ¿Ï¼º (1°³¿ù)
-- ? Component »ı¸íÁÖ±â (Awake/OnDestroy)
-- ? ¿Àµğ¿À ½Ã½ºÅÛ
-- ? UI ±âÃÊ
-
-**¸ñÇ¥:** »ç¿îµå¿Í UI°¡ ÀÖ´Â °£´ÜÇÑ °ÔÀÓ Á¦ÀÛ °¡´É
-
-### Milestone 2: °ÔÀÓ Á¦ÀÛ (2°³¿ù)
-- ? UI ¿Ï¼º
-- ? ÆÄÆ¼Å¬ ½Ã½ºÅÛ
-- ? Å¸ÀÏ¸Ê ½Ã½ºÅÛ
-- ? Ä«¸Ş¶ó ÄÁÆ®·Ñ·¯
-
-**¸ñÇ¥:** ÇÃ·§Æ÷¸Ó/½´ÆÃ °ÔÀÓ 1°³ ¿Ï¼º
-
-### Milestone 3: »ı»ê¼º Çâ»ó (3°³¿ù)
-- ? ÇÁ¸®ÆÕ ½Ã½ºÅÛ
-- ? Scene Á÷·ÄÈ­
-- ? ¿¡µğÅÍ µµ±¸
-
-**¸ñÇ¥:** ºü¸¥ ÇÁ·ÎÅäÅ¸ÀÌÇÎ °¡´É
+**BaseEngineì€ 2D ê²Œì„ ê°œë°œì„ ìœ„í•œ ì™„ì„±í˜• ì—”ì§„ì…ë‹ˆë‹¤!** ğŸš€

@@ -28,7 +28,7 @@ public:
     void Update(float dt);
     void LateUpdate(float dt);
     void Render();
-
+    void RenderUI();        // UI 렌더링 (Direct2D)
     void DebugRender();
 
 private:
