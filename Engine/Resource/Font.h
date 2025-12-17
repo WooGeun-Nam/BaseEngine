@@ -1,12 +1,8 @@
 #pragma once
 #include "Resource/Asset.h"
-#include <memory>
+#include <string>
 
-// Forward declaration
-namespace DirectX { class SpriteFont; }
-
-// Font: SpriteFont Asset 래퍼
-// 명칭 변경: FontAsset → Font (더 간결하고 직관적)
+// Font: TTF/OTF 폰트 파일 Asset
 class Font : public Asset
 {
 public:
@@ -15,9 +11,8 @@ public:
 
     bool Load(const std::wstring& path) override;
 
-    DirectX::SpriteFont* GetSpriteFont() const { return spriteFont.get(); }
-    std::shared_ptr<DirectX::SpriteFont> GetShared() const { return spriteFont; }
+    const std::wstring& GetPath() const { return fontPath; }
 
 private:
-    std::shared_ptr<DirectX::SpriteFont> spriteFont;
+    std::wstring fontPath;
 };

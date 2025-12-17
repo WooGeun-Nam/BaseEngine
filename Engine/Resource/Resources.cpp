@@ -3,7 +3,6 @@
 #include "Resource/SpriteSheet.h"
 #include "Resource/AnimationClip.h"
 #include "Resource/Font.h"
-#include "Resource/FontFile.h"
 #include "Audio/AudioClip.h"
 
 #include <filesystem>
@@ -32,7 +31,7 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         std::wstring extension = path.extension().wstring();
         std::wstring stem = path.stem().wstring();
 
-        // 확장자 기반 로딩
+        // 확장자 별로 로드
         if (extension == L".png")
         {
             Load<Texture>(stem, path.wstring());
@@ -49,13 +48,9 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         {
             Load<AudioClip>(stem, path.wstring());
         }
-        else if (extension == L".spritefont")
-        {
-            Load<Font>(stem, path.wstring());
-        }
         else if (extension == L".ttf" || extension == L".otf")
         {
-            Load<FontFile>(stem, path.wstring());
+            Load<Font>(stem, path.wstring());
         }
     }
 }

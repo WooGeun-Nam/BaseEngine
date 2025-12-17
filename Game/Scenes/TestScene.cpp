@@ -3,7 +3,7 @@
 #include "Graphics/SpriteRenderer.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
-#include "Resource/FontFile.h"
+#include "Resource/Font.h"
 #include "Input/Input.h"
 #include "Scripts/SceneController.h"
 #include "Physics/BoxCollider2D.h"
@@ -80,8 +80,8 @@ void TestScene::OnEnter()
     textRendererRect->anchoredPosition = {50, 200};
     
     auto textRenderer = textRendererObj->AddComponent<TextRenderer>();
-    // Resources를 통해 FontFile 로드
-    textRenderer->SetFont(Resources::Get<FontFile>(L"NanumGothic"), 48.0f);
+    // Resources를 통해 Font 로드
+    textRenderer->SetFont(Resources::Get<Font>(L"NanumGothic"), 48.0f);
     textRenderer->SetText(L"폰트 테스트");
     textRenderer->SetColor({1, 0.5f, 0, 1});  // 주황색
 

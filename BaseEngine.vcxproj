@@ -48,7 +48,6 @@
     <ClCompile Include="Engine\Physics\Rigidbody2D.cpp" />
     <ClCompile Include="Engine\Resource\AnimationClip.cpp" />
     <ClCompile Include="Engine\Resource\Font.cpp" />
-    <ClCompile Include="Engine\Resource\FontFile.cpp" />
     <ClCompile Include="Engine\Resource\Resources.cpp" />
     <ClCompile Include="Engine\Resource\SpriteSheet.cpp" />
     <ClCompile Include="Engine\Resource\Texture.cpp" />
@@ -103,7 +102,6 @@
     <ClInclude Include="Engine\Resource\AnimationClip.h" />
     <ClInclude Include="Engine\Resource\Asset.h" />
     <ClInclude Include="Engine\Resource\Font.h" />
-    <ClInclude Include="Engine\Resource\FontFile.h" />
     <ClInclude Include="Engine\Resource\Prefab.h" />
     <ClInclude Include="Engine\Resource\Resources.h" />
     <ClInclude Include="Engine\Resource\SpriteSheet.h" />
@@ -141,6 +139,7 @@
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\Shaders\</DestinationFolders>
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)\Shaders\</DestinationFolders>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Game\Shaders\DebugLine.hlsl">

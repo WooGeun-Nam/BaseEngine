@@ -51,7 +51,7 @@ void TextRenderer::SetText(const std::wstring& newText)
     }
 }
 
-void TextRenderer::SetFont(std::shared_ptr<FontFile> fontAsset, float size)
+void TextRenderer::SetFont(std::shared_ptr<::Font> fontAsset, float size)
 {
     font = fontAsset;
     fontSize = size;
@@ -79,7 +79,7 @@ void TextRenderer::UpdateTexture()
     FontFamily fontFamily;
     fontCollection.GetFamilies(1, &fontFamily, &fontCount);
 
-    Font gdipFont(&fontFamily, fontSize, FontStyleRegular, UnitPixel);
+    Gdiplus::Font gdipFont(&fontFamily, fontSize, FontStyleRegular, UnitPixel);
 
     // 텍스트 크기 측정
     Bitmap tempBitmap(1, 1);
@@ -92,7 +92,7 @@ void TextRenderer::UpdateTexture()
     textureWidth = static_cast<int>(bounds.Width) + 4;
     textureHeight = static_cast<int>(bounds.Height) + 4;
 
-    // 비트맵 생성
+    // 비트맵 렌더
     Bitmap bitmap(textureWidth, textureHeight, PixelFormat32bppARGB);
     Graphics graphics(&bitmap);
     graphics.Clear(Color(0, 0, 0, 0));  // 투명 배경
@@ -176,7 +176,7 @@ void TextRenderer::RenderUI()
     // 색상 변환
     XMVECTOR colorVec = XMLoadFloat4(&color);
 
-    // RECT 생성
+    // RECT 설정
     RECT destRect;
     destRect.left = static_cast<LONG>(topLeft.x);
     destRect.top = static_cast<LONG>(topLeft.y);

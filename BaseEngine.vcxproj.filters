@@ -216,9 +216,6 @@
     <ClCompile Include="Tool\FontConverter.cpp">
       <Filter>소스 파일\Tool</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Resource\Font.cpp">
-      <Filter>소스 파일\Engine\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\UI\Button.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
@@ -235,9 +232,9 @@
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
     <ClCompile Include="Engine\UI\TextRenderer.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Resource\FontFile.cpp">
+    <ClCompile Include="Engine\Resource\Font.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -386,9 +383,6 @@
     <ClInclude Include="Tool\FontConverter.h">
       <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Resource\Font.h">
-      <Filter>헤더 파일\Engine\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\UI\Button.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
@@ -405,9 +399,9 @@
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
     <ClInclude Include="Engine\UI\TextRenderer.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Resource\FontFile.h">
+    <ClInclude Include="Engine\Resource\Font.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -433,6 +427,11 @@
     <None Include="Docs\UI_System_Guide.md">
       <Filter>문서</Filter>
     </None>
-    <None Include="Docs\Text_Component_Guide.md" />
+    <None Include="Docs\Text_Component_Guide.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>문서</Filter>
+    </None>
   </ItemGroup>
 </Project>
