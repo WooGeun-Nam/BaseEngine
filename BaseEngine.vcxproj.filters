@@ -225,17 +225,14 @@
     <ClCompile Include="Engine\UI\Image.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\UI\Text.cpp">
-      <Filter>소스 파일\Engine\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\UI\UIBase.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\UI\TextRenderer.cpp">
-      <Filter>소스 파일\Engine\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Resource\Font.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Text.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -392,17 +389,14 @@
     <ClInclude Include="Engine\UI\Image.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\UI\Text.h">
-      <Filter>헤더 파일\Engine\UI</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\UI\UIBase.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\UI\TextRenderer.h">
-      <Filter>헤더 파일\Engine\UI</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Resource\Font.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Text.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -431,6 +425,9 @@
       <Filter>문서</Filter>
     </None>
     <None Include="README.md">
+      <Filter>문서</Filter>
+    </None>
+    <None Include=".gitignore">
       <Filter>문서</Filter>
     </None>
   </ItemGroup>

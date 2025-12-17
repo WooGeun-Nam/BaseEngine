@@ -13,7 +13,6 @@
 #include "UI/Image.h"
 #include "UI/Button.h"
 #include "UI/Text.h"
-#include "UI/TextRenderer.h"
 
 void TestScene::OnEnter()
 {
@@ -27,7 +26,7 @@ void TestScene::OnEnter()
     s->SetCamera(&camera);
     AddGameObject(sc);
 
-    // ===== Player1: 조작 가능한 오브젝트 =====
+    // Player1: 조작 가능한 오브젝트
     auto obj = new GameObject();
     obj->SetName(L"Player1");
     obj->SetApplication(app);
@@ -43,7 +42,7 @@ void TestScene::OnEnter()
 
     AddGameObject(obj);
 
-    // ===== Canvas 생성 =====
+    // Canvas 생성
     auto canvasObj = new GameObject();
     canvasObj->SetName(L"Canvas");
     canvasObj->SetApplication(app);
@@ -54,7 +53,7 @@ void TestScene::OnEnter()
     AddGameObject(canvasObj);
     SetCanvas(canvas);  // Scene에 Canvas 등록
 
-    // ===== UI Image 생성 =====
+    // UI Image 생성
     auto imageObj = new GameObject();
     imageObj->SetName(L"UI_Image");
     imageObj->SetApplication(app);
@@ -69,23 +68,7 @@ void TestScene::OnEnter()
     image->SetTexture(Resources::Get<Texture>(L"icon"));
     image->SetColor({1, 1, 1, 1});
 
-    // ===== TextRenderer 생성 (TTF 사용) ? =====
-    auto textRendererObj = new GameObject();
-    textRendererObj->SetName(L"UI_TextRenderer");
-    textRendererObj->SetApplication(app);
-    textRendererObj->SetParent(canvasObj);
-    
-    auto textRendererRect = textRendererObj->AddComponent<RectTransform>();
-    textRendererRect->anchor = RectTransform::Anchor::TopLeft;
-    textRendererRect->anchoredPosition = {50, 200};
-    
-    auto textRenderer = textRendererObj->AddComponent<TextRenderer>();
-    // Resources를 통해 Font 로드
-    textRenderer->SetFont(Resources::Get<Font>(L"NanumGothic"), 48.0f);
-    textRenderer->SetText(L"폰트 테스트");
-    textRenderer->SetColor({1, 0.5f, 0, 1});  // 주황색
-
-    // ===== UI Text 생성 (Bitmap Font) =====
+    // Text 생성 (TTF 폰트 사용)
     auto textObj = new GameObject();
     textObj->SetName(L"UI_Text");
     textObj->SetApplication(app);
@@ -93,15 +76,14 @@ void TestScene::OnEnter()
     
     auto textRect = textObj->AddComponent<RectTransform>();
     textRect->anchor = RectTransform::Anchor::TopLeft;
-    textRect->anchoredPosition = {50, 300};
+    textRect->anchoredPosition = {50, 200};
     
     auto text = textObj->AddComponent<Text>();
-    text->SetText(L"Score: 12345");
-    text->SetColor({1, 1, 0, 1});  // 노란색
-    text->characterSize = 32.0f;
-    text->characterSpacing = 5.0f;
+    text->SetFont(Resources::Get<Font>(L"NanumGothic"), 48.0f);
+    text->SetText(L"폰트 테스트");
+    text->SetColor({1, 0.5f, 0, 1});  // 주황색
 
-    // ===== UI Button 생성 (Canvas의 자식) =====
+    // UI Button 생성
     auto btnObj = new GameObject();
     btnObj->SetName(L"UI_Button");
     btnObj->SetApplication(app);
@@ -121,9 +103,8 @@ void TestScene::OnEnter()
     button->pressedColor = {0.5f, 0.5f, 0.5f, 1.0f};
     
     // 버튼 이벤트
-    button->onClick = [textRenderer]() {
-        // OutputDebugStringA("[Button] Clicked!\n");
-        textRenderer->SetText(L"버튼 클릭!");
+    button->onClick = [text]() {
+        text->SetText(L"버튼 클릭!");
     };
     
     button->onHover = []() {

@@ -56,7 +56,6 @@
     <ClCompile Include="Engine\UI\Image.cpp" />
     <ClCompile Include="Engine\UI\RectTransform.cpp" />
     <ClCompile Include="Engine\UI\Text.cpp" />
-    <ClCompile Include="Engine\UI\TextRenderer.cpp" />
     <ClCompile Include="Engine\UI\UIBase.cpp" />
     <ClCompile Include="Game\main.cpp" />
     <ClCompile Include="Game\Scenes\AnimationScene.cpp" />
@@ -111,7 +110,6 @@
     <ClInclude Include="Engine\UI\Image.h" />
     <ClInclude Include="Engine\UI\RectTransform.h" />
     <ClInclude Include="Engine\UI\Text.h" />
-    <ClInclude Include="Engine\UI\TextRenderer.h" />
     <ClInclude Include="Engine\UI\UIBase.h" />
     <ClInclude Include="Game\RegisterScenes.h" />
     <ClInclude Include="Game\Scenes\AnimationScene.h" />
@@ -126,6 +124,7 @@
     <ClInclude Include="Tool\SpriteImporter.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="Docs\CCD_and_SpatialPartitioning.md" />
     <None Include="Docs\DevelopmentRoadmap.md" />
     <None Include="Docs\PhysicsSystem.md" />

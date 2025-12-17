@@ -18,7 +18,7 @@ BaseEngine은 C++와 DirectX 11을 사용하여 제작된 2D 게임 엔진입니
 #### Core Systems
 - **GameObject/Component 아키텍처**: 유연한 템플릿 기반 컴포넌트 시스템
 - **Scene Management**: 다중 씬 전환 및 관리
-- **계층 구조**: 부모-자식 관계 지원
+- **Hierarchy**: 객체 부모-자식 관계 지원
 - **LifeCycle**: Awake → OnEnable → FixedUpdate → Update → LateUpdate → Render → OnDestroy
 
 #### Physics System
@@ -40,8 +40,7 @@ BaseEngine은 C++와 DirectX 11을 사용하여 제작된 2D 게임 엔진입니
 - **RectTransform**: 앵커 기반 UI 레이아웃 (9가지 앵커 지원)
 - **Image**: UI 이미지 컴포넌트
 - **Button**: 클릭/호버 이벤트 지원
-- **Text**: Bitmap Font 방식 텍스트
-- **TextRenderer**: TTF/OTF 폰트 런타임 렌더링 (한글 지원)
+- **Text**: TTF/OTF 폰트 런타임 렌더링 (한글 지원)
 
 #### Audio System
 - **AudioManager**: XAudio2 기반 오디오 관리
