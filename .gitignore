@@ -4,7 +4,8 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 # Assets 폴더 내용물 제외 (폴더 구조는 유지)
-!Game/Assets/*
+Game/Assets/*
+!Game/Assets/.gitkeep
 
 # User-specific files
 *.rsuser
