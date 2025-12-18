@@ -1,5 +1,5 @@
 #include "Graphics/SpriteRenderer.h"
-#include "Graphics/SpriteRenderDevice.h"
+#include "Graphics/RenderManager.h"
 #include "Core/GameObject.h"
 #include "Core/Transform.h"
 #include "Resource/SpriteSheet.h"
@@ -46,7 +46,7 @@ void SpriteRenderer::SetSpriteSheet(std::shared_ptr<SpriteSheet> sheet, int fram
     if (!spriteSheet)
         return;
 
-    // SpriteSheet의 Texture Asset 및 프레임 정보 가져오기
+    // SpriteSheet의 Texture Asset 을 자동 설정
     textureAsset = spriteSheet->GetTexture();
     textureShaderResourceView = nullptr;
 
@@ -70,9 +70,12 @@ void SpriteRenderer::SetSpriteSheet(std::shared_ptr<SpriteSheet> sheet, int fram
 
 void SpriteRenderer::Render()
 {
-    SpriteRenderDevice& spriteRenderDevice = SpriteRenderDevice::Instance();
+    // RenderManager의 SpriteBatch 사용
+    auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
+    if (!spriteBatch)
+        return;
 
-    // SRV 결정 (Texture Asset 또는 Raw SRV)
+    // SRV 획득 (Texture Asset 또는 Raw SRV)
     ID3D11ShaderResourceView* shaderResourceView = textureShaderResourceView;
 
     if (!shaderResourceView && textureAsset)
@@ -82,22 +85,14 @@ void SpriteRenderer::Render()
         return;
 
     Transform& transform = gameObject->transform;
+    
+    // SpriteEffects 설정
+    SpriteEffects effects = SpriteEffects_None;
+    if (flipX) effects = (SpriteEffects)(effects | SpriteEffects_FlipHorizontally);
+    if (flipY) effects = (SpriteEffects)(effects | SpriteEffects_FlipVertically);
 
-    SpriteRenderDevice::DrawInfo drawInfo;
-    drawInfo.texture = shaderResourceView;
-    drawInfo.position = transform.GetPosition();
-    drawInfo.scale = transform.GetScale();
-    drawInfo.rotation = transform.GetRotation();
-    drawInfo.color = color;
-    drawInfo.flipX = flipX;
-    drawInfo.flipY = flipY;
-    drawInfo.layer = layer;
-
-    if (hasSourceRect)
-    {
-        drawInfo.useSource = true;
-        drawInfo.sourceRect = sourceRect;
-    }
+    // Source rect
+    const RECT* src = hasSourceRect ? &sourceRect : nullptr;
 
     // 기본 피벗: 중앙
     XMFLOAT2 basePivot = hasPivotOverride
@@ -111,11 +106,25 @@ void SpriteRenderer::Render()
         pivotOffset.y + spritePivotOffset.y
     };
 
-    drawInfo.origin = XMFLOAT2
+    XMFLOAT2 finalOrigin
     {
         basePivot.x + combinedOffset.x,
         basePivot.y + combinedOffset.y
     };
 
-    spriteRenderDevice.Draw(drawInfo);
+    // Layer depth 계산 (Game 레이어)
+    float depth = RenderManager::GetLayerDepth(RenderLayer::Game, layer);
+
+    // 렌더링
+    spriteBatch->Draw(
+        shaderResourceView,
+        transform.GetPosition(),
+        src,
+        XMLoadFloat4(&color),
+        transform.GetRotation(),
+        finalOrigin,
+        transform.GetScale(),
+        effects,
+        depth
+    );
 }

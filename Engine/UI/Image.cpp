@@ -1,9 +1,7 @@
 #include "UI/Image.h"
 #include "UI/Canvas.h"
 #include "Core/GameObject.h"
-#include <SpriteBatch.h>
-
-using namespace DirectX;
+#include "Graphics/RenderManager.h"
 
 void Image::Awake()
 {
@@ -15,7 +13,7 @@ void Image::RenderUI()
     if (!texture || !rectTransform || !canvas)
         return;
 
-    auto* spriteBatch = canvas->GetSpriteBatch();
+    auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
     if (!spriteBatch)
         return;
 
@@ -28,17 +26,25 @@ void Image::RenderUI()
     // 색상 변환
     XMVECTOR colorVec = XMLoadFloat4(&color);
 
-    // RECT 생성 (destination)
+    // RECT 계산 (destination)
     RECT destRect;
     destRect.left = static_cast<LONG>(topLeft.x);
     destRect.top = static_cast<LONG>(topLeft.y);
     destRect.right = static_cast<LONG>(topLeft.x + size.x);
     destRect.bottom = static_cast<LONG>(topLeft.y + size.y);
 
+    // Layer depth 계산 (UI 레이어 내에서 sortOrder 기반)
+    float depth = RenderManager::GetLayerDepth(RenderLayer::UI, sortOrder / 1000.0f);
+
     // 이미지 렌더링
     spriteBatch->Draw(
         texture->GetSRV(),
         destRect,
-        colorVec
+        nullptr,  // source rect
+        colorVec,
+        0.0f,     // rotation
+        XMFLOAT2(0, 0),  // origin
+        SpriteEffects_None,
+        depth
     );
 }

@@ -213,9 +213,6 @@
     <ClCompile Include="Engine\UI\RectTransform.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Tool\FontConverter.cpp">
-      <Filter>소스 파일\Tool</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\UI\Button.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
@@ -233,6 +230,15 @@
     </ClCompile>
     <ClCompile Include="Engine\UI\Text.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\FontImporter.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\FontImporterExample.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\RenderManager.cpp">
+      <Filter>소스 파일\Engine\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -377,9 +383,6 @@
     <ClInclude Include="Engine\UI\RectTransform.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Tool\FontConverter.h">
-      <Filter>헤더 파일\Tool</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\UI\Button.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
@@ -397,6 +400,12 @@
     </ClInclude>
     <ClInclude Include="Engine\UI\Text.h">
       <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\FontImporter.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\RenderManager.h">
+      <Filter>헤더 파일\Engine\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

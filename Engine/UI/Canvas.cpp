@@ -1,37 +1,21 @@
 #include "UI/Canvas.h"
 #include "UI/UIBase.h"
 #include "Core/GameObject.h"
-#include "Core/Application.h"
-
-Canvas::~Canvas()
-{
-    spriteBatch.reset();
-}
+#include "Graphics/RenderManager.h"
 
 void Canvas::Awake()
 {
-    // SpriteBatch 생성
-    auto* app = gameObject->GetApplication();
-    if (app)
-    {
-        spriteBatch = std::make_unique<SpriteBatch>(app->GetContext());
-    }
-}
-
-void Canvas::OnDestroy()
-{
-    spriteBatch.reset();
+    // 초기화 로직 (필요시 화면 크기 설정 등)
 }
 
 void Canvas::RenderUI()
 {
+    // RenderManager의 SpriteBatch 사용 (이미 Begin되어 있음)
+    auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
     if (!spriteBatch)
         return;
 
-    // SpriteBatch 시작 (화면 좌표)
-    spriteBatch->Begin();
-
-    // 자식 GameObject들을 순회하며 UIBase 렌더링
+    // 자식 GameObject들을 순회하며 UIBase 컴포넌트 렌더링
     const auto& children = gameObject->GetChildren();
     for (auto* child : children)
     {
@@ -41,12 +25,10 @@ void Canvas::RenderUI()
         {
             // UIBase로 캐스팅 시도
             UIBase* uiBase = dynamic_cast<UIBase*>(comp);
-            if (uiBase && uiBase->IsActive() && uiBase->IsEnabled())
+            if (uiBase && uiBase->IsVisible() && uiBase->IsEnabled())
             {
                 uiBase->RenderUI();
             }
         }
     }
-
-    spriteBatch->End();
 }

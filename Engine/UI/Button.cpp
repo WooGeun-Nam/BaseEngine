@@ -12,7 +12,7 @@ void Button::Awake()
 
 void Button::Update(float deltaTime)
 {
-    if (!IsActive())
+    if (!IsVisible())
         return;
 
     bool isInside = IsPointerInside();

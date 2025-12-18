@@ -2,12 +2,17 @@
 #include "Core/Timer.h"
 #include "Resource/Resources.h"
 #include "Audio/AudioManager.h"
+#include "Graphics/RenderManager.h"
 #include <combaseapi.h>
+
+// 전역 Application 포인터 (Font 등에서 Device 접근용)
+Application* g_Application = nullptr;
 
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
 {
+    g_Application = this;
 }
 
 bool Application::initialize(HWND window, int width, int height)
@@ -28,12 +33,13 @@ bool Application::initialize(HWND window, int width, int height)
     windowWidth = width;
     windowHeight = height;
 
-	// renderdevice 초기화
-    SpriteRenderDevice::Instance().Initialize(
+    // 통합 RenderManager 초기화
+    RenderManager::Instance().Initialize(
         d3dDevice.getDevice(),
         d3dDevice.getContext()
     );
 
+    // DebugRenderer 초기화 (PrimitiveBatch 사용)
     DebugRenderer::Instance().Initialize(
         d3dDevice.getDevice(),
         d3dDevice.getContext()
@@ -69,6 +75,7 @@ void Application::run()
             {
                 // COM 해제
                 CoUninitialize();
+                g_Application = nullptr;
                 return;
             }
 
@@ -100,19 +107,25 @@ void Application::run()
 
         input.Update();
 
-        // 4) Render - 게임 (Direct3D)
+        // 4) Render - 통합 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
-        SpriteRenderDevice::Instance().Begin();
-        sceneManager.Render();
-        SpriteRenderDevice::Instance().End();
+        // 단일 SpriteBatch로 모든 2D 스프라이트 렌더링
+        RenderManager::Instance().BeginFrame();
+        {
+            // Layer depth 기반 자동 정렬:
+            // Background (0.0~0.2) → Game (0.2~0.5) → UI (0.5~0.8)
+            sceneManager.Render();      // Game layer
+            sceneManager.RenderUI();    // UI layer
+        }
+        RenderManager::Instance().EndFrame();
 
+        // Debug 선/박스 렌더링 (PrimitiveBatch - 의도적으로 최상위)
+        // 개발 중 디버그 정보를 UI 위에 표시하여 가시성 확보
+        // (Unity, Unreal도 디버그 기즈모를 UI 위에 그림)
         DebugRenderer::Instance().Begin(windowWidth, windowHeight);
         sceneManager.DebugRender();
         DebugRenderer::Instance().End();
-
-        // 5) Render - UI (Canvas의 SpriteBatch)
-        sceneManager.RenderUI();
 
         d3dDevice.endFrame();
     }
