@@ -88,7 +88,6 @@ BaseEngine/
 ├── Tool/                  # 개발 도구
 │   ├── AnimationImporter/ # 애니메이션 임포터
 │   ├── SpriteImporter/    # 스프라이트 임포터
-│   └── FontConverter/     # 폰트 변환기
 └── Assets/                # 게임 에셋 (텍스처, 오디오, 폰트 등)
 ```
 

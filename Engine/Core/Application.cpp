@@ -2,7 +2,6 @@
 #include "Core/Timer.h"
 #include "Resource/Resources.h"
 #include "Audio/AudioManager.h"
-#include "../Tool/FontConverter.h"
 #include <combaseapi.h>
 
 Application::Application()
@@ -45,10 +44,6 @@ bool Application::initialize(HWND window, int width, int height)
     {
         // 오디오 초기화 실패해도 게임은 계속 (경고만)
     }
-
-    // 폰트 변환 (최초 1회만 실행, 파일이 없을 때만)
-    // TODO: 파일 존재 확인 후 조건부 실행
-    FontConverter::ConvertDefaultFonts(d3dDevice.getDevice());
 
     Resources::LoadAllAssetsFromFolder(L"Assets");
 
