@@ -1,70 +1,89 @@
 #include "UI/Text.h"
+#include "UI/RectTransform.h"
 #include "UI/Canvas.h"
-#include "Core/GameObject.h"
 #include "Graphics/RenderManager.h"
-
-void Text::Awake()
-{
-    UIBase::Awake();
-}
-
-void Text::SetFont(std::shared_ptr<Font> fontAsset)
-{
-    font = fontAsset;
-}
+#include "Graphics/Camera2D.h"
+#include <SpriteBatch.h>
 
 void Text::RenderUI()
 {
-    if (text.empty() || !font || !rectTransform || !canvas)
-        return;
-
-    auto* spriteFont = font->GetSpriteFont();
-    if (!spriteFont)
+    if (!font || text.empty() || !isVisible)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
     if (!spriteBatch)
         return;
 
-    // 화면 좌표 계산
-    int screenW = canvas->GetScreenWidth();
-    int screenH = canvas->GetScreenHeight();
-    XMFLOAT2 position = rectTransform->GetScreenPosition(screenW, screenH);
+    auto* spriteFont = font->GetSpriteFont();
+    if (!spriteFont)
+        return;
 
-    // 텍스트 크기 측정
-    XMVECTOR textSize = spriteFont->MeasureString(text.c_str());
-    float textWidth = XMVectorGetX(textSize);
-
-    // 정렬 적용
-    switch (alignment)
+    // Canvas에서 화면 크기 가져오기
+    int screenWidth = 1280;
+    int screenHeight = 720;
+    if (canvas)
     {
-    case Alignment::Center:
-        position.x -= textWidth * fontSize * 0.5f;
-        break;
-    case Alignment::Right:
-        position.x -= textWidth * fontSize;
-        break;
-    case Alignment::Left:
-    default:
-        break;
+        screenWidth = canvas->GetScreenWidth();
+        screenHeight = canvas->GetScreenHeight();
     }
 
-    // 색상 변환
-    XMVECTOR colorVec = XMLoadFloat4(&color);
+    // RectTransform에서 화면 위치 가져오기
+    XMFLOAT2 screenPos = rectTransform->GetScreenPosition(screenWidth, screenHeight);
+    
+    // ===== 카메라 위치를 더해서 UI가 카메라를 따라다니도록 =====
+    auto* camera = RenderManager::Instance().GetCamera();
+    if (camera)
+    {
+        DirectX::XMFLOAT2 cameraPos = camera->GetPosition();
+        screenPos.x += cameraPos.x;
+        screenPos.y += cameraPos.y;
+    }
+    
+    // 정렬 처리
+    XMFLOAT2 origin(0, 0);
+    if (alignment != Alignment::Left)
+    {
+        XMVECTOR textSize = spriteFont->MeasureString(text.c_str());
+        float textWidth = XMVectorGetX(textSize);
 
-    // Layer depth 계산 (UI 레이어)
-    float depth = RenderManager::GetLayerDepth(RenderLayer::UI, sortOrder / 1000.0f);
+        if (alignment == Alignment::Center)
+        {
+            origin.x = textWidth * 0.5f;
+        }
+        else if (alignment == Alignment::Right)
+        {
+            origin.x = textWidth;
+        }
+    }
+
+    // UI 레이어 depth 설정 (sortOrder 반영)
+    // UI 레이어는 0.5~0.8 범위
+    float baseDepth = RenderManager::GetLayerDepth(RenderLayer::UI, 0.5f);
+    float layerDepth = baseDepth + (sortOrder * 0.001f);  // sortOrder에 따라 미세 조정
 
     // 텍스트 렌더링
+    XMVECTOR colorVec = XMLoadFloat4(&color);
     spriteFont->DrawString(
         spriteBatch,
         text.c_str(),
-        position,
+        screenPos,
         colorVec,
-        0.0f,                    // rotation
-        XMFLOAT2(0.0f, 0.0f),   // origin
-        fontSize,                // scale
+        0.0f,           // rotation
+        origin,
+        scale,
         DirectX::SpriteEffects_None,
-        depth
+        layerDepth
     );
+}
+
+XMVECTOR Text::MeasureString() const
+{
+    if (!font || text.empty())
+        return XMVectorZero();
+
+    auto* spriteFont = font->GetSpriteFont();
+    if (!spriteFont)
+        return XMVectorZero();
+
+    return spriteFont->MeasureString(text.c_str());
 }

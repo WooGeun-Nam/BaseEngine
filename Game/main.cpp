@@ -22,7 +22,7 @@ int APIENTRY WinMain(
 
     RegisterScenes::Register(&app);
     RegisterScenes::AddAllScenes(&app);
-    app.GetSceneManager().SetActiveScene(0);
+    app.GetSceneManager().SetActiveScene(1);
 
     app.run();
     return 0;

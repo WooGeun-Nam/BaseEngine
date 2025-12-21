@@ -105,9 +105,6 @@
     <ClCompile Include="Engine\Graphics\D3DDevice.cpp">
       <Filter>소스 파일\Engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\RendererBase.cpp">
-      <Filter>소스 파일\Engine\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\TextureManager.cpp">
       <Filter>소스 파일\Engine\Graphics</Filter>
     </ClCompile>
@@ -134,9 +131,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Core\GameObject.cpp">
       <Filter>소스 파일\Engine\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\SpriteRenderDevice.cpp">
-      <Filter>소스 파일\Engine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Game\Scenes\MyScene.cpp">
       <Filter>소스 파일\Game\Scenes</Filter>
@@ -225,20 +219,17 @@
     <ClCompile Include="Engine\UI\UIBase.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\RenderManager.cpp">
+      <Filter>소스 파일\Engine\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Resource\Font.cpp">
       <Filter>소스 파일\Engine\Resource</Filter>
     </ClCompile>
     <ClCompile Include="Engine\UI\Text.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Tool\FontImporter.cpp">
-      <Filter>소스 파일\Tool</Filter>
-    </ClCompile>
-    <ClCompile Include="Tool\FontImporterExample.cpp">
-      <Filter>소스 파일\Tool</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\RenderManager.cpp">
-      <Filter>소스 파일\Engine\Graphics</Filter>
+    <ClCompile Include="Engine\UI\WorldSpaceText.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -252,9 +243,6 @@
       <Filter>헤더 파일\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\D3DDevice.h">
-      <Filter>헤더 파일\Engine\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\RendererBase.h">
       <Filter>헤더 파일\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\TextureManager.h">
@@ -295,9 +283,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Core\Component.h">
       <Filter>헤더 파일\Engine\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\SpriteRenderDevice.h">
-      <Filter>헤더 파일\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Game\Scenes\MyScene.h">
       <Filter>헤더 파일\Game\Scenes</Filter>
@@ -395,17 +380,17 @@
     <ClInclude Include="Engine\UI\UIBase.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Graphics\RenderManager.h">
+      <Filter>헤더 파일\Engine\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Resource\Font.h">
       <Filter>헤더 파일\Engine\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Engine\UI\Text.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Tool\FontImporter.h">
-      <Filter>헤더 파일\Tool</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\RenderManager.h">
-      <Filter>헤더 파일\Engine\Graphics</Filter>
+    <ClInclude Include="Engine\UI\WorldSpaceText.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -414,24 +399,6 @@
     </None>
     <None Include="Game\Shaders\DebugLine.hlsl">
       <Filter>리소스 파일\Shaders</Filter>
-    </None>
-    <None Include="Docs\CCD_and_SpatialPartitioning.md">
-      <Filter>문서</Filter>
-    </None>
-    <None Include="Docs\PhysicsSystem.md">
-      <Filter>문서</Filter>
-    </None>
-    <None Include="Docs\Rigidbody2D.md">
-      <Filter>문서</Filter>
-    </None>
-    <None Include="Docs\DevelopmentRoadmap.md">
-      <Filter>문서</Filter>
-    </None>
-    <None Include="Docs\UI_System_Guide.md">
-      <Filter>문서</Filter>
-    </None>
-    <None Include="Docs\Text_Component_Guide.md">
-      <Filter>문서</Filter>
     </None>
     <None Include="README.md">
       <Filter>문서</Filter>

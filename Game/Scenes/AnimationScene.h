@@ -3,7 +3,6 @@
 #include "Core/Application.h"
 #include "Core/GameObject.h"
 #include "Graphics/SpriteRenderer.h"
-#include "Graphics/SpriteRenderDevice.h"
 #include "Graphics/Camera2D.h"
 
 class AnimationScene : public SceneBase
@@ -23,6 +22,5 @@ private:
     Application* app;
 
     GameObject* obj = nullptr;
-    SpriteRenderDevice* renderDevice = nullptr;
     Camera2D camera;
 };

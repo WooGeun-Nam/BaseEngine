@@ -1,6 +1,7 @@
-#include "Scenes/TestScene.h"
+Ôªø#include "Scenes/TestScene.h"
 #include "Core/GameObject.h"
 #include "Graphics/SpriteRenderer.h"
+#include "Graphics/RenderManager.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
 #include "Resource/Font.h"
@@ -8,17 +9,15 @@
 #include "Scripts/SceneController.h"
 #include "Physics/BoxCollider2D.h"
 #include "Scripts/MovementController.h"
-#include "UI/RectTransform.h"
 #include "UI/Canvas.h"
-#include "UI/Image.h"
-#include "UI/Button.h"
 #include "UI/Text.h"
+#include "UI/RectTransform.h"
+#include <DirectXMath.h>
 
 void TestScene::OnEnter()
 {
-    // æ¿ ¿¸»Ø »ƒ ƒ´∏ﬁ∂Û∏¶ ∑ª¥ı µπŸ¿ÃΩ∫ø° ¥ŸΩ√ º≥¡§
-    SpriteRenderDevice::Instance().SetCamera(&camera);
-    DebugRenderer::Instance().SetCamera(&camera);
+    // ===== Ïî¨ Ï¥àÍ∏∞Ìôî =====
+    RenderManager::Instance().SetCamera(&camera);
 
     auto sc = new GameObject();
     sc->SetApplication(app);
@@ -26,7 +25,7 @@ void TestScene::OnEnter()
     s->SetCamera(&camera);
     AddGameObject(sc);
 
-    // Player1: ¡∂¿€ ∞°¥…«— ø¿∫Í¡ß∆Æ
+    // Player1: Ï°∞Ïûë Í∞ÄÎä•Ìïú Ïò§Î∏åÏ†ùÌä∏
     auto obj = new GameObject();
     obj->SetName(L"Player1");
     obj->SetApplication(app);
@@ -37,8 +36,65 @@ void TestScene::OnEnter()
 
     obj->AddComponent<MovementController>();
 
-    obj->transform.SetPosition(0, 0);  // ¡ﬂæ”
+    obj->transform.SetPosition(0, 0);
     obj->transform.SetScale(5, 5);
 
     AddGameObject(obj);
+
+    // ===== UI ÏãúÏä§ÌÖú: Canvas + Text GameObject ÏÉùÏÑ± =====
+    CreateUIObjects();
+}
+
+void TestScene::CreateUIObjects()
+{
+    // Font Î¶¨ÏÜåÏä§ Î°úÎìú
+    auto arialFont = Resources::Get<Font>(L"Arial");
+    auto nanumFont = Resources::Get<Font>(L"NanumGothic");
+
+    // Canvas GameObject ÏÉùÏÑ±
+    auto canvasObj = new GameObject();
+    canvasObj->SetName(L"Canvas");
+    canvasObj->SetApplication(app);
+    auto canvas = canvasObj->AddComponent<Canvas>();
+    canvas->SetScreenSize(app->GetWindowWidth(), app->GetWindowHeight());
+    AddGameObject(canvasObj);
+
+    // ===== Arial Ìè∞Ìä∏Î°ú ÏòÅÎ¨∏ ÌÖçÏä§Ìä∏ =====
+    CreateTextUI(canvasObj, L"TitleText", nanumFont, L"BaseEngine - ÌÖåÏä§Ìä∏Ïã†",
+                 RectTransform::Anchor::TopLeft, {10, 10}, {1, 1, 1, 1}, 1.2f);
+
+    CreateTextUI(canvasObj, L"FPSText", arialFont, L"FPS: 60",
+                 RectTransform::Anchor::TopLeft, {10, 50}, {0, 1, 0, 1}, 0.8f);
+
+    CreateTextUI(canvasObj, L"ControlsTitle", arialFont, L"Controls:",
+                 RectTransform::Anchor::TopLeft, {10, 100}, {1, 1, 0, 1}, 0.9f);
+
+    CreateTextUI(canvasObj, L"WASDText", arialFont, L"WASD - Move",
+                 RectTransform::Anchor::TopLeft, {10, 130}, {0.8f, 0.8f, 0.8f, 1}, 0.7f);
+
+    CreateTextUI(canvasObj, L"ESCText", arialFont, L"ESC - Quit",
+                 RectTransform::Anchor::TopLeft, {10, 155}, {0.8f, 0.8f, 0.8f, 1}, 0.7f);
+}
+
+void TestScene::CreateTextUI(GameObject* parent, const std::wstring& name,
+                             std::shared_ptr<Font> font, const std::wstring& text,
+                             RectTransform::Anchor anchor, const DirectX::XMFLOAT2& position,
+                             const DirectX::XMFLOAT4& color, float scale)
+{
+    auto textObj = new GameObject();
+    textObj->SetName(name);
+    textObj->SetApplication(app);
+    textObj->SetParent(parent);
+
+    auto rectTransform = textObj->AddComponent<RectTransform>();
+    rectTransform->anchor = anchor;
+    rectTransform->anchoredPosition = position;
+
+    auto textComponent = textObj->AddComponent<Text>();
+    textComponent->SetFont(font);
+    textComponent->SetText(text);
+    textComponent->SetColor(color.x, color.y, color.z, color.w);
+    textComponent->SetScale(scale);
+
+    AddGameObject(textObj);
 }

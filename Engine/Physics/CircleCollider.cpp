@@ -2,7 +2,6 @@
 #include "Core/GameObject.h"
 #include "Core/Transform.h"
 #include "Physics/BoxCollider2D.h"
-#include "Graphics/SpriteRenderDevice.h"
 #include "Graphics/DebugRenderer.h"
 #include "Graphics/SpriteRenderer.h"
 #include "Resource/Texture.h"

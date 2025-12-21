@@ -1,48 +1,85 @@
-#include "Resource/Font.h"
+#include "Font.h"
 #include "Core/Application.h"
-#include <filesystem>
+#include <cassert>
 
-bool Font::Load(const std::wstring& path)
+extern Application* g_Application;
+
+bool Font::Load(const std::wstring& fontFilePath)
 {
-    // 파일 존재 확인
-    if (!std::filesystem::exists(path))
-        return false;
-
+    // fontFilePath: "Assets/Fonts/Arial.spritefont" 형식
+    // DirectXTK SpriteFont는 .spritefont 파일 필요
+    // MakeSpriteFont 도구로 .ttf/.otf를 .spritefont로 변환해야 함
+    //
+    // 변환 예시:
+    // MakeSpriteFont "Arial.ttf" Arial.spritefont /FontSize:32 /CharacterRegion:0x0020-0x007E
+    // MakeSpriteFont "NanumGothic.ttf" NanumGothic.spritefont /FontSize:24 /CharacterRegion:0xAC00-0xD7A3
+    
     try
     {
-        // Application에서 Device 획득
-        // 주의: Font 로드 시점에 Application이 초기화되어 있어야 함
-        extern class Application* g_Application;
         if (!g_Application)
+        {
+            assert(!"Application not initialized");
             return false;
+        }
 
         ID3D11Device* device = g_Application->GetDevice();
         if (!device)
+        {
+            assert(!"D3D11 Device not available");
             return false;
+        }
 
-        // SpriteFont 로드
-        spriteFont = std::make_unique<DirectX::SpriteFont>(device, path.c_str());
+        // DirectXTK SpriteFont 로드
+        spriteFont = std::make_unique<DirectX::SpriteFont>(device, fontFilePath.c_str());
         
+        if (!spriteFont)
+        {
+            assert(!"Failed to create SpriteFont");
+            return false;
+        }
+
         return true;
     }
     catch (...)
     {
+        // 파일이 없거나 형식이 잘못된 경우
+        assert(!"Font file load failed - check if .spritefont file exists");
         return false;
     }
 }
 
-float Font::GetLineSpacing() const
+void Font::DrawString(
+    DirectX::SpriteBatch* spriteBatch,
+    const wchar_t* text,
+    const DirectX::XMFLOAT2& position,
+    const DirectX::XMFLOAT4& color,
+    float rotation,
+    const DirectX::XMFLOAT2& origin,
+    float scale,
+    float layerDepth)
 {
-    if (!spriteFont)
-        return 0.0f;
+    if (!spriteFont || !spriteBatch || !text)
+        return;
+
+    DirectX::XMVECTOR colorVec = DirectX::XMLoadFloat4(&color);
     
-    return spriteFont->GetLineSpacing();
+    spriteFont->DrawString(
+        spriteBatch,
+        text,
+        position,
+        colorVec,
+        rotation,
+        origin,
+        scale,
+        DirectX::SpriteEffects_None,
+        layerDepth
+    );
 }
 
 DirectX::XMVECTOR Font::MeasureString(const wchar_t* text) const
 {
-    if (!spriteFont)
+    if (!spriteFont || !text)
         return DirectX::XMVectorZero();
-    
+
     return spriteFont->MeasureString(text);
 }

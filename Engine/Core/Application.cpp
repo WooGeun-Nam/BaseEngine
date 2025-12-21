@@ -33,10 +33,12 @@ bool Application::initialize(HWND window, int width, int height)
     windowWidth = width;
     windowHeight = height;
 
-    // 통합 RenderManager 초기화
+    // 통합 RenderManager 초기화 (화면 크기 포함)
     RenderManager::Instance().Initialize(
         d3dDevice.getDevice(),
-        d3dDevice.getContext()
+        d3dDevice.getContext(),
+        width,
+        height
     );
 
     // DebugRenderer 초기화 (PrimitiveBatch 사용)
@@ -110,7 +112,7 @@ void Application::run()
         // 4) Render - 통합 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
-        // 단일 SpriteBatch로 모든 2D 스프라이트 렌더링
+        // 스프라이트 렌더링 (SpriteBatch)
         RenderManager::Instance().BeginFrame();
         {
             // Layer depth 기반 자동 정렬:
@@ -120,12 +122,10 @@ void Application::run()
         }
         RenderManager::Instance().EndFrame();
 
-        // Debug 선/박스 렌더링 (PrimitiveBatch - 의도적으로 최상위)
-        // 개발 중 디버그 정보를 UI 위에 표시하여 가시성 확보
-        // (Unity, Unreal도 디버그 기즈모를 UI 위에 그림)
-        DebugRenderer::Instance().Begin(windowWidth, windowHeight);
+        // 디버그 렌더링 (PrimitiveBatch - RenderManager가 관리)
+        RenderManager::Instance().BeginDebug();
         sceneManager.DebugRender();
-        DebugRenderer::Instance().End();
+        RenderManager::Instance().EndDebug();
 
         d3dDevice.endFrame();
     }

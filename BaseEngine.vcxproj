@@ -34,10 +34,8 @@
     <ClCompile Include="Engine\Graphics\Camera2D.cpp" />
     <ClCompile Include="Engine\Graphics\D3DDevice.cpp" />
     <ClCompile Include="Engine\Graphics\DebugRenderer.cpp" />
-    <ClCompile Include="Engine\Graphics\RendererBase.cpp" />
     <ClCompile Include="Engine\Graphics\RenderManager.cpp" />
     <ClCompile Include="Engine\Graphics\ShaderManager.cpp" />
-    <ClCompile Include="Engine\Graphics\SpriteRenderDevice.cpp" />
     <ClCompile Include="Engine\Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Engine\Graphics\TextureManager.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
@@ -58,6 +56,7 @@
     <ClCompile Include="Engine\UI\RectTransform.cpp" />
     <ClCompile Include="Engine\UI\Text.cpp" />
     <ClCompile Include="Engine\UI\UIBase.cpp" />
+    <ClCompile Include="Engine\UI\WorldSpaceText.cpp" />
     <ClCompile Include="Game\main.cpp" />
     <ClCompile Include="Game\Scenes\AnimationScene.cpp" />
     <ClCompile Include="Game\Scenes\MyScene.cpp" />
@@ -65,8 +64,6 @@
     <ClCompile Include="Game\Scripts\MovementController.cpp" />
     <ClCompile Include="Game\Scripts\Player.cpp" />
     <ClCompile Include="Tool\AnimationImporter.cpp" />
-    <ClCompile Include="Tool\FontImporter.cpp" />
-    <ClCompile Include="Tool\FontImporterExample.cpp" />
     <ClCompile Include="Tool\SpriteImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -88,10 +85,8 @@
     <ClInclude Include="Engine\Graphics\Camera2D.h" />
     <ClInclude Include="Engine\Graphics\D3DDevice.h" />
     <ClInclude Include="Engine\Graphics\DebugRenderer.h" />
-    <ClInclude Include="Engine\Graphics\RendererBase.h" />
     <ClInclude Include="Engine\Graphics\RenderManager.h" />
     <ClInclude Include="Engine\Graphics\ShaderManager.h" />
-    <ClInclude Include="Engine\Graphics\SpriteRenderDevice.h" />
     <ClInclude Include="Engine\Graphics\SpriteRenderer.h" />
     <ClInclude Include="Engine\Graphics\TextureManager.h" />
     <ClInclude Include="Engine\Input\Input.h" />
@@ -114,6 +109,7 @@
     <ClInclude Include="Engine\UI\RectTransform.h" />
     <ClInclude Include="Engine\UI\Text.h" />
     <ClInclude Include="Engine\UI\UIBase.h" />
+    <ClInclude Include="Engine\UI\WorldSpaceText.h" />
     <ClInclude Include="Game\RegisterScenes.h" />
     <ClInclude Include="Game\Scenes\AnimationScene.h" />
     <ClInclude Include="Game\Scenes\MyScene.h" />
@@ -123,17 +119,10 @@
     <ClInclude Include="Game\Scripts\Player.h" />
     <ClInclude Include="Game\Scripts\SceneController.h" />
     <ClInclude Include="Tool\AnimationImporter.h" />
-    <ClInclude Include="Tool\FontImporter.h" />
     <ClInclude Include="Tool\SpriteImporter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
-    <None Include="Docs\CCD_and_SpatialPartitioning.md" />
-    <None Include="Docs\DevelopmentRoadmap.md" />
-    <None Include="Docs\PhysicsSystem.md" />
-    <None Include="Docs\Rigidbody2D.md" />
-    <None Include="Docs\Text_Component_Guide.md" />
-    <None Include="Docs\UI_System_Guide.md" />
     <None Include="Game\Shaders\Sprite.hlsl">
       <FileType>Document</FileType>
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)\Shaders\</DestinationFolders>

@@ -3,7 +3,7 @@
 #include "Graphics/SpriteRenderer.h"
 #include "Core/Transform.h"
 #include "Input/Input.h"
-#include "Graphics/SpriteRenderDevice.h"
+#include "Graphics/RenderManager.h"
 #include "Graphics/TextureManager.h"
 #include "Scripts/MovementController.h"
 #include "Scripts/Player.h"
@@ -22,9 +22,8 @@
 
 void MyScene::OnEnter()
 {
-    // 씬 전환 후 카메라를 렌더 디바이스에 다시 설정
-    SpriteRenderDevice::Instance().SetCamera(&camera);
-    DebugRenderer::Instance().SetCamera(&camera);
+    // 씬 전환 후 카메라를 RenderManager에 설정 (하위 렌더러들에게 자동 전파)
+    RenderManager::Instance().SetCamera(&camera);
 
     auto sc = new GameObject();
     sc->SetApplication(app);

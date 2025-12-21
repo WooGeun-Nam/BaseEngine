@@ -5,7 +5,6 @@
 #include "Graphics/TextureManager.h"
 #include "Graphics/ShaderManager.h"
 #include "Core/SceneManager.h"
-#include "Graphics/SpriteRenderDevice.h"
 #include "Graphics/DebugRenderer.h"
 
 class Application
