@@ -2,7 +2,7 @@
 
 **DirectX 11 기반의 2D 게임 엔진**
 
-BaseEngine은 C++와 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다. Entity-Component 아키텍처를 기반으로 하며, 물리 시스템, UI, 오디오, 애니메이션 등 게임 개발에 필요한 기능을 제공합니다.
+BaseEngine은 C++와 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다. 물리 시스템, UI, 오디오, 애니메이션 등 게임 개발에 필요한 기능을 제공합니다.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Language](https://img.shields.io/badge/Language-C%2B%2B17-blue)
@@ -40,7 +40,15 @@ BaseEngine은 C++와 DirectX 11을 사용하여 제작된 2D 게임 엔진입니
 - **RectTransform**: 앵커 기반 UI 레이아웃 (9가지 앵커 지원)
 - **Image**: UI 이미지 컴포넌트
 - **Button**: 클릭/호버 이벤트 지원
-- **Text**: TTF/OTF 폰트 런타임 렌더링 (한글 지원)
+- **Text**: 폰트 렌더링 (.spritefont 확장자 사용)
+```
+Tool/MakeSpriteFont.exe 사용 명령어 예시 (# 윈도우에 설치된 패밀리폰트만 변환 가능)
+.\MakeSpriteFont "NanumGothic" NanumGothic.spritefont `
+/FontSize:32 /FontStyle:Regular /FastPack `
+/CharacterRegion:0x20-0x7E `
+/CharacterRegion:0xAC00-0xD7A3 `
+/DefaultCharacter:0x003F
+```
 
 #### Audio System
 - **AudioManager**: XAudio2 기반 오디오 관리
@@ -103,4 +111,4 @@ BaseEngine/
 
 ---
 
-**BaseEngine - 2D 게임 개발을 위한 프레임워크**
+**BaseEngine - 2D 게임 개발 프레임워크**
