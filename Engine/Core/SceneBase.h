@@ -17,12 +17,11 @@ public:
     virtual void Update(float deltaTime);
     virtual void LateUpdate(float deltaTime);
     virtual void Render();
-    virtual void RenderUI();        // UI 렌더링 (Canvas 사용)
     virtual void DebugRender();
 
     const std::vector<GameObject*>& GetGameObjects() const { return gameObjects; }
 
-    // Canvas 설정 (씬에서 Canvas를 생성한 후 호출)
+    // Canvas 설정 (필요시 Canvas를 등록할 때 호출)
     void SetCanvas(Canvas* c) { canvas = c; }
     Canvas* GetCanvas() const { return canvas; }
 
@@ -36,6 +35,6 @@ protected:
     std::vector<GameObject*> gameObjects;
     Canvas* canvas = nullptr;
 
-    // PhysicsSystem은 Scene이 소유하고, 각 프레임 충돌을 관리한다.
+    // PhysicsSystem은 Scene에 종속되고, 각 씬마다 충돌을 관리한다.
     PhysicsSystem physicsSystem;
 };

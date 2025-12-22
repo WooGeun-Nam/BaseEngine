@@ -8,9 +8,9 @@ void Image::Awake()
     UIBase::Awake();
 }
 
-void Image::RenderUI()
+void Image::Render()
 {
-    if (!texture || !rectTransform || !canvas)
+    if (!texture || !rectTransform || !canvas || !isVisible)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
@@ -26,15 +26,15 @@ void Image::RenderUI()
     // 색상 변환
     XMVECTOR colorVec = XMLoadFloat4(&color);
 
-    // RECT 계산 (destination)
+    // RECT 설정 (destination)
     RECT destRect;
     destRect.left = static_cast<LONG>(topLeft.x);
     destRect.top = static_cast<LONG>(topLeft.y);
     destRect.right = static_cast<LONG>(topLeft.x + size.x);
     destRect.bottom = static_cast<LONG>(topLeft.y + size.y);
 
-    // Layer depth 계산 (UI 레이어 내에서 sortOrder 기반)
-    float depth = RenderManager::GetLayerDepth(RenderLayer::UI, sortOrder / 1000.0f);
+    // Layer depth 계산
+    float depth = GetUIDepth();
 
     // 이미지 렌더링
     spriteBatch->Draw(

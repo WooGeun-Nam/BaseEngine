@@ -29,6 +29,9 @@ public:
     void RemoveChild(GameObject* child);
     const std::vector<GameObject*>& GetChildren() const { return children; }
 
+    // Canvas인지 또는 Canvas의 자식인지 확인
+    bool IsCanvasOrChildOfCanvas() const;
+
     // AddComponent 템플릿
     template<typename T>
     T* AddComponent()

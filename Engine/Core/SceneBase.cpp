@@ -49,28 +49,6 @@ void SceneBase::Render()
     }
 }
 
-void SceneBase::RenderUI()
-{
-    // Canvas가 설정되어 있으면 그것을 사용
-    if (canvas)
-    {
-        canvas->RenderUI();
-        return;
-    }
-
-    // 설정되지 않았다면 자동으로 찾기
-    for (auto* obj : gameObjects)
-    {
-        Canvas* canvasComp = obj->GetComponent<Canvas>();
-        if (canvasComp)
-        {
-            canvasComp->RenderUI();
-            // 첫 번째 Canvas만 사용
-            break;
-        }
-    }
-}
-
 void SceneBase::DebugRender()
 {
     for (auto* obj : gameObjects)

@@ -18,18 +18,7 @@ enum class RenderLayer : int
 };
 
 // RenderManager: 모든 렌더링 관리
-// 모든 2D 렌더링(Game, UI, Debug)을 담당
-//
-// 렌더링 순서:
-// 1. SpriteBatch (Game + UI sprites) - RenderManager가 직접 관리
-// 2. Canvas (UI components) - Text, Image, Button 등
-// 3. DebugRenderer - 디버그 렌더링
-//
-// 주요 기능:
-// - SetCamera(): 모든 렌더러에 카메라 자동 설정
-// - BeginFrame/EndFrame(): 스프라이트 렌더링
-// - SetCanvas(): Canvas 설정 (자동 렌더링)
-// - BeginDebug/EndDebug(): 디버그 렌더링
+// Game Objects는 카메라 변환 적용, UI는 Screen Space로 별도 렌더링
 class RenderManager
 {
 public:
@@ -41,12 +30,15 @@ public:
 
     bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, int screenWidth, int screenHeight);
 
-    // 스프라이트 렌더링 사이클
+    // 스프라이트 렌더링 사이클 (Game Objects용, 카메라 적용)
     void BeginFrame();
-    void EndFrame();
+    void EndFrame();  // UI는 EndFrame()에서 자동 렌더링
 
-    // Canvas 설정 (UI 렌더링)
+    // Canvas 설정
     void SetCanvas(Canvas* canvas) { this->canvas = canvas; }
+
+    // Canvas 렌더링 (카메라 변환 없이)
+    void RenderCanvas();
 
     // 디버그 렌더링 사이클
     void BeginDebug();
@@ -66,10 +58,6 @@ public:
     void SetScreenSize(int width, int height);
 
 private:
-    // 내부 함수: Canvas 렌더링
-    void RenderCanvas();
-
-private:
     RenderManager() = default;
 
 private:
@@ -77,7 +65,7 @@ private:
     ID3D11Device* device = nullptr;
     ID3D11DeviceContext* context = nullptr;
     class Camera2D* camera = nullptr;
-    Canvas* canvas = nullptr;           // UI Canvas
+    Canvas* canvas = nullptr;
     
     int screenWidth = 1280;
     int screenHeight = 720;

@@ -17,7 +17,7 @@ void Button::Update(float deltaTime)
 
     bool isInside = IsPointerInside();
     
-    // Application을 통해 Input 접근
+    // Application을 통해 Input 가져오기
     auto* app = gameObject->GetApplication();
     bool isLeftDown = app ? app->GetInput().IsMouseButtonDown(0) : false;
 
@@ -31,7 +31,7 @@ void Button::Update(float deltaTime)
         }
         else
         {
-            // 이전에 Pressed였고 지금 떼었다면 onClick 호출
+            // 이전에 Pressed였고 지금 놓았다면 onClick 호출
             if (prevState == State::Pressed && onClick)
             {
                 onClick();
@@ -66,10 +66,10 @@ void Button::Update(float deltaTime)
     }
 }
 
-void Button::RenderUI()
+void Button::Render()
 {
-    // Image의 렌더링 사용
-    Image::RenderUI();
+    // Image의 렌더링 호출
+    Image::Render();
 }
 
 bool Button::IsPointerInside()
@@ -77,7 +77,7 @@ bool Button::IsPointerInside()
     if (!rectTransform || !canvas)
         return false;
 
-    // Application을 통해 Input 접근
+    // Application을 통해 Input 가져오기
     auto* app = gameObject->GetApplication();
     if (!app)
         return false;
@@ -86,7 +86,7 @@ bool Button::IsPointerInside()
     int mouseX = app->GetInput().GetMouseX();
     int mouseY = app->GetInput().GetMouseY();
 
-    // 화면 좌표 계산
+    // 화면 좌표 변환
     int screenW = canvas->GetScreenWidth();
     int screenH = canvas->GetScreenHeight();
 

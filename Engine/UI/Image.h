@@ -6,7 +6,7 @@
 
 using namespace DirectX;
 
-// Image: UI 이미지 렌더링
+// Image: UI 이미지 컴포넌트
 class Image : public UIBase
 {
 public:
@@ -14,13 +14,15 @@ public:
     ~Image() = default;
 
     void Awake() override;
-    void RenderUI() override;
+
+    // Component::Render() 오버라이드
+    void Render() override;
 
     // 텍스처 설정
     void SetTexture(std::shared_ptr<Texture> tex) { texture = tex; }
     std::shared_ptr<Texture> GetTexture() const { return texture; }
 
-    // 색상 틴팅 (RGBA, 0~1)
+    // 색상 틴트 (RGBA, 0~1)
     void SetColor(XMFLOAT4 col) { color = col; }
     void SetColor(float r, float g, float b, float a = 1.0f) 
     { 

@@ -21,8 +21,7 @@ void RenderManager::BeginFrame()
     if (!spriteBatch)
         return;
 
-    // SpriteSortMode_BackToFront: layer depth 기준 정렬 (뒤에서부터 front)
-    // 카메라 변환 view matrix 적용 (Game 레이어용)
+    // ===== Game Objects용: 카메라 변환 적용 =====
     if (camera)
     {
         XMMATRIX view = camera->GetViewMatrix();
@@ -39,10 +38,11 @@ void RenderManager::EndFrame()
     if (!spriteBatch)
         return;
 
+    // Game 레이어 렌더링 종료
     spriteBatch->End();
 
-    // EndFrame 후 UI 렌더링 (카메라 영향 없이)
-    RenderCanvas();   // Canvas UI 렌더링
+    // ===== UI 렌더링: 카메라 변환 없이 별도 처리 =====
+    RenderCanvas();
 }
 
 void RenderManager::RenderCanvas()
@@ -51,12 +51,10 @@ void RenderManager::RenderCanvas()
         return;
 
     // ===== UI는 카메라 변환 없이 Screen Space로 렌더링 =====
-    // 카메라 view matrix 없이 SpriteBatch 시작
     spriteBatch->Begin(SpriteSortMode_BackToFront);
     
-    // Canvas의 RenderUI() 호출
-    // Canvas는 자식 GameObject의 UIBase Component들을 순회하여 렌더링
-    canvas->RenderUI();
+    // Canvas의 Render() 호출
+    canvas->Render();
     
     spriteBatch->End();
 }

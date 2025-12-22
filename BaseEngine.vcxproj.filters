@@ -228,8 +228,14 @@
     <ClCompile Include="Engine\UI\Text.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\UI\WorldSpaceText.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="Engine\UI\Panel.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\ScrollView.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\Slider.cpp">
+      <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -389,8 +395,17 @@
     <ClInclude Include="Engine\UI\Text.h">
       <Filter>헤더 파일\Engine\UI</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\UI\WorldSpaceText.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="Engine\UI\Panel.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\ScrollView.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\Slider.h">
+      <Filter>헤더 파일\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Scripts\HpControll.h">
+      <Filter>헤더 파일\Game\Scripts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

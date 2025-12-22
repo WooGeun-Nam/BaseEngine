@@ -109,20 +109,15 @@ void Application::run()
 
         input.Update();
 
-        // 4) Render - 통합 렌더링 파이프라인
+        // 4) Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
-        // 스프라이트 렌더링 (SpriteBatch)
+        // ===== Game Objects 렌더링 (카메라 적용) =====
         RenderManager::Instance().BeginFrame();
-        {
-            // Layer depth 기반 자동 정렬:
-            // Background (0.0~0.2) → Game (0.2~0.5) → UI (0.5~0.8)
-            sceneManager.Render();      // Game layer
-            sceneManager.RenderUI();    // UI layer
-        }
-        RenderManager::Instance().EndFrame();
+        sceneManager.Render();  // SpriteRenderer 등 (Canvas 제외)
+        RenderManager::Instance().EndFrame();  // UI는 EndFrame()에서 자동 렌더링
 
-        // 디버그 렌더링 (PrimitiveBatch - RenderManager가 관리)
+        // ===== 디버그 렌더링 (PrimitiveBatch) =====
         RenderManager::Instance().BeginDebug();
         sceneManager.DebugRender();
         RenderManager::Instance().EndDebug();

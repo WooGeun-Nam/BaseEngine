@@ -12,38 +12,30 @@ public:
     {
         TopLeft,      TopCenter,      TopRight,
         MiddleLeft,   Center,         MiddleRight,
-        BottomLeft,   BottomCenter,   BottomRight
+        BottomLeft,   BottomCenter,   BottomRight,
+        World          // 월드 좌표 기반 UI (캐릭터 따라다니기)
     };
 
     RectTransform() = default;
     ~RectTransform() = default;
 
-    // 화면 좌표 계산 (앵커 + 오프셋)
-    XMFLOAT2 GetScreenPosition(int screenWidth, int screenHeight) const;
+    void Awake() override;
 
-    // 피벗 기준 좌상단 위치
-    XMFLOAT2 GetTopLeftPosition(int screenWidth, int screenHeight) const;
-
-    // 크기
+    // 크기 설정
+    void SetSize(float width, float height) { sizeDelta = XMFLOAT2(width, height); }
     XMFLOAT2 GetSize() const { return sizeDelta; }
 
-    // 영역 체크 (마우스 입력용)
-    bool Contains(XMFLOAT2 point, int screenWidth, int screenHeight) const;
+    // 화면 좌표 계산 (픽셀 단위)
+    XMFLOAT2 GetScreenPosition(int screenWidth, int screenHeight) const;
+
+    // 왼쪽 위 좌표 계산
+    XMFLOAT2 GetTopLeftPosition(int screenWidth, int screenHeight) const;
+
+    // 마우스 포인터가 UI 영역 내에 있는지 확인
+    bool Contains(const XMFLOAT2& screenPoint, int screenWidth, int screenHeight) const;
 
 public:
-    // 앵커 위치
     Anchor anchor = Anchor::Center;
-
-    // 앵커로부터의 오프셋
-    XMFLOAT2 anchoredPosition{0, 0};
-
-    // 크기
-    XMFLOAT2 sizeDelta{100, 100};
-
-    // 피벗 (0~1, 중심점)
-    XMFLOAT2 pivot{0.5f, 0.5f};
-
-private:
-    // 앵커 위치 계산
-    XMFLOAT2 GetAnchorPosition(int screenWidth, int screenHeight) const;
+    XMFLOAT2 anchoredPosition{ 0, 0 };  // 앵커 기준 위치
+    XMFLOAT2 sizeDelta{ 100, 100 };     // UI 크기
 };

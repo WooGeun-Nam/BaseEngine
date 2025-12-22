@@ -1,15 +1,16 @@
 #include "Core/GameObject.h"
+#include "UI/Canvas.h"
 
 GameObject::~GameObject()
 {
-    // 자식들 정리 (부모가 삭제되면 자식도 삭제)
+    // 자식들 삭제 (부모 삭제되면 자식들 삭제)
     for (auto* child : children)
     {
         delete child;
     }
     children.clear();
 
-    // 컴포넌트 정리
+    // 컴포넌트 삭제
     for (auto* comp : components)
     {
         comp->OnDestroy();
@@ -28,7 +29,7 @@ void GameObject::SetParent(GameObject* newParent)
 
     parent = newParent;
 
-    // 새 부모에 추가
+    // 새 부모 추가
     if (parent)
     {
         parent->AddChild(this);
@@ -104,8 +105,38 @@ void GameObject::LateUpdate(float deltaTime)
     }
 }
 
+// Canvas GameObject인지 확인하는 헬퍼 함수
+bool GameObject::IsCanvasOrChildOfCanvas() const
+{
+    // 현재 GameObject가 Canvas를 가지고 있는지 확인
+    for (auto* comp : components)
+    {
+        if (dynamic_cast<Canvas*>(comp) != nullptr)
+            return true;
+    }
+    
+    // 부모 중에 Canvas가 있는지 확인
+    GameObject* p = parent;
+    while (p)
+    {
+        for (auto* comp : p->components)
+        {
+            if (dynamic_cast<Canvas*>(comp) != nullptr)
+                return true;
+        }
+        p = p->parent;
+    }
+    
+    return false;
+}
+
 void GameObject::Render()
 {
+    // ===== Canvas GameObject와 그 자식들은 Render에서 제외 =====
+    // UI는 RenderManager::RenderCanvas()에서만 렌더링됨
+    if (IsCanvasOrChildOfCanvas())
+        return;
+    
     for (auto* comp : components)
     {
         if (!comp->IsEnabled()) continue;

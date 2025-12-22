@@ -98,12 +98,6 @@ void SceneManager::Render()
         currentScene->Render();
 }
 
-void SceneManager::RenderUI()
-{
-    if (currentScene)
-        currentScene->RenderUI();
-}
-
 void SceneManager::DebugRender()
 {
     if (currentScene)

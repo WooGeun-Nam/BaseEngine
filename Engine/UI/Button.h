@@ -11,7 +11,9 @@ public:
 
     void Awake() override;
     void Update(float deltaTime) override;
-    void RenderUI() override;
+
+    // Component::Render() 오버라이드
+    void Render() override;
 
     // 이벤트 핸들러
     std::function<void()> onClick;

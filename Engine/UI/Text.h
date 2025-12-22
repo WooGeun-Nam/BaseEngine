@@ -7,7 +7,7 @@
 
 using namespace DirectX;
 
-// TextLabel: DirectXTK SpriteFont 기반 UI 텍스트 컴포넌트
+// Text: DirectXTK SpriteFont 기반 UI 텍스트 컴포넌트
 // 
 // 사용 방법:
 // 1. Canvas 생성
@@ -36,8 +36,8 @@ public:
     Text() = default;
     ~Text() = default;
 
-    // UI 렌더링
-    void RenderUI() override;
+    // Component::Render() 오버라이드
+    void Render() override;
 
     // 폰트 설정
     void SetFont(std::shared_ptr<Font> font) { this->font = font; }
