@@ -10,89 +10,62 @@ void Button::Awake()
     color = normalColor;
 }
 
-void Button::Update(float deltaTime)
+// ? Update 제거 - UIBase에서 이벤트 처리
+
+// ? UIBase 이벤트 핸들러 오버라이드
+void Button::OnPointerEnter()
 {
-    if (!IsVisible())
-        return;
-
-    bool isInside = IsPointerInside();
+    // Hover 상태로 전환
+    currentState = State::Hover;
+    color = hoverColor;
     
-    // Application을 통해 Input 가져오기
-    auto* app = gameObject->GetApplication();
-    bool isLeftDown = app ? app->GetInput().IsMouseButtonDown(0) : false;
-
-    State prevState = currentState;
-
-    if (isInside)
+    // onHover 콜백
+    if (onHover)
     {
-        if (isLeftDown)
-        {
-            currentState = State::Pressed;
-        }
-        else
-        {
-            // 이전에 Pressed였고 지금 놓았다면 onClick 호출
-            if (prevState == State::Pressed && onClick)
-            {
-                onClick();
-            }
+        onHover();
+    }
+}
 
-            currentState = State::Hover;
+void Button::OnPointerExit()
+{
+    // Normal 상태로 전환
+    currentState = State::Normal;
+    color = normalColor;
+}
 
-            // Hover 이벤트
-            if (prevState != State::Hover && onHover)
-            {
-                onHover();
-            }
-        }
+void Button::OnPointerDown()
+{
+    // Pressed 상태로 전환
+    currentState = State::Pressed;
+    color = pressedColor;
+}
+
+void Button::OnPointerUp()
+{
+    // Hover 상태로 전환 (마우스가 아직 버튼 위에 있음)
+    if (IsPointerInside())
+    {
+        currentState = State::Hover;
+        color = hoverColor;
     }
     else
     {
         currentState = State::Normal;
-    }
-
-    // 상태에 따라 색상 변경
-    switch (currentState)
-    {
-    case State::Normal:
         color = normalColor;
-        break;
-    case State::Hover:
-        color = hoverColor;
-        break;
-    case State::Pressed:
-        color = pressedColor;
-        break;
     }
 }
 
-void Button::Render()
+void Button::OnClick()
+{
+    // onClick 콜백
+    if (onClick)
+    {
+        onClick();
+    }
+}
+
+void Button::RenderUI()
 {
     // Image의 렌더링 호출
     Image::Render();
-}
-
-bool Button::IsPointerInside()
-{
-    if (!rectTransform || !canvas)
-        return false;
-
-    // Application을 통해 Input 가져오기
-    auto* app = gameObject->GetApplication();
-    if (!app)
-        return false;
-
-    // 마우스 위치 가져오기
-    int mouseX = app->GetInput().GetMouseX();
-    int mouseY = app->GetInput().GetMouseY();
-
-    // 화면 좌표 변환
-    int screenW = canvas->GetScreenWidth();
-    int screenH = canvas->GetScreenHeight();
-
-    return rectTransform->Contains(
-        XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY)),
-        screenW,
-        screenH
-    );
 }

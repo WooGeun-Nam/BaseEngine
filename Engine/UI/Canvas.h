@@ -1,61 +1,59 @@
-#pragma once
+ï»¿#pragma once
 #include "Core/Component.h"
+#include <DirectXMath.h>
+#include <vector>
+
+using namespace DirectX;
+
+class GameObject;
 
 // Canvas Render Mode
 enum class CanvasRenderMode
 {
-    ScreenSpaceOverlay,  // È­¸é °íÁ¤ (HUD, ÀÎº¥Åä¸® µî)
-    WorldSpace           // °ÔÀÓ ¿ÀºêÁ§Æ®Ã³·³ µ¿ÀÛ (Ã¼·Â¹Ù, ÀÌ¸§Ç¥ µî)
+    ScreenSpaceOverlay,  // í™”ë©´ ê³ ì • (HUD, ì¸ë²¤í† ë¦¬ ë“±)
+    WorldSpace           // ì›”ë“œ ì˜¤ë¸Œì íŠ¸ì²˜ëŸ¼ ë°°ì¹˜ (ì²´ë ¥ë°”, ì´ë¦„í‘œ ë“±)
 };
 
-// Canvas: UI ·»´õ¸µ ·çÆ® ÄÁÅ×ÀÌ³Ê
-// Canvas GameObjectÀÇ ÀÚ½Äµé¸¸ UI·Î ·»´õ¸µµÊ (Unity ¹æ½Ä)
+// Canvas: UI ë Œë”ë§ ê´€ë¦¬ì
+// - UpdateëŠ” Sceneì´ ê´€ë¦¬ (ëª¨ë“  GameObject)
+// - CanvasëŠ” ë Œë”ë§ë§Œ ê´€ë¦¬ (uiObjects ë°°ì—´)
 class Canvas : public Component
 {
 public:
-    Canvas()
-    {
-        SetName(L"Canvas");
-    };
+    Canvas() = default;
     ~Canvas() = default;
 
     void Awake() override;
-
-    // Component::Render() ¿À¹ö¶óÀÌµå - ¸ğµç UI ·»´õ¸µ
-    void Render() override;
-
-    // È­¸é Å©±â (UI ÁÂÇ¥ °è»ê¿ë)
-    void SetScreenSize(int width, int height) 
-    { 
-        screenWidth = width;
-        screenHeight = height; 
-    }
     
+    // âœ… CanvasëŠ” ë Œë”ë§ë§Œ ê´€ë¦¬, UpdateëŠ” Sceneì´ ì²˜ë¦¬
+    void Render() override {}
+
+    // í™”ë©´ í¬ê¸° ì„¤ì •
+    void SetScreenSize(int width, int height)
+    {
+        screenWidth = width;
+        screenHeight = height;
+    }
+
     int GetScreenWidth() const { return screenWidth; }
     int GetScreenHeight() const { return screenHeight; }
 
-    // Render Mode ¼³Á¤
-    void SetRenderMode(CanvasRenderMode mode) { renderMode = mode; }
-    CanvasRenderMode GetRenderMode() const { return renderMode; }
-
-    // World Space À§Ä¡ ¿ÀÇÁ¼Â (RenderMode == WorldSpaceÀÏ ¶§¸¸ »ç¿ë)
-    void SetWorldOffset(float x, float y) { worldOffsetX = x; worldOffsetY = y; }
-    float GetWorldOffsetX() const { return worldOffsetX; }
-    float GetWorldOffsetY() const { return worldOffsetY; }
-
-    // GameObject Á¢±Ù (World Space ¸ğµå¿ë)
-    class GameObject* GetGameObject() const { return gameObject; }
+    // âœ… UI GameObject ê´€ë¦¬ (ë Œë”ë§ìš©)
+    void AddUIObject(GameObject* obj);
+    void RemoveUIObject(GameObject* obj);
+    const std::vector<GameObject*>& GetUIObjects() const { return uiObjects; }
 
 private:
-    // Àç±ÍÀûÀ¸·Î ÀÚ½Ä GameObjectÀÇ UI Component ·»´õ¸µ (ÄÄÆ÷ÁöÆ® ÆĞÅÏ)
-    void RenderRecursive(class GameObject* obj, int hierarchyDepth, int siblingIndex);
+    // âœ… ë¶€ëª¨-ìì‹ ìˆœì„œë¥¼ ìœ ì§€í•˜ë©° ì‚½ì…í•  ìœ„ì¹˜ ì°¾ê¸°
+    size_t FindInsertPosition(GameObject* obj);
+    
+    // âœ… íŠ¹ì • GameObjectì˜ ìì†ì¸ì§€ í™•ì¸
+    bool IsDescendantOf(GameObject* obj, GameObject* ancestor);
 
 private:
     int screenWidth = 1280;
     int screenHeight = 720;
-    CanvasRenderMode renderMode = CanvasRenderMode::ScreenSpaceOverlay;
     
-    // World Space ¿ÀÇÁ¼Â (¿ÀºêÁ§Æ® À§Ä¡ ±âÁØ »ó´ë ÁÂÇ¥)
-    float worldOffsetX = 0.0f;
-    float worldOffsetY = 0.0f;
+    // âœ… Canvasì˜ ëª¨ë“  UI GameObject (ê³„ì¸µ ìˆœì„œ ë³´ì¥, ë Œë”ë§ìš©)
+    std::vector<GameObject*> uiObjects;
 };

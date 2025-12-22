@@ -8,9 +8,9 @@ void Image::Awake()
     UIBase::Awake();
 }
 
-void Image::Render()
+void Image::RenderUI()
 {
-    if (!texture || !rectTransform || !canvas || !isVisible)
+    if (!texture || !rectTransform || !canvas || !IsEnabled())  // ? IsEnabled() 사용
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
@@ -26,7 +26,7 @@ void Image::Render()
     // 색상 변환
     XMVECTOR colorVec = XMLoadFloat4(&color);
 
-    // RECT 설정 (destination)
+    // RECT 생성 (destination)
     RECT destRect;
     destRect.left = static_cast<LONG>(topLeft.x);
     destRect.top = static_cast<LONG>(topLeft.y);

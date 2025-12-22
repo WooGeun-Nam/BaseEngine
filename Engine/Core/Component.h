@@ -12,12 +12,15 @@ public:
 
     void SetOwner(GameObject* owner) { gameObject = owner; }
     void SetApplication(Application* app) { application = app; }
+    
+    GameObject* GetGameObject() const { return gameObject; }
 
     virtual void Awake() {}  // AddComponent 직후 호출 (초기화)
     virtual void FixedUpdate(float fixedDelta) {}
     virtual void Update(float delta) {}
     virtual void LateUpdate(float delta) {}
     virtual void Render() {}
+    virtual void RenderUI() {}
 
 	// 활성화
     void SetEnabled(bool enable)
@@ -33,17 +36,17 @@ public:
 
     virtual void DebugDraw() {}
     
-    // OnCollision: 물리 연산 O, 관통 X, 실제 충돌 처리 (Rigidbody 추가 시 반발력 적용)
+    // OnCollision: 물리 효과 O, 이벤트 X, 충돌 처리 (Rigidbody 필요 시 반발력 적용)
     virtual void OnCollisionEnter(BaseCollider* other) {}
     virtual void OnCollisionStay(BaseCollider* other) {}
     virtual void OnCollisionExit(BaseCollider* other) {}
 
-    // OnTrigger: 물리 연산 X, 관통 O, 가벼운 감지만 (이벤트 발생용, 성능 효율적)
+    // OnTrigger: 물리 효과 X, 이벤트 O, 센서로 작동 (이벤트 발생용, 아이템 획득)
     virtual void OnTriggerEnter(BaseCollider* other) {}
     virtual void OnTriggerStay(BaseCollider* other) {}
     virtual void OnTriggerExit(BaseCollider* other) {}
     
-    virtual void OnDestroy() {}  // Component 삭제 전 호출 (정리)
+    virtual void OnDestroy() {}  // Component 삭제 시 호출 (정리)
 
 protected:
     // 컴포넌트 활성화/비활성화 이벤트

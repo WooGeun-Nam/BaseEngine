@@ -6,10 +6,10 @@
 #include "Graphics/RenderManager.h"
 #include <SpriteBatch.h>
 
-void Panel::Render()
+void Panel::RenderUI()
 {
-    // 보이지 않으면 렌더링 안 함
-    if (!isVisible || !rectTransform || !canvas)
+    // 보이지 않거나 필수 요소가 없으면 렌더링 안 함
+    if (!IsEnabled() || !rectTransform || !canvas)  // ? IsEnabled() 사용
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
@@ -29,7 +29,7 @@ void Panel::Render()
 
     DirectX::XMVECTOR colorVec = DirectX::XMLoadFloat4(&color);
 
-    // RECT 설정
+    // RECT 생성
     RECT destRect;
     destRect.left = (LONG)topLeft.x;
     destRect.top = (LONG)topLeft.y;
@@ -39,7 +39,7 @@ void Panel::Render()
     // 텍스처가 있으면 이미지 렌더링, 없으면 UI_Base.png 사용
     if (texture)
     {
-        // 사용자 지정 이미지 배경
+        // 사용자 정의 이미지 사용
         spriteBatch->Draw(
             texture->GetSRV(),
             destRect,
@@ -53,7 +53,7 @@ void Panel::Render()
     }
     else
     {
-        // 단색 배경: UI_Base.png (1x1 흰색 픽셀) 사용
+        // 단색 패널: UI_Base.png (1x1 흰색 픽셀) 사용
         auto baseTexture = Resources::Get<Texture>(L"UI_Base");
         if (baseTexture)
         {

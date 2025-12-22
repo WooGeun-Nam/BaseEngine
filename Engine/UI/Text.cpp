@@ -5,9 +5,9 @@
 #include "Graphics/RenderManager.h"
 #include <SpriteBatch.h>
 
-void Text::Render()
+void Text::RenderUI()
 {
-    if (!font || text.empty() || !isVisible)
+    if (!font || text.empty() || !IsEnabled())  // ? IsEnabled() »ç¿ë
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();

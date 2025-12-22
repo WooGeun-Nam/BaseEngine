@@ -37,7 +37,7 @@ public:
     ~Text() = default;
 
     // Component::Render() 오버라이드
-    void Render() override;
+    void RenderUI() override;
 
     // 폰트 설정
     void SetFont(std::shared_ptr<Font> font) { this->font = font; }

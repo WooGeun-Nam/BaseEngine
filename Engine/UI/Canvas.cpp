@@ -1,55 +1,80 @@
-#include "UI/Canvas.h"
-#include "UI/UIBase.h"
+ï»¿#include "UI/Canvas.h"
 #include "Core/GameObject.h"
-#include "Graphics/RenderManager.h"
+#include <algorithm>
 
 void Canvas::Awake()
 {
-    // ÃÊ±âÈ­ ·ÎÁ÷ (ÇÊ¿ä½Ã È­¸é Å©±â ¼³Á¤ µî)
+    // Canvas ì´ˆê¸°í™”
 }
 
-void Canvas::Render()
-{
-    if (!gameObject)
-        return;
-
-    // ===== ÄÄÆ÷ÁöÆ® ÆĞÅÏ: Àç±ÍÀûÀ¸·Î ¸ğµç ÀÚ½Ä ·»´õ¸µ =====
-    // Canvas Á÷¼Ó ÀÚ½ÄºÎÅÍ ½ÃÀÛ (hierarchyDepth = 0)
-    RenderRecursive(gameObject, 0, 0);
-}
-
-void Canvas::RenderRecursive(GameObject* obj, int hierarchyDepth, int siblingIndex)
+// UI GameObject ì¶”ê°€ (ê³„ì¸µ ìˆœì„œ ìœ ì§€, ë Œë”ë§ìš©)
+void Canvas::AddUIObject(GameObject* obj)
 {
     if (!obj)
         return;
+    
+    // ì¤‘ë³µ ë°©ì§€
+    auto it = std::find(uiObjects.begin(), uiObjects.end(), obj);
+    if (it != uiObjects.end())
+        return;
+    
+    // ë¶€ëª¨ ë°”ë¡œ ë‹¤ìŒ ìœ„ì¹˜ì— ì‚½ì…
+    size_t insertPos = FindInsertPosition(obj);
+    uiObjects.insert(uiObjects.begin() + insertPos, obj);
+}
 
-    // 1. ÇöÀç GameObjectÀÇ ¸ğµç UIBase Component¿¡ °èÃş Á¤º¸ ¼³Á¤ ¹× ·»´õ¸µ
-    const auto& components = obj->GetComponents();
-    for (auto* comp : components)
+// UI GameObject ì œê±°
+void Canvas::RemoveUIObject(GameObject* obj)
+{
+    auto it = std::find(uiObjects.begin(), uiObjects.end(), obj);
+    if (it != uiObjects.end())
     {
-        // Canvas ÀÚ½ÅÀº Á¦¿Ü (¹«ÇÑ Àç±Í ¹æÁö)
-        if (comp == this)
-            continue;
+        uiObjects.erase(it);
+    }
+}
 
-        // UIBase·Î Ä³½ºÆÃ ½Ãµµ
-        UIBase* uiBase = dynamic_cast<UIBase*>(comp);
-        if (uiBase && uiBase->IsVisible() && uiBase->IsEnabled())
+// ì‚½ì… ìœ„ì¹˜ ì°¾ê¸°: ë¶€ëª¨ì˜ ë°”ë¡œ ë‹¤ìŒ
+size_t Canvas::FindInsertPosition(GameObject* obj)
+{
+    GameObject* parent = obj->GetParent();
+    
+    // ë¶€ëª¨ê°€ ì—†ìœ¼ë©´ ë§¨ ë’¤ì— ì¶”ê°€
+    if (!parent)
+        return uiObjects.size();
+    
+    // ë¶€ëª¨ê°€ Canvas GameObjectë©´ ë§¨ ì•ì— ì¶”ê°€
+    if (parent == gameObject)
+        return 0;
+    
+    // ë¶€ëª¨ë¥¼ ì°¾ì•„ì„œ ê·¸ ë‹¤ìŒ ìœ„ì¹˜ì— ì‚½ì…
+    for (size_t i = 0; i < uiObjects.size(); ++i)
+    {
+        if (uiObjects[i] == parent)
         {
-            // °èÃş Á¤º¸ ¼³Á¤
-            uiBase->SetHierarchyInfo(hierarchyDepth, siblingIndex);
-            
-            // ·»´õ¸µ
-            uiBase->Render();
+            // ë¶€ëª¨ì˜ ëª¨ë“  ìì‹ë“¤ ë’¤ì— ì¶”ê°€
+            size_t pos = i + 1;
+            while (pos < uiObjects.size() && 
+                   IsDescendantOf(uiObjects[pos], parent))
+            {
+                pos++;
+            }
+            return pos;
         }
     }
+    
+    // ë¶€ëª¨ë¥¼ ëª» ì°¾ìœ¼ë©´ ë§¨ ë’¤ì—
+    return uiObjects.size();
+}
 
-    // 2. Àç±ÍÀûÀ¸·Î ¸ğµç ÀÚ½Ä GameObject ·»´õ¸µ
-    // ÀÚ½ÄÀº hierarchyDepth + 1, ÇüÁ¦ ¼ø¼­´Â 0ºÎÅÍ ½ÃÀÛ
-    const auto& children = obj->GetChildren();
-    int childSiblingIndex = 0;
-    for (auto* child : children)
+// íŠ¹ì • GameObjectì˜ ìì†ì¸ì§€ í™•ì¸
+bool Canvas::IsDescendantOf(GameObject* obj, GameObject* ancestor)
+{
+    GameObject* parent = obj->GetParent();
+    while (parent)
     {
-        RenderRecursive(child, hierarchyDepth + 1, childSiblingIndex);
-        childSiblingIndex++;
+        if (parent == ancestor)
+            return true;
+        parent = parent->GetParent();
     }
+    return false;
 }

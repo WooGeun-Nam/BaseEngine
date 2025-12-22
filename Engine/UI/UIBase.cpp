@@ -1,18 +1,19 @@
-#include "UI/UIBase.h"
+ï»¿#include "UI/UIBase.h"
 #include "UI/Canvas.h"
 #include "Core/GameObject.h"
+#include "Core/Application.h"
 #include "Graphics/RenderManager.h"
 
 void UIBase::Awake()
 {
-    // RectTransform ÄÄÆ÷³ÍÆ® (ÀÚµ¿À¸·Î Ãß°¡)
+    // RectTransform ì»´í¬ë„ŒíŠ¸ (ìë™ìœ¼ë¡œ ì¶”ê°€)
     rectTransform = gameObject->GetComponent<RectTransform>();
     if (!rectTransform)
     {
         rectTransform = gameObject->AddComponent<RectTransform>();
     }
 
-    // ºÎ¸ğ Canvas Ã£±â
+    // ë¶€ëª¨ Canvas ì°¾ê¸°
     GameObject* parent = gameObject->GetParent();
     while (parent)
     {
@@ -26,45 +27,165 @@ void UIBase::Awake()
     }
 }
 
-void UIBase::Render()
+// UIBaseì—ì„œ ê³µí†µ ì´ë²¤íŠ¸ ì²˜ë¦¬
+void UIBase::Update(float deltaTime)
 {
-    // ±âº» UIBase´Â ¾Æ¹«°Íµµ ·»´õ¸µÇÏÁö ¾ÊÀ½
-    // ÀÚ½Ä Å¬·¡½º(Text, Image µî)¿¡¼­ ¿À¹ö¶óÀÌµå
+    if (!IsEnabled())
+        return;
+
+    auto* app = gameObject->GetApplication();
+    if (!app)
+        return;
+
+    bool isPointerInside = IsPointerInside();
+    bool isLeftDown = app->GetInput().IsMouseButtonDown(0);
+    DirectX::XMFLOAT2 currentMousePos = GetMousePosition();
+
+    // 1. Pointer Enter/Exit
+    if (isPointerInside && !wasPointerInside)
+    {
+        OnPointerEnter();
+    }
+    else if (!isPointerInside && wasPointerInside)
+    {
+        OnPointerExit();
+    }
+
+    // 2. Pointer Down
+    if (isPointerInside && isLeftDown && !isPointerDown)
+    {
+        isPointerDown = true;
+        dragStartPos = currentMousePos;
+        lastMousePos = currentMousePos;
+        OnPointerDown();
+    }
+
+    // 3. Drag Start / Dragging
+    if (isPointerDown && isLeftDown)
+    {
+        float deltaX = currentMousePos.x - dragStartPos.x;
+        float deltaY = currentMousePos.y - dragStartPos.y;
+        float dragThreshold = 5.0f;  // 5í”½ì…€ ì´ìƒ ì´ë™ ì‹œ ë“œë˜ê·¸
+
+        if (!isDragging && (abs(deltaX) > dragThreshold || abs(deltaY) > dragThreshold))
+        {
+            isDragging = true;
+            OnDragStart();
+        }
+
+        if (isDragging)
+        {
+            DirectX::XMFLOAT2 delta;
+            delta.x = currentMousePos.x - lastMousePos.x;
+            delta.y = currentMousePos.y - lastMousePos.y;
+            OnDrag(delta);
+        }
+    }
+
+    // 4. Pointer Up / Click / Drag End
+    if (isPointerDown && !isLeftDown)
+    {
+        if (isDragging)
+        {
+            OnDragEnd();
+            isDragging = false;
+        }
+        else if (isPointerInside)
+        {
+            // ë“œë˜ê·¸ ì—†ì´ Up â†’ Click
+            OnClick();
+        }
+
+        OnPointerUp();
+        isPointerDown = false;
+    }
+
+    wasPointerInside = isPointerInside;
+    lastMousePos = currentMousePos;
 }
 
-void UIBase::SetHierarchyInfo(int depth, int siblingIdx)
+// ë§ˆìš°ìŠ¤ê°€ UI ë‚´ë¶€ì— ìˆëŠ”ì§€ í™•ì¸
+bool UIBase::IsPointerInside()
 {
-    hierarchyDepth = depth;
-    siblingIndex = siblingIdx;
+    if (!rectTransform || !canvas)
+        return false;
+
+    auto* app = gameObject->GetApplication();
+    if (!app)
+        return false;
+
+    DirectX::XMFLOAT2 mousePos = GetMousePosition();
+    int screenW = canvas->GetScreenWidth();
+    int screenH = canvas->GetScreenHeight();
+
+    return rectTransform->Contains(mousePos, screenW, screenH);
 }
 
-float UIBase::CalculateRenderDepth() const
+// í˜„ì¬ ë§ˆìš°ìŠ¤ ìœ„ì¹˜ ê°€ì ¸ì˜¤ê¸°
+DirectX::XMFLOAT2 UIBase::GetMousePosition()
 {
-    // UI Layer ±âº» ¹üÀ§: 0.5 ~ 0.8 (0.3 ¹üÀ§)
-    float baseDepth = 0.5f;
+    auto* app = gameObject->GetApplication();
+    if (!app)
+        return {0, 0};
+
+    int mouseX = app->GetInput().GetMouseX();
+    int mouseY = app->GetInput().GetMouseY();
+
+    return DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY));
+}
+
+int UIBase::CalculateHierarchyDepth() const
+{
+    int depth = 0;
+    GameObject* parent = gameObject->GetParent();
     
-    // °èÃş´ç 0.01¾¿ °¨¼Ò (ÀÚ½ÄÀÌ ´õ ÀÛÀ½ = ¾Õ¿¡ ±×·ÁÁü)
-    // depth 0 (Canvas Á÷¼Ó): 0.50
-    // depth 1 (1´Ü°è ÀÚ½Ä): 0.49
-    // depth 2 (2´Ü°è ÀÚ½Ä): 0.48
-    float hierarchyOffset = hierarchyDepth * 0.01f;
+    // Canvasê¹Œì§€ë§Œ ê³„ì‚°
+    while (parent)
+    {
+        // Canvasë¥¼ ë§Œë‚˜ë©´ ì¤‘ë‹¨
+        if (parent->GetComponent<Canvas>() != nullptr)
+            break;
+        
+        depth++;
+        parent = parent->GetParent();
+    }
     
-    // ÇüÁ¦ °£ 0.001¾¿ Áõ°¡ (³ªÁß Ãß°¡°¡ ´õ ÀÛÀ½ = ¾Õ¿¡ ±×·ÁÁü)
-    // sibling 0 (Ã¹Â°): 0.000
-    // sibling 1 (µÑÂ°): 0.001
-    // sibling 2 (¼ÂÂ°): 0.002
-    float siblingOffset = siblingIndex * 0.001f;
+    return depth;
+}
+
+int UIBase::CalculateSiblingIndex() const
+{
+    GameObject* parent = gameObject->GetParent();
+    if (!parent)
+        return 0;
     
-    // sortOrder ¹İ¿µ (¼öµ¿ Á¶Á¤, 0.0001 ´ÜÀ§)
-    float sortOffset = sortOrder * 0.0001f;
+    // ë¶€ëª¨ì˜ ìì‹ ëª©ë¡ì—ì„œ ìì‹ ì˜ ì¸ë±ìŠ¤ ì°¾ê¸°
+    const auto& siblings = parent->GetChildren();
+    for (size_t i = 0; i < siblings.size(); ++i)
+    {
+        if (siblings[i] == gameObject)
+            return static_cast<int>(i);
+    }
     
-    // ÃÖÁ¾ depth (ÀÛÀ»¼ö·Ï ¾Õ¿¡, BackToFront ¸ğµå)
-    // ³ªÁß ÇüÁ¦ÀÏ¼ö·Ï ÀÛ¾ÆÁü ¡æ ¾Õ¿¡ ±×·ÁÁü
-    return baseDepth - hierarchyOffset - siblingOffset - sortOffset;
+    return 0;
 }
 
 float UIBase::GetUIDepth() const
 {
-    // °èÃş ±â¹İ depth °è»ê »ç¿ë
-    return CalculateRenderDepth();
+    // UI Layer ê¸°ë³¸ ë²”ìœ„: 0.5 ~ 0.8
+    float baseDepth = 0.5f;
+    
+    // 1. ê³„ì¸µ ê¹Šì´ ìë™ ê³„ì‚° (0.01 ë‹¨ìœ„)
+    int hierarchyDepth = CalculateHierarchyDepth();
+    float hierarchyOffset = hierarchyDepth * 0.01f;
+    
+    // 2. í˜•ì œ ìˆœì„œ ìë™ ê³„ì‚° (0.001 ë‹¨ìœ„)
+    int siblingIndex = CalculateSiblingIndex();
+    float siblingOffset = siblingIndex * 0.001f;
+    
+    // 3. sortOrder ë°˜ì˜ (ìˆ˜ë™ ì„¤ì •, 0.0001 ë‹¨ìœ„)
+    float sortOffset = sortOrder * 0.0001f;
+    
+    // ìµœì¢… depth (ì‘ì„ìˆ˜ë¡ ì•ì—, BackToFront ëª¨ë“œ)
+    return baseDepth - hierarchyOffset - siblingOffset - sortOffset;
 }

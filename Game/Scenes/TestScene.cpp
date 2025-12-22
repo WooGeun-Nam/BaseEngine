@@ -85,6 +85,7 @@ void TestScene::CreateUIObjects()
     panelObj->SetName(L"InventoryPanel");
     panelObj->SetApplication(app);
     panelObj->SetParent(canvasObj);
+    AddGameObject(panelObj);  // ✅ Scene에 추가
 
     auto panelRect = panelObj->AddComponent<RectTransform>();
     panelRect->anchor = RectTransform::Anchor::MiddleRight;
@@ -99,6 +100,7 @@ void TestScene::CreateUIObjects()
     sliderObj->SetName(L"VolumeSlider");
     sliderObj->SetApplication(app);
     sliderObj->SetParent(canvasObj);
+    AddGameObject(sliderObj);  // ✅ Scene에 추가
 
     auto sliderRect = sliderObj->AddComponent<RectTransform>();
     sliderRect->anchor = RectTransform::Anchor::TopLeft;
@@ -114,6 +116,8 @@ void TestScene::CreateUIObjects()
     // Slider 라벨
     auto sliderLabelObj = new GameObject();
     sliderLabelObj->SetParent(sliderObj);
+    AddGameObject(sliderLabelObj);  // ✅ Scene에 추가
+    
     auto sliderLabelRect = sliderLabelObj->AddComponent<RectTransform>();
     sliderLabelRect->anchor = RectTransform::Anchor::TopLeft;
     sliderLabelRect->anchoredPosition = { 50, 230 };
@@ -134,6 +138,7 @@ void TestScene::CreateUIObjects()
     scrollViewObj->SetName(L"ChatScrollView");
     scrollViewObj->SetApplication(app);
     scrollViewObj->SetParent(canvasObj);
+    AddGameObject(scrollViewObj);  // ✅ Scene에 추가
 
     auto scrollRect = scrollViewObj->AddComponent<RectTransform>();
     scrollRect->anchor = RectTransform::Anchor::BottomLeft;
@@ -153,6 +158,7 @@ void TestScene::CreateUIObjects()
     auto hpBarObj = new GameObject();
     hpBarObj->SetName(L"HealthBar");
     hpBarObj->SetParent(canvasObj);
+    AddGameObject(hpBarObj);  // ✅ Scene에 추가
 
     auto hpRect = hpBarObj->AddComponent<RectTransform>();
     hpRect->anchor = RectTransform::Anchor::World;
@@ -188,7 +194,10 @@ void TestScene::CreateTextUI(GameObject* parent, const std::wstring& name,
     auto textObj = new GameObject();
     textObj->SetName(name);
     textObj->SetApplication(app);
-    textObj->SetParent(parent);
+    textObj->SetParent(parent);  // Canvas에 렌더링 등록
+    
+    // ✅ Scene에 추가 (Update 받기 위해)
+    AddGameObject(textObj);
 
     auto rectTransform = textObj->AddComponent<RectTransform>();
     rectTransform->anchor = anchor;

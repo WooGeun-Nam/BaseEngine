@@ -1,7 +1,28 @@
-#include "Graphics/RenderManager.h"
+ï»¿#include "Graphics/RenderManager.h"
 #include "Graphics/Camera2D.h"
 #include "Graphics/DebugRenderer.h"
+#include "Core/GameObject.h"
 #include "UI/Canvas.h"
+#include <SimpleMath.h>
+
+RenderManager& RenderManager::Instance()
+{
+    static RenderManager instance;
+    return instance;
+}
+
+void RenderManager::SetCamera(Camera2D* cam)
+{
+    camera = cam;
+    
+    // DebugRendererì—ë„ ì¹´ë©”ë¼ ì„¤ì •
+    DebugRenderer::Instance().SetCamera(cam);
+}
+
+void RenderManager::SetCanvas(Canvas* c)
+{
+    canvas = c;
+}
 
 bool RenderManager::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, int screenWidth, int screenHeight)
 {
@@ -10,8 +31,11 @@ bool RenderManager::Initialize(ID3D11Device* device, ID3D11DeviceContext* contex
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
     
-    // ½Ì±ÛÅæ SpriteBatch »ı¼º
+    // SpriteBatch ìƒì„±
     spriteBatch = std::make_unique<SpriteBatch>(context);
+    
+    // DebugRenderer ì´ˆê¸°í™”
+    DebugRenderer::Instance().Initialize(device, context);
     
     return true;
 }
@@ -21,11 +45,12 @@ void RenderManager::BeginFrame()
     if (!spriteBatch)
         return;
 
-    // ===== Game Objects¿ë: Ä«¸Ş¶ó º¯È¯ Àû¿ë =====
+    // ì¹´ë©”ë¼ view í–‰ë ¬ ì ìš©
     if (camera)
     {
         XMMATRIX view = camera->GetViewMatrix();
-        spriteBatch->Begin(SpriteSortMode_BackToFront, nullptr, nullptr, nullptr, nullptr, nullptr, view);
+        spriteBatch->Begin(SpriteSortMode_BackToFront, nullptr, nullptr,
+                          nullptr, nullptr, nullptr, view);
     }
     else
     {
@@ -38,45 +63,40 @@ void RenderManager::EndFrame()
     if (!spriteBatch)
         return;
 
-    // Game ·¹ÀÌ¾î ·»´õ¸µ Á¾·á
     spriteBatch->End();
 
-    // ===== UI ·»´õ¸µ: Ä«¸Ş¶ó º¯È¯ ¾øÀÌ º°µµ Ã³¸® =====
-    RenderCanvas();
+    // UI ìë™ ë Œë”ë§ (ì¹´ë©”ë¼ ì—†ìŒ)
+    RenderUI();
 }
 
-void RenderManager::RenderCanvas()
+// Canvasê°€ ê´€ë¦¬í•˜ëŠ” UI GameObjectë§Œ ìˆœíšŒ
+void RenderManager::RenderUI()
 {
     if (!canvas || !spriteBatch)
         return;
 
-    // ===== UI´Â Ä«¸Ş¶ó º¯È¯ ¾øÀÌ Screen Space·Î ·»´õ¸µ =====
+    // UIëŠ” ì¹´ë©”ë¼ ë³€í™˜ ì—†ì´ Screen Spaceë¡œ ë Œë”ë§
     spriteBatch->Begin(SpriteSortMode_BackToFront);
     
-    // CanvasÀÇ Render() È£Ãâ
-    canvas->Render();
+    // Canvasì˜ uiObjects ë°°ì—´ ìˆœíšŒ (ê³„ì¸µ ìˆœì„œ ë³´ì¥)
+    for (auto* obj : canvas->GetUIObjects())
+    {
+        obj->RenderUI();
+    }
     
     spriteBatch->End();
 }
 
 void RenderManager::BeginDebug()
 {
-    // DebugRenderer¿¡ ½ÃÀÛ
+    // DebugRendererë¡œ ìœ„ì„
     DebugRenderer::Instance().Begin(screenWidth, screenHeight);
 }
 
 void RenderManager::EndDebug()
 {
-    // DebugRenderer¿¡ Á¾·á
+    // DebugRendererë¡œ ìœ„ì„
     DebugRenderer::Instance().End();
-}
-
-void RenderManager::SetCamera(Camera2D* cam)
-{
-    camera = cam;
-    
-    // DebugRenderer¿¡µµ Ä«¸Ş¶ó ¼³Á¤
-    DebugRenderer::Instance().SetCamera(cam);
 }
 
 void RenderManager::SetScreenSize(int width, int height)
@@ -87,11 +107,11 @@ void RenderManager::SetScreenSize(int width, int height)
 
 float RenderManager::GetLayerDepth(RenderLayer layer, float subDepth)
 {
-    // subDepth´Â 0~1 ¹üÀ§·Î Å¬·¥ÇÎ
+    // subDepthëŠ” 0~1 ë²”ìœ„ë¡œ í´ë¨í•‘
     if (subDepth < 0.0f) subDepth = 0.0f;
     if (subDepth > 1.0f) subDepth = 1.0f;
 
-    // °¢ ·¹ÀÌ¾îÀÇ depth ¹üÀ§
+    // ê° ë ˆì´ì–´ì˜ depth ë²”ìœ„
     const float layerRanges[][2] = {
         { 0.0f, 0.2f },  // Background
         { 0.2f, 0.5f },  // Game
@@ -103,6 +123,6 @@ float RenderManager::GetLayerDepth(RenderLayer layer, float subDepth)
     float minDepth = layerRanges[layerIndex][0];
     float maxDepth = layerRanges[layerIndex][1];
 
-    // ¼±Çü º¸°£
+    // ì„ í˜• ë³´ê°„
     return minDepth + (maxDepth - minDepth) * subDepth;
 }

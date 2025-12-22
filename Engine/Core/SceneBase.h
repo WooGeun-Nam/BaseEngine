@@ -21,20 +21,22 @@ public:
 
     const std::vector<GameObject*>& GetGameObjects() const { return gameObjects; }
 
-    // Canvas 설정 (필요시 Canvas를 등록할 때 호출)
+    // Canvas 설정
     void SetCanvas(Canvas* c) { canvas = c; }
     Canvas* GetCanvas() const { return canvas; }
 
 protected:
+    // ? GameObject 추가 (Game Object + UI GameObject 모두)
     void AddGameObject(GameObject* object)
     {
         gameObjects.push_back(object);
     }
 
 protected:
+    // ? Scene이 모든 GameObject 관리 (Update 통합)
     std::vector<GameObject*> gameObjects;
     Canvas* canvas = nullptr;
 
-    // PhysicsSystem은 Scene에 종속되고, 각 씬마다 충돌을 관리한다.
+    // PhysicsSystem은 Scene에 속하며, 각 씬마다 충돌을 관리한다.
     PhysicsSystem physicsSystem;
 };

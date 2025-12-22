@@ -1,16 +1,27 @@
-#include "Core/GameObject.h"
+ï»¿#include "Core/GameObject.h"
 #include "UI/Canvas.h"
+#include "Core/SceneBase.h"
 
 GameObject::~GameObject()
 {
-    // ÀÚ½Äµé »èÁ¦ (ºÎ¸ğ »èÁ¦µÇ¸é ÀÚ½Äµé »èÁ¦)
+    // Canvasì—ì„œ ì œê±°
+    if (parent)
+    {
+        Canvas* canvas = parent->GetComponent<Canvas>();
+        if (canvas)
+        {
+            canvas->RemoveUIObject(this);
+        }
+    }
+    
+    // ìì‹ë“¤ ì‚­ì œ (ë¶€ëª¨ ì‚­ì œë˜ë©´ ìì‹ë“¤ ì‚­ì œ)
     for (auto* child : children)
     {
         delete child;
     }
     children.clear();
 
-    // ÄÄÆ÷³ÍÆ® »èÁ¦
+    // ì»´í¬ë„ŒíŠ¸ ì‚­ì œ
     for (auto* comp : components)
     {
         comp->OnDestroy();
@@ -21,26 +32,52 @@ GameObject::~GameObject()
 
 void GameObject::SetParent(GameObject* newParent)
 {
-    // ±âÁ¸ ºÎ¸ğ¿¡¼­ Á¦°Å
+    // ê¸°ì¡´ ë¶€ëª¨ì˜ Canvasì—ì„œ ì œê±°
     if (parent)
     {
+        Canvas* oldCanvas = FindCanvasInParents(parent);
+        if (oldCanvas)
+        {
+            oldCanvas->RemoveUIObject(this);
+        }
+        
         parent->RemoveChild(this);
     }
 
     parent = newParent;
 
-    // »õ ºÎ¸ğ Ãß°¡
+    // ìƒˆ ë¶€ëª¨ ì¶”ê°€
     if (parent)
     {
         parent->AddChild(this);
+        
+        // âœ… ìƒˆ ë¶€ëª¨ì˜ Canvasì— ë“±ë¡ (ë Œë”ë§ìš©)
+        Canvas* newCanvas = FindCanvasInParents(parent);
+        if (newCanvas)
+        {
+            newCanvas->AddUIObject(this);
+        }
     }
+}
+
+// âœ… ë¶€ëª¨ ê³„ì¸µì—ì„œ Canvas ì°¾ê¸°
+Canvas* GameObject::FindCanvasInParents(GameObject* obj)
+{
+    while (obj)
+    {
+        Canvas* canvas = obj->GetComponent<Canvas>();
+        if (canvas)
+            return canvas;
+        obj = obj->GetParent();
+    }
+    return nullptr;
 }
 
 void GameObject::AddChild(GameObject* child)
 {
     if (child && child != this)
     {
-        // Áßº¹ ¹æÁö
+        // ì¤‘ë³µ ë°©ì§€
         auto it = std::find(children.begin(), children.end(), child);
         if (it == children.end())
         {
@@ -67,12 +104,6 @@ void GameObject::FixedUpdate(float fixedDelta)
         if (!comp->IsEnabled()) continue;
         comp->FixedUpdate(fixedDelta);
     }
-    
-    // ÀÚ½Äµéµµ ¾÷µ¥ÀÌÆ®
-    for (auto* child : children)
-    {
-        child->FixedUpdate(fixedDelta);
-    }
 }
 
 void GameObject::Update(float deltaTime)
@@ -81,12 +112,6 @@ void GameObject::Update(float deltaTime)
     {
         if (!comp->IsEnabled()) continue;
         comp->Update(deltaTime);
-    }
-    
-    // ÀÚ½Äµéµµ ¾÷µ¥ÀÌÆ®
-    for (auto* child : children)
-    {
-        child->Update(deltaTime);
     }
 }
 
@@ -97,56 +122,43 @@ void GameObject::LateUpdate(float deltaTime)
         if (!comp->IsEnabled()) continue;
         comp->LateUpdate(deltaTime);
     }
-    
-    // ÀÚ½Äµéµµ ¾÷µ¥ÀÌÆ®
-    for (auto* child : children)
-    {
-        child->LateUpdate(deltaTime);
-    }
 }
 
-// Canvas GameObjectÀÎÁö È®ÀÎÇÏ´Â ÇïÆÛ ÇÔ¼ö
-bool GameObject::IsCanvasOrChildOfCanvas() const
+// Canvas GameObjectì¸ì§€ í™•ì¸
+bool GameObject::IsCanvas() const
 {
-    // ÇöÀç GameObject°¡ Canvas¸¦ °¡Áö°í ÀÖ´ÂÁö È®ÀÎ
     for (auto* comp : components)
     {
         if (dynamic_cast<Canvas*>(comp) != nullptr)
             return true;
     }
-    
-    // ºÎ¸ğ Áß¿¡ Canvas°¡ ÀÖ´ÂÁö È®ÀÎ
-    GameObject* p = parent;
-    while (p)
-    {
-        for (auto* comp : p->components)
-        {
-            if (dynamic_cast<Canvas*>(comp) != nullptr)
-                return true;
-        }
-        p = p->parent;
-    }
-    
     return false;
 }
 
 void GameObject::Render()
 {
-    // ===== Canvas GameObject¿Í ±× ÀÚ½ÄµéÀº Render¿¡¼­ Á¦¿Ü =====
-    // UI´Â RenderManager::RenderCanvas()¿¡¼­¸¸ ·»´õ¸µµÊ
-    if (IsCanvasOrChildOfCanvas())
+    // CanvasëŠ” Game ë Œë”ë§ì—ì„œ ì œì™¸
+    if (IsCanvas())
         return;
     
+    // ì¼ë°˜ GameObject ë Œë”ë§
     for (auto* comp : components)
     {
         if (!comp->IsEnabled()) continue;
         comp->Render();
     }
+}
+
+void GameObject::RenderUI()
+{
+    // UI GameObjectë§Œ ë Œë”ë§ (CanvasëŠ” ì œì™¸)
+    if (IsCanvas())
+        return;
     
-    // ÀÚ½Äµéµµ ·»´õ¸µ
-    for (auto* child : children)
+    for (auto* comp : components)
     {
-        child->Render();
+        if (!comp->IsEnabled()) continue;
+        comp->RenderUI();
     }
 }
 
@@ -156,11 +168,5 @@ void GameObject::DebugRender()
     {
         if (!comp->IsEnabled()) continue;
         comp->DebugDraw();
-    }
-    
-    // ÀÚ½Äµéµµ µğ¹ö±× ·»´õ¸µ
-    for (auto* child : children)
-    {
-        child->DebugRender();
     }
 }

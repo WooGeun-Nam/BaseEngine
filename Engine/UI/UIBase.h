@@ -1,52 +1,83 @@
-#pragma once
+ï»¿#pragma once
 #include "Core/Component.h"
 #include "UI/RectTransform.h"
 #include <DirectXMath.h>
+#include <functional>
 
 class Canvas;
 
-// ¸ğµç UI ÄÄÆ÷³ÍÆ®ÀÇ ±âº» Å¬·¡½º
+// UI ì´ë²¤íŠ¸ ìƒíƒœ
+enum class UIEventState
+{
+    None,           // ì´ë²¤íŠ¸ ì—†ìŒ
+    PointerEnter,   // ë§ˆìš°ìŠ¤ ì§„ì…
+    PointerExit,    // ë§ˆìš°ìŠ¤ ë‚˜ê°
+    PointerDown,    // ë§ˆìš°ìŠ¤ ë‹¤ìš´
+    PointerUp,      // ë§ˆìš°ìŠ¤ ì—…
+    Click,          // í´ë¦­ (Down â†’ Up)
+    DragStart,      // ë“œë˜ê·¸ ì‹œì‘
+    Dragging,       // ë“œë˜ê·¸ ì¤‘
+    DragEnd         // ë“œë˜ê·¸ ì¢…ë£Œ
+};
+
+// ëª¨ë“  UI ì»´í¬ë„ŒíŠ¸ì˜ ê¸°ë³¸ í´ë˜ìŠ¤
 class UIBase : public Component
 {
 public:
     UIBase() = default;
     virtual ~UIBase() = default;
 
-    // Component::Render() ¿À¹ö¶óÀÌµå - UI ·»´õ¸µ
-    void Render() override;
+    // UIBaseì—ì„œ Update ì²˜ë¦¬ (ê³µí†µ ì´ë²¤íŠ¸ ê°ì§€)
+    void Update(float deltaTime) override;
 
-    // RectTransform Á¢±Ù
+    // Component::Render() ì˜¤ë²„ë¼ì´ë“œ - UI ë Œë”ë§
+    void RenderUI() override {};
+
+    // RectTransform ì ‘ê·¼
     RectTransform* GetRectTransform() const { return rectTransform; }
 
-    // Canvas Á¢±Ù
+    // Canvas ì ‘ê·¼
     Canvas* GetCanvas() const { return canvas; }
-
-    // °¡½Ã¼º ¼³Á¤
-    void SetVisible(bool visible) { isVisible = visible; }
-    bool IsVisible() const { return isVisible; }
     
-    // UI Á¤·Ä ¼ø¼­ (¼öµ¿ Á¶Á¤¿ë)
+    // UI ì •ë ¬ ìˆœì„œ (ë Œë” ìˆœì„œ)
     void SetSortOrder(int order) { sortOrder = order; }
     int GetSortOrder() const { return sortOrder; }
 
-    // Awake´Â publicÀ¸·Î À¯Áö
+    // Awake
     void Awake() override;
 
-    // ===== °èÃş ±â¹İ Depth °è»ê =====
-    void SetHierarchyInfo(int depth, int siblingIdx);
-    float CalculateRenderDepth() const;
-
 protected:
-    // UI Layer depth °è»ê (sortOrder ¹İ¿µ)
+    // ì´ë²¤íŠ¸ í•¸ë“¤ëŸ¬ (ìì‹ì´ ì˜¤ë²„ë¼ì´ë“œ)
+    virtual void OnPointerEnter() {}
+    virtual void OnPointerExit() {}
+    virtual void OnPointerDown() {}
+    virtual void OnPointerUp() {}
+    virtual void OnClick() {}
+    virtual void OnDragStart() {}
+    virtual void OnDrag(const DirectX::XMFLOAT2& delta) {}
+    virtual void OnDragEnd() {}
+    
+    // ìœ í‹¸ë¦¬í‹° í•¨ìˆ˜
+    bool IsPointerInside();  // ë§ˆìš°ìŠ¤ê°€ UI ë‚´ë¶€ì— ìˆëŠ”ì§€
+    DirectX::XMFLOAT2 GetMousePosition();  // í˜„ì¬ ë§ˆìš°ìŠ¤ ìœ„ì¹˜
+    
+    // UI Layer depth ê³„ì‚° (ìë™ìœ¼ë¡œ ê³„ì¸µ ìˆœì„œ ë°˜ì˜)
     float GetUIDepth() const;
+    
+    // ê³„ì¸µ ê¹Šì´ ìë™ ê³„ì‚°
+    int CalculateHierarchyDepth() const;
+    int CalculateSiblingIndex() const;
+
+private:
+    // ì´ë²¤íŠ¸ ìƒíƒœ ì¶”ì 
+    bool wasPointerInside = false;
+    bool isPointerDown = false;
+    bool isDragging = false;
+    DirectX::XMFLOAT2 dragStartPos = {0, 0};
+    DirectX::XMFLOAT2 lastMousePos = {0, 0};
 
 protected:
     RectTransform* rectTransform = nullptr;
-    Canvas* canvas = nullptr;  // ºÎ¸ğ Canvas
-    bool isVisible = true;
-    int sortOrder = 0;  // ¼öµ¿ Á¶Á¤¿ë (0~1000)
-    
-    // °èÃş Á¤º¸ (ÀÚµ¿ °è»ê)
-    int hierarchyDepth = 0;   // 0=Canvas Á÷¼Ó, 1=1´Ü°è ÀÚ½Ä, 2=2´Ü°è ÀÚ½Ä...
-    int siblingIndex = 0;     // ÇüÁ¦ Áß ¼ø¼­ (0=Ã¹Â°, 1=µÑÂ°...)
+    Canvas* canvas = nullptr;
+    int sortOrder = 0;
 };

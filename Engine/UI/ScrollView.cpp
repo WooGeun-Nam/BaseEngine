@@ -13,57 +13,61 @@ void ScrollView::Awake()
     UIBase::Awake();
 }
 
+// ? Update에서 마우스 휠 처리만 남김 (드래그는 UIBase에서 처리)
+// Update를 오버라이드하지 않으면 UIBase::Update가 자동 호출됨
+// 하지만 마우스 휠은 별도 처리가 필요하므로 Update 오버라이드
 void ScrollView::Update(float deltaTime)
 {
-    if (!isVisible)
-        return;
+    // ? 부모 Update 호출 (이벤트 핸들러 실행)
+    UIBase::Update(deltaTime);
 
-    auto* app = gameObject->GetApplication();
-    if (!app)
-        return;
-
-    bool isPointerInside = IsPointerInside();
-
-    // 마우스 휠 스크롤
-    if (isPointerInside && verticalScrollEnabled)
+    // ? 마우스 휠 처리 (추가 기능)
+    if (IsPointerInside() && verticalScrollEnabled)
     {
-        float wheelDelta = app->GetInput().GetMouseWheelDelta();
-        if (wheelDelta != 0.0f)
-        {
-            HandleMouseWheel(wheelDelta);
-        }
-    }
-
-    // 드래그 스크롤
-    bool isLeftDown = app->GetInput().IsMouseButtonDown(0);
-    
-    if (isPointerInside && isLeftDown && !isDragging)
-    {
-        // 드래그 시작
-        isDragging = true;
-        int mouseX = app->GetInput().GetMouseX();
-        int mouseY = app->GetInput().GetMouseY();
-        dragStartPos = DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY));
-        scrollStartPos = DirectX::XMFLOAT2(scrollX, scrollY);
-    }
-
-    if (isDragging)
-    {
-        if (isLeftDown)
-        {
-            HandleDrag();
-        }
-        else
-        {
-            // 드래그 종료
-            isDragging = false;
-        }
+        HandleMouseWheel();
     }
 }
 
-void ScrollView::Render()
+// ? UIBase 이벤트 핸들러 오버라이드
+void ScrollView::OnDragStart()
 {
-    if (!isVisible || !rectTransform || !canvas)
+    // 드래그 시작 - 현재 스크롤 위치 저장
+    scrollStartPos = DirectX::XMFLOAT2(scrollX, scrollY);
+}
+
+void ScrollView::OnDrag(const DirectX::XMFLOAT2& delta)
+{
+    // 드래그 중 - 스크롤 위치 업데이트
+    DirectX::XMFLOAT2 size = rectTransform->GetSize();
+
+    if (horizontalScrollEnabled && contentWidth > size.x)
+    {
+        float scrollableWidth = contentWidth - size.x;
+        float scrollDelta = -delta.x / scrollableWidth;
+        scrollX = (std::max)(0.0f, (std::min)(1.0f, scrollX + scrollDelta));
+    }
+
+    if (verticalScrollEnabled && contentHeight > size.y)
+    {
+        float scrollableHeight = contentHeight - size.y;
+        float scrollDelta = -delta.y / scrollableHeight;
+        scrollY = (std::max)(0.0f, (std::min)(1.0f, scrollY + scrollDelta));
+    }
+
+    if (onScroll)
+    {
+        onScroll(DirectX::XMFLOAT2(scrollX, scrollY));
+    }
+}
+
+void ScrollView::OnDragEnd()
+{
+    // 드래그 종료 (필요시 추가 로직)
+}
+
+void ScrollView::RenderUI()
+{
+    if (!IsEnabled() || !rectTransform || !canvas)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
@@ -74,18 +78,15 @@ void ScrollView::Render()
     if (!baseTexture)
         return;
 
-    // 화면 크기
     int screenWidth = canvas->GetScreenWidth();
     int screenHeight = canvas->GetScreenHeight();
 
-    // ScrollView 위치와 크기
     DirectX::XMFLOAT2 topLeft = rectTransform->GetTopLeftPosition(screenWidth, screenHeight);
     DirectX::XMFLOAT2 size = rectTransform->GetSize();
 
-    // Layer depth 계산
     float depth = GetUIDepth();
 
-    // 1. 배경 렌더링 (어두운 패널) - 가장 뒤
+    // 1. 배경 렌더링
     RECT bgRect;
     bgRect.left = (LONG)topLeft.x;
     bgRect.top = (LONG)topLeft.y;
@@ -102,17 +103,17 @@ void ScrollView::Render()
         0.0f,
         DirectX::XMFLOAT2(0, 0),
         DirectX::SpriteEffects_None,
-        depth  // 배경 (가장 뒤)
+        depth
     );
 
-    // 2. 수직 스크롤바 렌더링
+    // 2. 수직 스크롤바
     if (verticalScrollEnabled && contentHeight > size.y)
     {
-        // 스크롤바 배경
         float sbX = topLeft.x + size.x - scrollbarWidth - scrollbarPadding;
         float sbY = topLeft.y + scrollbarPadding;
         float sbHeight = size.y - scrollbarPadding * 2;
 
+        // 배경
         RECT sbBgRect;
         sbBgRect.left = (LONG)sbX;
         sbBgRect.top = (LONG)sbY;
@@ -128,10 +129,10 @@ void ScrollView::Render()
             0.0f,
             DirectX::XMFLOAT2(0, 0),
             DirectX::SpriteEffects_None,
-            depth - 0.001f  // ? 배경보다 앞에
+            depth - 0.001f
         );
 
-        // 스크롤바 thumb (실제 위치)
+        // Thumb
         float visibleRatio = size.y / contentHeight;
         float sbThumbHeight = sbHeight * visibleRatio;
         float sbThumbY = sbY + scrollY * (sbHeight - sbThumbHeight);
@@ -151,18 +152,18 @@ void ScrollView::Render()
             0.0f,
             DirectX::XMFLOAT2(0, 0),
             DirectX::SpriteEffects_None,
-            depth - 0.002f  // ? 가장 앞에
+            depth - 0.002f
         );
     }
 
-    // 3. 수평 스크롤바 렌더링
+    // 3. 수평 스크롤바
     if (horizontalScrollEnabled && contentWidth > size.x)
     {
-        // 스크롤바 배경
         float sbX = topLeft.x + scrollbarPadding;
         float sbY = topLeft.y + size.y - scrollbarWidth - scrollbarPadding;
         float sbWidth = size.x - scrollbarPadding * 2;
 
+        // 배경
         RECT sbBgRect;
         sbBgRect.left = (LONG)sbX;
         sbBgRect.top = (LONG)sbY;
@@ -178,10 +179,10 @@ void ScrollView::Render()
             0.0f,
             DirectX::XMFLOAT2(0, 0),
             DirectX::SpriteEffects_None,
-            depth - 0.001f  // ? 배경보다 앞에
+            depth - 0.001f
         );
 
-        // 스크롤바 thumb (실제 위치)
+        // Thumb
         float visibleRatio = size.x / contentWidth;
         float sbThumbWidth = sbWidth * visibleRatio;
         float sbThumbX = sbX + scrollX * (sbWidth - sbThumbWidth);
@@ -201,12 +202,9 @@ void ScrollView::Render()
             0.0f,
             DirectX::XMFLOAT2(0, 0),
             DirectX::SpriteEffects_None,
-            depth - 0.002f  // ? 가장 앞에
+            depth - 0.002f
         );
     }
-
-    // TODO: 자식 UI들은 스크롤 위치에 따라 렌더링되어야 함
-    // 현재는 스크롤바만 표시, 실제 콘텐츠 스크롤은 Canvas에서 처리 필요
 }
 
 void ScrollView::SetScrollPosition(float x, float y)
@@ -220,71 +218,16 @@ void ScrollView::SetScrollPosition(float x, float y)
     }
 }
 
-bool ScrollView::IsPointerInside()
+void ScrollView::HandleMouseWheel()
 {
-    if (!rectTransform || !canvas)
-        return false;
-
     auto* app = gameObject->GetApplication();
     if (!app)
-        return false;
-
-    int mouseX = app->GetInput().GetMouseX();
-    int mouseY = app->GetInput().GetMouseY();
-
-    int screenW = canvas->GetScreenWidth();
-    int screenH = canvas->GetScreenHeight();
-
-    return rectTransform->Contains(
-        DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY)),
-        screenW,
-        screenH
-    );
-}
-
-void ScrollView::HandleMouseWheel(float delta)
-{
-    if (!verticalScrollEnabled)
         return;
 
-    // 휠 방향에 따라 스크롤
-    float newScrollY = scrollY - delta * wheelScrollSpeed;
-    SetScrollPosition(scrollX, newScrollY);
-}
-
-void ScrollView::HandleDrag()
-{
-    auto* app = gameObject->GetApplication();
-    if (!app || !rectTransform)
-        return;
-
-    int mouseX = app->GetInput().GetMouseX();
-    int mouseY = app->GetInput().GetMouseY();
-
-    DirectX::XMFLOAT2 currentPos(static_cast<float>(mouseX), static_cast<float>(mouseY));
-    DirectX::XMFLOAT2 size = rectTransform->GetSize();
-
-    // 드래그 델타 계산
-    float deltaX = currentPos.x - dragStartPos.x;
-    float deltaY = currentPos.y - dragStartPos.y;
-
-    // 스크롤 위치 업데이트 (드래그는 반대 방향)
-    if (horizontalScrollEnabled && contentWidth > size.x)
+    float wheelDelta = static_cast<float>(app->GetInput().GetMouseWheelDelta());
+    if (wheelDelta != 0.0f)
     {
-        float scrollableWidth = contentWidth - size.x;
-        float newScrollX = scrollStartPos.x - (deltaX / scrollableWidth);
-        scrollX = (std::max)(0.0f, (std::min)(1.0f, newScrollX));
-    }
-
-    if (verticalScrollEnabled && contentHeight > size.y)
-    {
-        float scrollableHeight = contentHeight - size.y;
-        float newScrollY = scrollStartPos.y - (deltaY / scrollableHeight);
-        scrollY = (std::max)(0.0f, (std::min)(1.0f, newScrollY));
-    }
-
-    if (onScroll)
-    {
-        onScroll(DirectX::XMFLOAT2(scrollX, scrollY));
+        float newScrollY = scrollY - wheelDelta * wheelScrollSpeed;
+        SetScrollPosition(scrollX, newScrollY);
     }
 }

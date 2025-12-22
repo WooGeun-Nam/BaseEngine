@@ -16,7 +16,7 @@ public:
     void Awake() override;
 
     // Component::Render() 오버라이드
-    void Render() override;
+    void RenderUI() override;
 
     // 텍스처 설정
     void SetTexture(std::shared_ptr<Texture> tex) { texture = tex; }

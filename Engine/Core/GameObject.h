@@ -5,6 +5,7 @@
 #include "Core/Transform.h"
 
 class Application;
+class Canvas;
 
 class GameObject : public Component
 {
@@ -15,13 +16,14 @@ public:
     void FixedUpdate(float fixedDelta);
     void Update(float deltaTime);
     void LateUpdate(float deltaTime);
-    void Render();
+    void Render();              // Game 렌더링 (Canvas 제외)
+    void RenderUI();            // UI 렌더링
     void DebugRender();
 
     void SetApplication(Application* app) { application = app; }
     Application* GetApplication() const { return application; }
 
-    // 부모-자식 관계
+    // 부모-자식 관계 (계층 구조용, 렌더링 순회는 Scene/Canvas에서)
     void SetParent(GameObject* parent);
     GameObject* GetParent() const { return parent; }
     
@@ -29,8 +31,11 @@ public:
     void RemoveChild(GameObject* child);
     const std::vector<GameObject*>& GetChildren() const { return children; }
 
-    // Canvas인지 또는 Canvas의 자식인지 확인
-    bool IsCanvasOrChildOfCanvas() const;
+    // Canvas인지 확인
+    bool IsCanvas() const;
+    
+    // ? 부모 계층에서 Canvas 찾기
+    static Canvas* FindCanvasInParents(GameObject* obj);
 
     // AddComponent 템플릿
     template<typename T>
@@ -45,7 +50,7 @@ public:
         return comp;
     }
 
-	// GetComponent 템플릿
+    // GetComponent 템플릿
     template<typename T>
     T* GetComponent()
     {
@@ -58,10 +63,10 @@ public:
                 return casted;
         }
         return nullptr;
-	}
+    }
 
-	// RemoveComponent 템플릿
-	template<typename T>
+    // RemoveComponent 템플릿
+    template<typename T>
     void RemoveComponent()
     {
         static_assert(std::is_base_of<Component, T>::value,
@@ -69,7 +74,7 @@ public:
         for (auto it = components.begin(); it != components.end(); ++it)
         {
             T* casted = dynamic_cast<T*>(*it);
-			if (casted != nullptr)
+            if (casted != nullptr)
             {
                 casted->OnDestroy();
                 delete *it;
@@ -77,7 +82,7 @@ public:
                 return;
             }
         }
-	}
+    }
 
     const std::vector<Component*>& GetComponents() const
     {
@@ -91,7 +96,7 @@ private:
     Application* application = nullptr;
     std::vector<Component*> components;
     
-    // 계층 구조
+    // 계층 구조 (Transform 상속용, 렌더링 순회는 Scene/Canvas에서)
     GameObject* parent = nullptr;
     std::vector<GameObject*> children;
 };

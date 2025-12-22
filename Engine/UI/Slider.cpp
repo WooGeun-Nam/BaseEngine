@@ -13,65 +13,48 @@ void Slider::Awake()
     UIBase::Awake();
 }
 
-void Slider::Update(float deltaTime)
+// ? Update 제거 - UIBase에서 이벤트 처리
+
+// ? UIBase 이벤트 핸들러 오버라이드
+void Slider::OnPointerDown()
 {
-    if (!isVisible)
-        return;
-
-    auto* app = gameObject->GetApplication();
-    if (!app)
-        return;
-
-    bool isLeftDown = app->GetInput().IsMouseButtonDown(0);
-    bool isPointerInside = IsPointerInside();
-
-    // 드래그 시작
-    if (isPointerInside && isLeftDown && !isDragging)
-    {
-        isDragging = true;
-    }
-
-    // 드래그 중
-    if (isDragging)
-    {
-        if (isLeftDown)
-        {
-            UpdateValueFromMouse();
-        }
-        else
-        {
-            // 드래그 종료
-            isDragging = false;
-        }
-    }
+    // 드래그 시작 - 즉시 값 업데이트
+    UpdateValueFromMouse();
 }
 
-void Slider::Render()
+void Slider::OnDrag(const DirectX::XMFLOAT2& delta)
 {
-    if (!isVisible || !rectTransform || !canvas)
+    // 드래그 중 - 값 업데이트
+    UpdateValueFromMouse();
+}
+
+void Slider::OnPointerUp()
+{
+    // 드래그 종료 (필요시 추가 로직)
+}
+
+void Slider::RenderUI()
+{
+    if (!IsEnabled() || !rectTransform || !canvas)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
     if (!spriteBatch)
         return;
 
-    // UI_Base 텍스처 가져오기
     auto baseTexture = Resources::Get<Texture>(L"UI_Base");
     if (!baseTexture)
         return;
 
-    // 화면 크기
     int screenWidth = canvas->GetScreenWidth();
     int screenHeight = canvas->GetScreenHeight();
 
-    // Slider 위치와 크기
     DirectX::XMFLOAT2 topLeft = rectTransform->GetTopLeftPosition(screenWidth, screenHeight);
     DirectX::XMFLOAT2 size = rectTransform->GetSize();
 
-    // Layer depth 계산 (UIBase의 계층 기반 depth)
     float baseDepth = GetUIDepth();
 
-    // 1. 배경 바 렌더링 (기본 depth)
+    // 1. 배경 바 렌더링
     RECT bgRect;
     bgRect.left = (LONG)topLeft.x;
     bgRect.top = (LONG)topLeft.y;
@@ -87,10 +70,10 @@ void Slider::Render()
         0.0f,
         DirectX::XMFLOAT2(0, 0),
         DirectX::SpriteEffects_None,
-        baseDepth + 0.00002f  // 배경 (제일 뒤)
+        baseDepth + 0.00002f
     );
 
-    // 2. 채워지는 바 렌더링 (중간)
+    // 2. 채워진 바 렌더링
     float fillWidth = size.x * value;
     RECT fillRect;
     fillRect.left = (LONG)topLeft.x;
@@ -107,13 +90,13 @@ void Slider::Render()
         0.0f,
         DirectX::XMFLOAT2(0, 0),
         DirectX::SpriteEffects_None,
-        baseDepth + 0.00001f  // fill (중간)
+        baseDepth + 0.00001f
     );
 
-    // 3. 핸들 렌더링 (제일 앞)
+    // 3. 핸들 렌더링
     float handleX = topLeft.x + fillWidth - (handleWidth / 2.0f);
-    float handleY = topLeft.y - 5.0f;  // 살짝 위로
-    float handleHeight = size.y + 10.0f;  // 살짝 크게
+    float handleY = topLeft.y - 5.0f;
+    float handleHeight = size.y + 10.0f;
 
     RECT handleRect;
     handleRect.left = (LONG)handleX;
@@ -130,45 +113,19 @@ void Slider::Render()
         0.0f,
         DirectX::XMFLOAT2(0, 0),
         DirectX::SpriteEffects_None,
-        baseDepth  // 핸들 (제일 앞, 기본 depth 사용)
+        baseDepth
     );
 }
 
 void Slider::SetValue(float newValue)
 {
-    // 값 범위 제한
     newValue = (std::max)(minValue, (std::min)(maxValue, newValue));
-    
-    // 정규화 (0.0 ~ 1.0)
     value = (newValue - minValue) / (maxValue - minValue);
 
-    // 콜백 호출
     if (onValueChanged)
     {
         onValueChanged(newValue);
     }
-}
-
-bool Slider::IsPointerInside()
-{
-    if (!rectTransform || !canvas)
-        return false;
-
-    auto* app = gameObject->GetApplication();
-    if (!app)
-        return false;
-
-    int mouseX = app->GetInput().GetMouseX();
-    int mouseY = app->GetInput().GetMouseY();
-
-    int screenW = canvas->GetScreenWidth();
-    int screenH = canvas->GetScreenHeight();
-
-    return rectTransform->Contains(
-        DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY)),
-        screenW,
-        screenH
-    );
 }
 
 void Slider::UpdateValueFromMouse()
@@ -176,27 +133,20 @@ void Slider::UpdateValueFromMouse()
     if (!rectTransform || !canvas)
         return;
 
-    auto* app = gameObject->GetApplication();
-    if (!app)
-        return;
+    DirectX::XMFLOAT2 mousePos = GetMousePosition();
 
-    // 마우스 X 위치 가져오기
-    int mouseX = app->GetInput().GetMouseX();
-
-    // Slider 위치와 크기
     int screenW = canvas->GetScreenWidth();
     int screenH = canvas->GetScreenHeight();
     DirectX::XMFLOAT2 topLeft = rectTransform->GetTopLeftPosition(screenW, screenH);
     DirectX::XMFLOAT2 size = rectTransform->GetSize();
 
     // 상대 위치 계산 (0.0 ~ 1.0)
-    float relativeX = (mouseX - topLeft.x) / size.x;
+    float relativeX = (mousePos.x - topLeft.x) / size.x;
     relativeX = (std::max)(0.0f, (std::min)(1.0f, relativeX));
 
     // 실제 값 계산
     float newValue = minValue + relativeX * (maxValue - minValue);
     
-    // 이전 값과 다르면 업데이트
     if (std::abs(newValue - (minValue + value * (maxValue - minValue))) > 0.001f)
     {
         SetValue(newValue);
