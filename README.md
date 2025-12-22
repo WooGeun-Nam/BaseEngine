@@ -49,6 +49,8 @@ Tool/MakeSpriteFont.exe 사용 명령어 예시 (# 윈도우에 설치된 패밀
 /CharacterRegion:0xAC00-0xD7A3 `
 /DefaultCharacter:0x003F
 ```
+- **Slider**: 슬라이더 컴포넌트
+- **ScrollView**: 스크롤 뷰 컴포넌트
 
 #### Audio System
 - **AudioManager**: XAudio2 기반 오디오 관리
@@ -94,8 +96,8 @@ BaseEngine/
 │   ├── Scripts/           # 커스텀 컴포넌트
 │   └── Shaders/           # HLSL 셰이더
 ├── Tool/                  # 개발 도구
-│   ├── AnimationImporter/ # 애니메이션 임포터
-│   ├── SpriteImporter/    # 스프라이트 임포터
+│   ├── AnimationImporter # 애니메이션 임포터
+│   ├── SpriteImporter    # 스프라이트 임포터
 └── Assets/                # 게임 에셋 (텍스처, 오디오, 폰트 등)
 ```
 
