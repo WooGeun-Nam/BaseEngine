@@ -17,6 +17,7 @@ public:
     virtual void Update(float deltaTime);
     virtual void LateUpdate(float deltaTime);
     virtual void Render();
+    virtual void RenderUI();
     virtual void DebugRender();
 
     const std::vector<GameObject*>& GetGameObjects() const { return gameObjects; }
@@ -26,14 +27,14 @@ public:
     Canvas* GetCanvas() const { return canvas; }
 
 protected:
-    // ? GameObject 추가 (Game Object + UI GameObject 모두)
+    // GameObject 추가 (Game Object)
     void AddGameObject(GameObject* object)
     {
         gameObjects.push_back(object);
     }
 
 protected:
-    // ? Scene이 모든 GameObject 관리 (Update 통합)
+    // Scene이 모든 GameObject 관리 (Update 통합)
     std::vector<GameObject*> gameObjects;
     Canvas* canvas = nullptr;
 

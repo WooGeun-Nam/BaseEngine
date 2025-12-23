@@ -59,6 +59,11 @@ public:
             y -= speed;
             camera->SetPosition(x, y);
         }
+
+        if (input.WasKeyPressed(112))
+        {
+			DebugRenderer::Instance().SetRendering(!DebugRenderer::Instance().IsRendering());
+        }
     }
 
 private:

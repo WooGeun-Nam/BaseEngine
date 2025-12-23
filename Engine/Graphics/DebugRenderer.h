@@ -37,6 +37,14 @@ public:
 
     void SetCamera(Camera2D* cam) { camera = cam; }
 
+	bool IsRendering() const { return isRendering; }
+
+    bool SetRendering(bool enable)
+    {
+        isRendering = enable;
+        return isRendering;
+	}
+
 private:
     DebugRenderer() = default;
 
@@ -48,6 +56,9 @@ private:
     std::unique_ptr<BasicEffect> effect;
     std::unique_ptr<PrimitiveBatch<VertexPositionColor>> primitiveBatch;
     ID3D11InputLayout* inputLayout = nullptr;
+
+    // DebugRenerer 사용 여부
+    bool isRendering = false;
 
 	Camera2D* camera = nullptr;
 };

@@ -28,6 +28,7 @@ public:
     void Update(float dt);
     void LateUpdate(float dt);
     void Render();
+    void RenderUI();
     void DebugRender();
 
 private:

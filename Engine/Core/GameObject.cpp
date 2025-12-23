@@ -1,5 +1,6 @@
 ﻿#include "Core/GameObject.h"
 #include "UI/Canvas.h"
+#include "UI/UIBase.h"
 #include "Core/SceneBase.h"
 
 GameObject::~GameObject()
@@ -51,7 +52,7 @@ void GameObject::SetParent(GameObject* newParent)
     {
         parent->AddChild(this);
         
-        // ✅ 새 부모의 Canvas에 등록 (렌더링용)
+        // 새 부모의 Canvas에 등록 (렌더링용)
         Canvas* newCanvas = FindCanvasInParents(parent);
         if (newCanvas)
         {
@@ -60,7 +61,7 @@ void GameObject::SetParent(GameObject* newParent)
     }
 }
 
-// ✅ 부모 계층에서 Canvas 찾기
+// 부모 계층에서 Canvas 찾기
 Canvas* GameObject::FindCanvasInParents(GameObject* obj)
 {
     while (obj)
@@ -124,23 +125,8 @@ void GameObject::LateUpdate(float deltaTime)
     }
 }
 
-// Canvas GameObject인지 확인
-bool GameObject::IsCanvas() const
-{
-    for (auto* comp : components)
-    {
-        if (dynamic_cast<Canvas*>(comp) != nullptr)
-            return true;
-    }
-    return false;
-}
-
 void GameObject::Render()
-{
-    // Canvas는 Game 렌더링에서 제외
-    if (IsCanvas())
-        return;
-    
+{   
     // 일반 GameObject 렌더링
     for (auto* comp : components)
     {
@@ -150,15 +136,18 @@ void GameObject::Render()
 }
 
 void GameObject::RenderUI()
-{
-    // UI GameObject만 렌더링 (Canvas는 제외)
-    if (IsCanvas())
-        return;
-    
+{   
     for (auto* comp : components)
     {
         if (!comp->IsEnabled()) continue;
-        comp->RenderUI();
+
+		// UIBase 컴포넌트만 RenderUI 호출
+        UIBase* const uiTest = dynamic_cast<UIBase*>(comp);
+
+        if (uiTest != nullptr)
+        {
+            comp->RenderUI();
+        }
     }
 }
 

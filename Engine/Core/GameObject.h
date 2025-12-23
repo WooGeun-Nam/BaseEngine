@@ -30,9 +30,6 @@ public:
     void AddChild(GameObject* child);
     void RemoveChild(GameObject* child);
     const std::vector<GameObject*>& GetChildren() const { return children; }
-
-    // Canvas인지 확인
-    bool IsCanvas() const;
     
     // ? 부모 계층에서 Canvas 찾기
     static Canvas* FindCanvasInParents(GameObject* obj);

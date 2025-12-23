@@ -5,21 +5,17 @@
 #include "Graphics/RenderManager.h"
 #include <combaseapi.h>
 
-// 전역 Application 포인터 (Font 등에서 Device 접근용)
-Application* g_Application = nullptr;
-
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
 {
-    g_Application = this;
 }
 
 bool Application::initialize(HWND window, int width, int height)
 {
     this->windowHandle = window;
 
-    // COM 초기화 (Media Foundation 사용 전에 필요)
+    // COM 초기화
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
         return false;
@@ -27,6 +23,7 @@ bool Application::initialize(HWND window, int width, int height)
     if (!d3dDevice.initialize(window, width, height))
         return false;
 
+	// TextureManager 및 ShaderManager 초기화  
     TextureManager::Instance().Initialize(d3dDevice.getDevice());
     shaderManager.Initialize(d3dDevice.getDevice());
 
@@ -50,9 +47,10 @@ bool Application::initialize(HWND window, int width, int height)
     // AudioManager 초기화
     if (!AudioManager::Instance().Initialize())
     {
-        // 오디오 초기화 실패해도 게임은 계속 (경고만)
+        // 오디오 초기화 실패해도 게임은 실행
     }
-
+    
+    // Assets 폴더 캐싱
     Resources::LoadAllAssetsFromFolder(L"Assets");
 
     return true;
@@ -65,19 +63,19 @@ void Application::run()
 
     MSG msg = {};
 
-    const float fixedDelta = 1.0f / 60.0f;   // 60Hz
-    const float maxDelta = 0.1f;              // 최대 deltaTime (100ms)
-    float fixedAccumulator = 0.0f;
+    const float fixedDelta = 1.0f / 60.0f; // 60Hz
+    const float maxDelta = 0.1f; // 최대 deltaTime (100ms)
+    float fixedAccumulator = 0.0f; // 고정값 누적기
 
     while (true)
     {
+        // 윈도우 메시지 처리
         while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             if (msg.message == WM_QUIT)
             {
                 // COM 해제
                 CoUninitialize();
-                g_Application = nullptr;
                 return;
             }
 
@@ -85,6 +83,9 @@ void Application::run()
             DispatchMessageW(&msg);
         }
 
+        // Application 순환 로직
+
+        // Timer 업데이트 및 deltaTime 계산
         timer.Update();
         float deltaTime = timer.GetDeltaTime();
         
@@ -94,34 +95,47 @@ void Application::run()
 
         fixedAccumulator += deltaTime;
 
-        // 1) FixedUpdate — 고정 주기 호출
+        // FixedUpdate — 고정 주기 호출
         while (fixedAccumulator >= fixedDelta)
         {
             sceneManager.FixedUpdate(fixedDelta);
             fixedAccumulator -= fixedDelta;
         }
 
-        // 2) Update — 매 프레임
+        // Update — 매 프레임
         sceneManager.Update(deltaTime);
 
-        // 3) LateUpdate — Update 후 처리
+        // LateUpdate — Update 후 처리
         sceneManager.LateUpdate(deltaTime);
 
+        // 입력 상태 업데이트
         input.Update();
 
-        // 4) Render - 렌더링 파이프라인
+        // Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
-        // ===== Game Objects 렌더링 (카메라 적용) =====
+        // Game Objects 렌더링 (카메라 적용)
         RenderManager::Instance().BeginFrame();
-        sceneManager.Render();  // SpriteRenderer 등 (Canvas 제외)
-        RenderManager::Instance().EndFrame();  // UI는 EndFrame()에서 자동 렌더링
+        sceneManager.Render();  // SpriteRenderer
+        RenderManager::Instance().EndFrame();
 
-        // ===== 디버그 렌더링 (PrimitiveBatch) =====
-        RenderManager::Instance().BeginDebug();
-        sceneManager.DebugRender();
-        RenderManager::Instance().EndDebug();
+		// UI 렌더링 (Canvas의 uiObjects만 순회)
+		RenderManager::Instance().BeginUI();
+        sceneManager.RenderUI(); // UIBase 컴포넌트들 Rendering
+		RenderManager::Instance().EndUI();
 
+        #ifdef _DEBUG
+        // 디버그 렌더링 여부 확인
+        if (DebugRenderer::Instance().IsRendering())
+        {
+            // 디버그 렌더링 (PrimitiveBatch)
+            RenderManager::Instance().BeginDebug();
+            sceneManager.DebugRender();
+            RenderManager::Instance().EndDebug();
+        }
+        #endif
+
+        // 프레임 종료
         d3dDevice.endFrame();
     }
 }

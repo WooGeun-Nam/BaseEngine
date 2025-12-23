@@ -2,7 +2,6 @@
 #include "Graphics/Camera2D.h"
 #include "Graphics/DebugRenderer.h"
 #include "Core/GameObject.h"
-#include "UI/Canvas.h"
 #include <SimpleMath.h>
 
 RenderManager& RenderManager::Instance()
@@ -17,11 +16,6 @@ void RenderManager::SetCamera(Camera2D* cam)
     
     // DebugRenderer에도 카메라 설정
     DebugRenderer::Instance().SetCamera(cam);
-}
-
-void RenderManager::SetCanvas(Canvas* c)
-{
-    canvas = c;
 }
 
 bool RenderManager::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, int screenWidth, int screenHeight)
@@ -64,38 +58,35 @@ void RenderManager::EndFrame()
         return;
 
     spriteBatch->End();
-
-    // UI 자동 렌더링 (카메라 없음)
-    RenderUI();
 }
 
 // Canvas가 관리하는 UI GameObject만 순회
-void RenderManager::RenderUI()
+void RenderManager::BeginUI()
 {
-    if (!canvas || !spriteBatch)
+    if (!spriteBatch)
         return;
 
-    // UI는 카메라 변환 없이 Screen Space로 렌더링
+    // UI 렌더링은 카메라 위치 적용 X
     spriteBatch->Begin(SpriteSortMode_BackToFront);
-    
-    // Canvas의 uiObjects 배열 순회 (계층 순서 보장)
-    for (auto* obj : canvas->GetUIObjects())
-    {
-        obj->RenderUI();
-    }
-    
+}
+
+void RenderManager::EndUI()
+{
+    if (!spriteBatch)
+        return;
+
     spriteBatch->End();
 }
 
 void RenderManager::BeginDebug()
 {
-    // DebugRenderer로 위임
+    // DebugRenderer 사용
     DebugRenderer::Instance().Begin(screenWidth, screenHeight);
 }
 
 void RenderManager::EndDebug()
 {
-    // DebugRenderer로 위임
+    // DebugRenderer 사용
     DebugRenderer::Instance().End();
 }
 

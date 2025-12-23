@@ -29,11 +29,9 @@ public:
     void BeginFrame();
     void EndFrame();  // UI는 EndFrame()에서 자동 렌더링
 
-    // Canvas 설정
-    void SetCanvas(Canvas* canvas);
-
     // UI 렌더링 (Canvas의 uiObjects만 순회)
-    void RenderUI();
+    void BeginUI();
+    void EndUI();
 
     // 디버그 렌더링 사이클 (DebugRenderer로 위임)
     void BeginDebug();
@@ -41,6 +39,10 @@ public:
 
     // SpriteBatch 접근
     SpriteBatch* GetSpriteBatch() const { return spriteBatch.get(); }
+
+    // Device 접근자 추가
+    ID3D11Device* GetDevice() const { return device; }
+    ID3D11DeviceContext* GetContext() const { return context; }
 
     // Layer depth 계산 헬퍼
     static float GetLayerDepth(RenderLayer layer, float subDepth = 0.5f);
@@ -64,7 +66,6 @@ private:
     ID3D11Device* device = nullptr;
     ID3D11DeviceContext* context = nullptr;
     class Camera2D* camera = nullptr;
-    Canvas* canvas = nullptr;
     
     int screenWidth = 1280;
     int screenHeight = 720;

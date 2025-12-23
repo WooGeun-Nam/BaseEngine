@@ -1,8 +1,6 @@
 #include "Font.h"
-#include "Core/Application.h"
+#include "Graphics/RenderManager.h"
 #include <cassert>
-
-extern Application* g_Application;
 
 bool Font::Load(const std::wstring& fontFilePath)
 {
@@ -16,13 +14,7 @@ bool Font::Load(const std::wstring& fontFilePath)
     
     try
     {
-        if (!g_Application)
-        {
-            assert(!"Application not initialized");
-            return false;
-        }
-
-        ID3D11Device* device = g_Application->GetDevice();
+        ID3D11Device* device = RenderManager::Instance().GetDevice();
         if (!device)
         {
             assert(!"D3D11 Device not available");
@@ -42,7 +34,7 @@ bool Font::Load(const std::wstring& fontFilePath)
     }
     catch (...)
     {
-        // 파일이 없거나 형식이 잘못된 경우
+        // 파일이 없거나 포맷이 잘못된 경우
         assert(!"Font file load failed - check if .spritefont file exists");
         return false;
     }

@@ -19,7 +19,7 @@
 
 void TestScene::OnEnter()
 {
-    // ===== 씬 초기화 =====
+    // 씬 초기화
     RenderManager::Instance().SetCamera(&camera);
 
     auto sc = new GameObject();
@@ -57,12 +57,12 @@ void TestScene::CreateUIObjects()
     // Canvas GameObject 생성
     auto canvasObj = new GameObject();
     canvasObj->SetApplication(app);
-    auto canvas = canvasObj->AddComponent<Canvas>();
-    canvas->SetScreenSize(app->GetWindowWidth(), app->GetWindowHeight());
+    auto canvasCom = canvasObj->AddComponent<Canvas>();
+    canvasCom->SetScreenSize(app->GetWindowWidth(), app->GetWindowHeight());
     AddGameObject(canvasObj);
 
-    // RenderManager에 Canvas 등록
-    RenderManager::Instance().SetCanvas(canvas);
+	// 나중에 SetCanvas 필요없이 자동으로 Scene의 Canvas를 찾도록 변경필요
+    SetCanvas(canvasCom);
 
     // Text UI 테스트
     CreateTextUI(canvasObj, L"TitleText", nanumFont, L"BaseEngine - 테스트신",
@@ -85,7 +85,7 @@ void TestScene::CreateUIObjects()
     panelObj->SetName(L"InventoryPanel");
     panelObj->SetApplication(app);
     panelObj->SetParent(canvasObj);
-    AddGameObject(panelObj);  // ✅ Scene에 추가
+    AddGameObject(panelObj);
 
     auto panelRect = panelObj->AddComponent<RectTransform>();
     panelRect->anchor = RectTransform::Anchor::MiddleRight;
@@ -100,7 +100,7 @@ void TestScene::CreateUIObjects()
     sliderObj->SetName(L"VolumeSlider");
     sliderObj->SetApplication(app);
     sliderObj->SetParent(canvasObj);
-    AddGameObject(sliderObj);  // ✅ Scene에 추가
+    AddGameObject(sliderObj);
 
     auto sliderRect = sliderObj->AddComponent<RectTransform>();
     sliderRect->anchor = RectTransform::Anchor::TopLeft;
@@ -116,7 +116,7 @@ void TestScene::CreateUIObjects()
     // Slider 라벨
     auto sliderLabelObj = new GameObject();
     sliderLabelObj->SetParent(sliderObj);
-    AddGameObject(sliderLabelObj);  // ✅ Scene에 추가
+    AddGameObject(sliderLabelObj);
     
     auto sliderLabelRect = sliderLabelObj->AddComponent<RectTransform>();
     sliderLabelRect->anchor = RectTransform::Anchor::TopLeft;
@@ -138,7 +138,7 @@ void TestScene::CreateUIObjects()
     scrollViewObj->SetName(L"ChatScrollView");
     scrollViewObj->SetApplication(app);
     scrollViewObj->SetParent(canvasObj);
-    AddGameObject(scrollViewObj);  // ✅ Scene에 추가
+    AddGameObject(scrollViewObj);
 
     auto scrollRect = scrollViewObj->AddComponent<RectTransform>();
     scrollRect->anchor = RectTransform::Anchor::BottomLeft;
@@ -158,7 +158,7 @@ void TestScene::CreateUIObjects()
     auto hpBarObj = new GameObject();
     hpBarObj->SetName(L"HealthBar");
     hpBarObj->SetParent(canvasObj);
-    AddGameObject(hpBarObj);  // ✅ Scene에 추가
+    AddGameObject(hpBarObj);
 
     auto hpRect = hpBarObj->AddComponent<RectTransform>();
     hpRect->anchor = RectTransform::Anchor::World;
@@ -195,8 +195,7 @@ void TestScene::CreateTextUI(GameObject* parent, const std::wstring& name,
     textObj->SetName(name);
     textObj->SetApplication(app);
     textObj->SetParent(parent);  // Canvas에 렌더링 등록
-    
-    // ✅ Scene에 추가 (Update 받기 위해)
+
     AddGameObject(textObj);
 
     auto rectTransform = textObj->AddComponent<RectTransform>();

@@ -49,6 +49,19 @@ void SceneBase::Render()
     }
 }
 
+void SceneBase::RenderUI()
+{
+	// canvas가 없으면 종료
+    if (!canvas)
+        return;
+
+    // Canvas의 uiObjects 배열 순회
+    for (auto* obj : canvas->GetUIObjects())
+    {
+        obj->RenderUI();
+    }
+}
+
 void SceneBase::DebugRender()
 {
     for (auto* obj : gameObjects)
