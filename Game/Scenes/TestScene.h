@@ -26,8 +26,8 @@ public:
 private:
     void CreateUIObjects();  // UI GameObject 생성 헬퍼 함수
     
-    // UI 텍스트 생성 헬퍼 함수
-    void CreateTextUI(GameObject* parent, const std::wstring& name,
+    // Canvas GameObject를 받도록 수정
+    void CreateTextUI(GameObject* canvasObj, const std::wstring& name,
                      std::shared_ptr<Font> font, const std::wstring& text,
                      RectTransform::Anchor anchor, const DirectX::XMFLOAT2& position,
                      const DirectX::XMFLOAT4& color, float scale);

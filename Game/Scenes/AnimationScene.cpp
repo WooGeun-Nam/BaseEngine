@@ -22,7 +22,7 @@
 
 void AnimationScene::OnEnter()
 {
-    // 씬 전환 후 카메라를 렌더 디바이스에 다시 설정
+    // 카메라 설정
     RenderManager::Instance().SetCamera(&camera);
 
     auto sc = new GameObject();
@@ -31,7 +31,7 @@ void AnimationScene::OnEnter()
     s->SetCamera(&camera);
     AddGameObject(sc);
 
-    // 1. 스프라이트 시트 임포트 (하나의 .sheet 파일 생성)
+    // 스프라이트 시트 임포트
     SpriteImporter::ImportSheet(
         L"Assets/Textures/animTest.png",
         L"Assets/Sheets/",
@@ -39,16 +39,15 @@ void AnimationScene::OnEnter()
         L"animTest"
     );
 
-    // 2. 애니메이션 임포트 (sheet 참조 + frame indices)
+    // 애니메이션 임포트
     AnimationImporter::ImportAnimationFromSheet(
         L"attack",
-        L"animTest",  // sheet 베이스명
+        L"animTest",
         L"Assets/Animations/animTest_attack.anim",
-        4, 10,  // 시트 내 프레임 인덱스 범위
+        4, 10,
         12.0f
     );
 
-    // ===== 애니메이션 오브젝트 =====
     auto attack = Resources::Get<AnimationClip>(L"animTest_attack");
     if (!attack)
     {

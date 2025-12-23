@@ -5,7 +5,6 @@
 #include "Core/Transform.h"
 
 class Application;
-class Canvas;
 
 class GameObject : public Component
 {
@@ -16,23 +15,20 @@ public:
     void FixedUpdate(float fixedDelta);
     void Update(float deltaTime);
     void LateUpdate(float deltaTime);
-    void Render();              // Game 렌더링 (Canvas 제외)
+    void Render();              // World 렌더링
     void RenderUI();            // UI 렌더링
     void DebugRender();
 
     void SetApplication(Application* app) { application = app; }
     Application* GetApplication() const { return application; }
 
-    // 부모-자식 관계 (계층 구조용, 렌더링 순회는 Scene/Canvas에서)
+    // 부모-자식 관계
     void SetParent(GameObject* parent);
     GameObject* GetParent() const { return parent; }
     
     void AddChild(GameObject* child);
     void RemoveChild(GameObject* child);
     const std::vector<GameObject*>& GetChildren() const { return children; }
-    
-    // ? 부모 계층에서 Canvas 찾기
-    static Canvas* FindCanvasInParents(GameObject* obj);
 
     // AddComponent 템플릿
     template<typename T>
@@ -93,7 +89,7 @@ private:
     Application* application = nullptr;
     std::vector<Component*> components;
     
-    // 계층 구조 (Transform 상속용, 렌더링 순회는 Scene/Canvas에서)
+    // 부모-자식 관계 (Transform 계층용)
     GameObject* parent = nullptr;
     std::vector<GameObject*> children;
 };

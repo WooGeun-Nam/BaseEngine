@@ -57,12 +57,9 @@ void TestScene::CreateUIObjects()
     // Canvas GameObject 생성
     auto canvasObj = new GameObject();
     canvasObj->SetApplication(app);
-    auto canvasCom = canvasObj->AddComponent<Canvas>();
-    canvasCom->SetScreenSize(app->GetWindowWidth(), app->GetWindowHeight());
-    AddGameObject(canvasObj);
-
-	// 나중에 SetCanvas 필요없이 자동으로 Scene의 Canvas를 찾도록 변경필요
-    SetCanvas(canvasCom);
+    auto canvas = canvasObj->AddComponent<Canvas>();
+    canvas->SetScreenSize(app->GetWindowWidth(), app->GetWindowHeight());
+    AddUIObject(canvasObj, canvasObj);
 
     // Text UI 테스트
     CreateTextUI(canvasObj, L"TitleText", nanumFont, L"BaseEngine - 테스트신",
@@ -84,8 +81,7 @@ void TestScene::CreateUIObjects()
     auto panelObj = new GameObject();
     panelObj->SetName(L"InventoryPanel");
     panelObj->SetApplication(app);
-    panelObj->SetParent(canvasObj);
-    AddGameObject(panelObj);
+    AddUIObject(panelObj, canvasObj);
 
     auto panelRect = panelObj->AddComponent<RectTransform>();
     panelRect->anchor = RectTransform::Anchor::MiddleRight;
@@ -93,14 +89,13 @@ void TestScene::CreateUIObjects()
     panelRect->sizeDelta = { 400, 300 };
 
     auto panel = panelObj->AddComponent<Panel>();
-    panel->SetColor(0.15f, 0.15f, 0.15f, 0.95f);  // 거의 불투명한 어두운 회색
+    panel->SetColor(0.15f, 0.15f, 0.15f, 0.95f);
 
     // Slider 볼륨
     auto sliderObj = new GameObject();
     sliderObj->SetName(L"VolumeSlider");
     sliderObj->SetApplication(app);
-    sliderObj->SetParent(canvasObj);
-    AddGameObject(sliderObj);
+    AddUIObject(sliderObj, canvasObj);
 
     auto sliderRect = sliderObj->AddComponent<RectTransform>();
     sliderRect->anchor = RectTransform::Anchor::TopLeft;
@@ -116,7 +111,7 @@ void TestScene::CreateUIObjects()
     // Slider 라벨
     auto sliderLabelObj = new GameObject();
     sliderLabelObj->SetParent(sliderObj);
-    AddGameObject(sliderLabelObj);
+    AddUIObject(sliderLabelObj, canvasObj);
     
     auto sliderLabelRect = sliderLabelObj->AddComponent<RectTransform>();
     sliderLabelRect->anchor = RectTransform::Anchor::TopLeft;
@@ -127,7 +122,6 @@ void TestScene::CreateUIObjects()
     sliderLabel->SetColor(0, 0, 0, 1);
     sliderLabel->SetScale(0.8f);
 
-    // 함수 콜백
     slider->onValueChanged = [sliderLabel](float value) {
         sliderLabel->SetText(
             L"Volume: " + std::to_wstring(static_cast<int>(value * 100)) + L"%");
@@ -137,8 +131,7 @@ void TestScene::CreateUIObjects()
     auto scrollViewObj = new GameObject();
     scrollViewObj->SetName(L"ChatScrollView");
     scrollViewObj->SetApplication(app);
-    scrollViewObj->SetParent(canvasObj);
-    AddGameObject(scrollViewObj);
+    AddUIObject(scrollViewObj, canvasObj);
 
     auto scrollRect = scrollViewObj->AddComponent<RectTransform>();
     scrollRect->anchor = RectTransform::Anchor::BottomLeft;
@@ -146,7 +139,7 @@ void TestScene::CreateUIObjects()
     scrollRect->sizeDelta = { 350, 200 };
 
     auto scrollView = scrollViewObj->AddComponent<ScrollView>();
-    scrollView->SetContentSize(350, 600);  // 콘텐츠 크기 설정
+    scrollView->SetContentSize(350, 600);
     scrollView->SetVerticalScroll(true);
     scrollView->SetHorizontalScroll(false);
     scrollView->SetScrollbarColor({ 0.7f, 0.7f, 0.7f, 0.9f });
@@ -157,36 +150,34 @@ void TestScene::CreateUIObjects()
     // 체력바 Slider
     auto hpBarObj = new GameObject();
     hpBarObj->SetName(L"HealthBar");
-    hpBarObj->SetParent(canvasObj);
-    AddGameObject(hpBarObj);
+    AddUIObject(hpBarObj, canvasObj);
 
     auto hpRect = hpBarObj->AddComponent<RectTransform>();
     hpRect->anchor = RectTransform::Anchor::World;
-    hpRect->anchoredPosition = { 0, -100 };  // 초기 월드 좌표 (HPControll에서 업데이트됨)
-    hpRect->sizeDelta = { 150, 20 };  // 체력바 크기
+    hpRect->anchoredPosition = { 0, -100 };
+    hpRect->sizeDelta = { 150, 20 };
 
     auto hpBar = hpBarObj->AddComponent<Slider>();
-    hpBar->SetValue(0.7f);  // 체력
+    hpBar->SetValue(0.7f);
     hpBar->SetBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.8f });
-    hpBar->SetFillColor({ 0.8f, 0.1f, 0.1f, 1.0f }); // 빨강
-    hpBar->SetHandleColor({ 0, 0, 0, 0 }); // 핸들 X
+    hpBar->SetFillColor({ 0.8f, 0.1f, 0.1f, 1.0f });
+    hpBar->SetHandleColor({ 0, 0, 0, 0 });
 
     // HPControll GameObject 생성
     auto hpObj = new GameObject();
     hpObj->SetApplication(app);
     auto hpController = hpObj->AddComponent<HPControll>();
 
-    // 데이터 설정 (캐릭터 Transform, 체력바 RectTransform)
     hpController->SetData(
-        &obj->transform,  // 캐릭터 Transform 포인터
-        hpRect            // 체력바 RectTransform
+        &obj->transform,
+        hpRect
     );
-    hpController->SetOffsetY(100.0f);  // 캐릭터 머리 위 100픽셀
+    hpController->SetOffsetY(100.0f);
 
     AddGameObject(hpObj);
 }
 
-void TestScene::CreateTextUI(GameObject* parent, const std::wstring& name,
+void TestScene::CreateTextUI(GameObject* canvasObj, const std::wstring& name,
                              std::shared_ptr<Font> font, const std::wstring& text,
                              RectTransform::Anchor anchor, const DirectX::XMFLOAT2& position,
                              const DirectX::XMFLOAT4& color, float scale)
@@ -194,9 +185,8 @@ void TestScene::CreateTextUI(GameObject* parent, const std::wstring& name,
     auto textObj = new GameObject();
     textObj->SetName(name);
     textObj->SetApplication(app);
-    textObj->SetParent(parent);  // Canvas에 렌더링 등록
 
-    AddGameObject(textObj);
+    AddUIObject(textObj, canvasObj);
 
     auto rectTransform = textObj->AddComponent<RectTransform>();
     rectTransform->anchor = anchor;

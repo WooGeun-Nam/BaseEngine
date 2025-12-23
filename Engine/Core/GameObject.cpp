@@ -1,24 +1,23 @@
 ﻿#include "Core/GameObject.h"
-#include "UI/Canvas.h"
 #include "UI/UIBase.h"
-#include "Core/SceneBase.h"
 
 GameObject::~GameObject()
 {
-    // Canvas에서 제거
+    // 부모-자식 관계 해제 (중복 삭제 방지)
     if (parent)
     {
-        Canvas* canvas = parent->GetComponent<Canvas>();
-        if (canvas)
-        {
-            canvas->RemoveUIObject(this);
-        }
+        parent->RemoveChild(this);
+        parent = nullptr;
     }
     
-    // 자식들 삭제 (부모 삭제되면 자식들 삭제)
+    // 자식들의 부모 포인터 먼저 nullptr로 설정
     for (auto* child : children)
     {
-        delete child;
+        if (child)
+        {
+            child->parent = nullptr;  // 부모 참조 제거
+            delete child;
+        }
     }
     children.clear();
 
@@ -33,45 +32,19 @@ GameObject::~GameObject()
 
 void GameObject::SetParent(GameObject* newParent)
 {
-    // 기존 부모의 Canvas에서 제거
+    // 기존 부모에서 제거
     if (parent)
     {
-        Canvas* oldCanvas = FindCanvasInParents(parent);
-        if (oldCanvas)
-        {
-            oldCanvas->RemoveUIObject(this);
-        }
-        
         parent->RemoveChild(this);
     }
 
     parent = newParent;
 
-    // 새 부모 추가
+    // 새 부모에 추가
     if (parent)
     {
         parent->AddChild(this);
-        
-        // 새 부모의 Canvas에 등록 (렌더링용)
-        Canvas* newCanvas = FindCanvasInParents(parent);
-        if (newCanvas)
-        {
-            newCanvas->AddUIObject(this);
-        }
     }
-}
-
-// 부모 계층에서 Canvas 찾기
-Canvas* GameObject::FindCanvasInParents(GameObject* obj)
-{
-    while (obj)
-    {
-        Canvas* canvas = obj->GetComponent<Canvas>();
-        if (canvas)
-            return canvas;
-        obj = obj->GetParent();
-    }
-    return nullptr;
 }
 
 void GameObject::AddChild(GameObject* child)
@@ -126,25 +99,29 @@ void GameObject::LateUpdate(float deltaTime)
 }
 
 void GameObject::Render()
-{   
-    // 일반 GameObject 렌더링
+{
+    // World 컴포넌트만 렌더링 (UIBase가 아닌 것)
     for (auto* comp : components)
     {
         if (!comp->IsEnabled()) continue;
-        comp->Render();
+        
+        // UIBase가 아닌 컴포넌트만 렌더링
+        if (dynamic_cast<UIBase*>(comp) == nullptr)
+        {
+            comp->Render();
+        }
     }
 }
 
 void GameObject::RenderUI()
-{   
+{
+    // UI 컴포넌트만 렌더링 (UIBase 계열)
     for (auto* comp : components)
     {
         if (!comp->IsEnabled()) continue;
 
-		// UIBase 컴포넌트만 RenderUI 호출
-        UIBase* const uiTest = dynamic_cast<UIBase*>(comp);
-
-        if (uiTest != nullptr)
+        UIBase* uiComp = dynamic_cast<UIBase*>(comp);
+        if (uiComp != nullptr)
         {
             comp->RenderUI();
         }

@@ -20,24 +20,32 @@ public:
     virtual void RenderUI();
     virtual void DebugRender();
 
-    const std::vector<GameObject*>& GetGameObjects() const { return gameObjects; }
-
-    // Canvas 설정
-    void SetCanvas(Canvas* c) { canvas = c; }
-    Canvas* GetCanvas() const { return canvas; }
-
 protected:
-    // GameObject 추가 (Game Object)
+    // GameObject 등록 (World 전용)
     void AddGameObject(GameObject* object)
     {
-        gameObjects.push_back(object);
+        if (object)
+        {
+            worldObjects.push_back(object);
+        }
     }
+    
+    // UI GameObject 등록 (Canvas 필수)
+    void AddUIObject(GameObject* object, GameObject* canvasObj);
 
 protected:
-    // Scene이 모든 GameObject 관리 (Update 통합)
-    std::vector<GameObject*> gameObjects;
-    Canvas* canvas = nullptr;
+    // 렌더링 대상 GameObject 리스트
+    std::vector<GameObject*> worldObjects;  // World GameObject만
+    
+    // Canvas별로 UI 관리
+    struct CanvasGroup
+    {
+        Canvas* canvas;
+        GameObject* canvasObject;
+        std::vector<GameObject*> uiObjects;
+    };
+    std::vector<CanvasGroup> canvasGroups;
 
-    // PhysicsSystem은 Scene에 속하며, 각 씬마다 충돌을 관리한다.
+    // PhysicsSystem
     PhysicsSystem physicsSystem;
 };
