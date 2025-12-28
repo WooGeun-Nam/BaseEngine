@@ -67,6 +67,10 @@ Tool/MakeSpriteFont.exe 사용 명령어 예시 (# 윈도우에 설치된 패밀
 - 키보드 및 마우스 입력 처리
 - 실시간 입력 상태 감지
 
+#### Tools
+- **Sprite Importer Tool**: ImGui 기반 스프라이트 시트 임포터
+  - 스프라이트 시트를 `.sheet` 파일로 변환
+
 ---
 
 ### 요구 사항
@@ -83,6 +87,14 @@ Tool/MakeSpriteFont.exe 사용 명령어 예시 (# 윈도우에 설치된 패밀
 
 ```
 BaseEngine/
+├── Inc/                    # 외부 라이브러리 헤더
+│   ├── ImGui/             # ImGui UI 라이브러리
+│   ├── DirectXTex.h       # DirectX 텍스처 라이브러리
+│   ├── Audio.h            # DirectXTK Audio
+│   └── ...                # 기타 외부 헤더
+├── lib/                    # 외부 라이브러리 .lib 파일
+│   ├── DirectXTK.lib
+│   ├── DirectXTex.lib
 ├── Engine/                 # 엔진 코어 코드
 │   ├── Core/              # GameObject, Component, Scene, Transform
 │   ├── Graphics/          # 렌더링, Sprite, Camera, Animation
@@ -96,8 +108,9 @@ BaseEngine/
 │   ├── Scripts/           # 커스텀 컴포넌트
 │   └── Shaders/           # HLSL 셰이더
 ├── Tool/                  # 개발 도구
-│   ├── AnimationImporter # 애니메이션 임포터
-│   ├── SpriteImporter    # 스프라이트 임포터
+│   ├── SpriteImporter/    # 스프라이트 임포터
+│   ├── AnimationImporter/ # 애니메이션 임포터
+│   └── ...                # 기타 개발 도구
 └── Assets/                # 게임 에셋 (텍스처, 오디오, 폰트 등)
 ```
 
@@ -110,6 +123,7 @@ BaseEngine/
 - [DirectX Tool Kit](https://github.com/microsoft/DirectXTK) - DirectX 유틸리티
 - [DirectXTex](https://github.com/microsoft/DirectXTex) - 텍스처 로딩
 - [XAudio2](https://docs.microsoft.com/en-us/windows/win32/xaudio2/xaudio2-introduction) - 오디오 처리
+- [ImGui](https://github.com/ocornut/imgui) - GUI 라이브러리
 
 ---
 

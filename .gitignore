@@ -3,7 +3,7 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# Assets 폴더 내용물 제외 (폴더 구조는 유지)
+# Assets 폴더 제외 설정 (대용량 파일 방지)
 Docs/*
 Game/Assets/*
 !Game/Assets/.gitkeep

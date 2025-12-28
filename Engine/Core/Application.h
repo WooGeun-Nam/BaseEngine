@@ -7,10 +7,13 @@
 #include "Core/SceneManager.h"
 #include "Graphics/DebugRenderer.h"
 
+class SpriteImporterWindow;
+
 class Application
 {
 public:
     Application();
+    ~Application();
 
     bool initialize(HWND windowHandle, int width, int height);
     void run();
@@ -36,4 +39,11 @@ private:
     int windowHeight;
 
     float clearColor[4] = { 0.1f, 0.1f, 0.3f, 1.f };
+
+    // ImGui µµ±¸ Ã¢
+    SpriteImporterWindow* spriteImporterWindow;
+    bool imguiInitialized;
+
+    void InitializeImGui();
+    void ShutdownImGui();
 };

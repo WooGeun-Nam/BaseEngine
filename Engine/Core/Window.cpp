@@ -1,6 +1,13 @@
 #include "Core/Window.h"
 #include <windowsx.h> // GET_X_LPARAM, GET_Y_LPARAM, GET_WHEEL_DELTA_WPARAM
 
+// ImGui Win32 핸들러
+#include <ImGui/imgui.h>
+#include <ImGui/imgui_impl_win32.h>
+
+// Forward declare ImGui Win32 message handler
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 Window::Window() {}
 
 Window::~Window()
@@ -70,18 +77,50 @@ HWND Window::GetHandle() const
 
 LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    // ImGui에 먼저 메시지 전달
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+        return true;
+
     Window* window = reinterpret_cast<Window*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 
     if (window && window->input)
     {
+        // ImGui Context가 있을 때만 입력 캡처 체크
+        bool wantCaptureKeyboard = false;
+        bool wantCaptureMouse = false;
+        
+        if (ImGui::GetCurrentContext() != nullptr)
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            wantCaptureKeyboard = io.WantCaptureKeyboard;
+            wantCaptureMouse = io.WantCaptureMouse;
+        }
+        
         switch (msg)
         {
             // 키보드
         case WM_KEYDOWN:
-            window->input->OnKeyDown(wParam);
+            // F1 키는 항상 전달 (ImGui 도구 창 토글용)
+            if (wParam == VK_F1)
+            {
+                window->input->OnKeyDown(wParam);
+            }
+            // 다른 키는 ImGui가 사용하지 않을 때만 전달
+            else if (!wantCaptureKeyboard)
+            {
+                window->input->OnKeyDown(wParam);
+            }
             return 0;
         case WM_KEYUP:
-            window->input->OnKeyUp(wParam);
+            // F1 키는 항상 전달
+            if (wParam == VK_F1)
+            {
+                window->input->OnKeyUp(wParam);
+            }
+            else if (!wantCaptureKeyboard)
+            {
+                window->input->OnKeyUp(wParam);
+            }
             return 0;
 
             // 마우스 이동
@@ -89,37 +128,45 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         {
             int x = GET_X_LPARAM(lParam);
             int y = GET_Y_LPARAM(lParam);
+            // 마우스 위치는 항상 업데이트
             window->input->OnMouseMove(x, y);
             return 0;
         }
 
         // 마우스 버튼
         case WM_LBUTTONDOWN:
-            window->input->OnMouseDown(0); // Left
+            if (!wantCaptureMouse)
+                window->input->OnMouseDown(0); // Left
             return 0;
         case WM_LBUTTONUP:
-            window->input->OnMouseUp(0);
+            if (!wantCaptureMouse)
+                window->input->OnMouseUp(0);
             return 0;
 
         case WM_RBUTTONDOWN:
-            window->input->OnMouseDown(1); // Right
+            if (!wantCaptureMouse)
+                window->input->OnMouseDown(1); // Right
             return 0;
         case WM_RBUTTONUP:
-            window->input->OnMouseUp(1);
+            if (!wantCaptureMouse)
+                window->input->OnMouseUp(1);
             return 0;
 
         case WM_MBUTTONDOWN:
-            window->input->OnMouseDown(2); // Middle
+            if (!wantCaptureMouse)
+                window->input->OnMouseDown(2); // Middle
             return 0;
         case WM_MBUTTONUP:
-            window->input->OnMouseUp(2);
+            if (!wantCaptureMouse)
+                window->input->OnMouseUp(2);
             return 0;
 
             // 마우스 휠
         case WM_MOUSEWHEEL:
         {
             int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-            window->input->OnMouseWheel(delta);
+            if (!wantCaptureMouse)
+                window->input->OnMouseWheel(delta);
             return 0;
         }
         }

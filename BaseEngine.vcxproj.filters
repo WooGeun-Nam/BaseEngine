@@ -91,6 +91,12 @@
     <Filter Include="헤더 파일\Engine\UI">
       <UniqueIdentifier>{b6f9fe7a-d603-4830-83a6-54f16e530aa8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\ImGui">
+      <UniqueIdentifier>{6b9392ba-5dcc-43d2-a586-387abfea2aad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\ImGui">
+      <UniqueIdentifier>{0b5429ef-99af-49e4-a35a-0da73556e134}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -236,6 +242,27 @@
     </ClCompile>
     <ClCompile Include="Engine\UI\Slider.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui_widgets.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui_draw.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui_impl_dx11.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui_impl_win32.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Inc\ImGui\imgui_tables.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\SpriteImporterWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -406,6 +433,33 @@
     </ClInclude>
     <ClInclude Include="Game\Scripts\HpControll.h">
       <Filter>헤더 파일\Game\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imgui_internal.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imconfig.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imgui.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imgui_impl_dx11.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imgui_impl_win32.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imstb_rectpack.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imstb_textedit.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\ImGui\imstb_truetype.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\SpriteImporterWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -65,8 +65,15 @@
     <ClCompile Include="Game\Scenes\TestScene.cpp" />
     <ClCompile Include="Game\Scripts\MovementController.cpp" />
     <ClCompile Include="Game\Scripts\Player.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="Inc\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Tool\AnimationImporter.cpp" />
     <ClCompile Include="Tool\SpriteImporter.cpp" />
+    <ClCompile Include="Tool\SpriteImporterWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Audio\AudioClip.h" />
@@ -123,8 +130,17 @@
     <ClInclude Include="Game\Scripts\MovementController.h" />
     <ClInclude Include="Game\Scripts\Player.h" />
     <ClInclude Include="Game\Scripts\SceneController.h" />
+    <ClInclude Include="Inc\ImGui\imconfig.h" />
+    <ClInclude Include="Inc\ImGui\imgui.h" />
+    <ClInclude Include="Inc\ImGui\imgui_impl_dx11.h" />
+    <ClInclude Include="Inc\ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="Inc\ImGui\imgui_internal.h" />
+    <ClInclude Include="Inc\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="Inc\ImGui\imstb_textedit.h" />
+    <ClInclude Include="Inc\ImGui\imstb_truetype.h" />
     <ClInclude Include="Tool\AnimationImporter.h" />
     <ClInclude Include="Tool\SpriteImporter.h" />
+    <ClInclude Include="Tool\SpriteImporterWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

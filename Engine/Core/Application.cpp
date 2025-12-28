@@ -5,10 +5,83 @@
 #include "Graphics/RenderManager.h"
 #include <combaseapi.h>
 
+// ImGui 포함
+#include <ImGui/imgui.h>
+#include <ImGui/imgui_impl_win32.h>
+#include <ImGui/imgui_impl_dx11.h>
+#include "../Tool/SpriteImporterWindow.h"
+
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
+    , spriteImporterWindow(nullptr)
+    , imguiInitialized(false)
 {
+}
+
+Application::~Application()
+{
+    ShutdownImGui();
+}
+
+void Application::InitializeImGui()
+{
+    if (imguiInitialized)
+        return;
+
+    // ImGui 초기화
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    // ImGui 스타일 설정
+    ImGui::StyleColorsDark();
+
+    // 한글 폰트 로드
+    ImFontConfig fontConfig;
+    fontConfig.OversampleH = 2;
+    fontConfig.OversampleV = 2;
+    
+    // 한글 범위 설정
+    static const ImWchar ranges[] = {
+        0x0020, 0x00FF, // Basic Latin + Latin Supplement
+        0x3131, 0x3163, // Korean Jamo
+        0xAC00, 0xD7A3, // Korean Syllables
+        0,
+    };
+    
+    // Windows 기본 한글 폰트 (맑은 고딕) 로드
+    ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 16.0f, &fontConfig, ranges);
+    if (font == nullptr)
+    {
+        // 폰트 로드 실패 시 기본 폰트 사용
+        io.Fonts->AddFontDefault();
+    }
+
+    // ImGui Win32 + DX11 백엔드 초기화
+    ImGui_ImplWin32_Init(windowHandle);
+    ImGui_ImplDX11_Init(d3dDevice.getDevice(), d3dDevice.getContext());
+
+    // Sprite Importer 창 생성 (Device와 Context 전달)
+    spriteImporterWindow = new SpriteImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
+
+    imguiInitialized = true;
+}
+
+void Application::ShutdownImGui()
+{
+    if (!imguiInitialized)
+        return;
+
+    delete spriteImporterWindow;
+    spriteImporterWindow = nullptr;
+
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    imguiInitialized = false;
 }
 
 bool Application::initialize(HWND window, int width, int height)
@@ -53,6 +126,9 @@ bool Application::initialize(HWND window, int width, int height)
     // Assets 폴더 캐싱
     Resources::LoadAllAssetsFromFolder(L"Assets");
 
+    // ImGui 초기화
+    InitializeImGui();
+
     return true;
 }
 
@@ -74,6 +150,9 @@ void Application::run()
         {
             if (msg.message == WM_QUIT)
             {
+                // ImGui 정리
+                ShutdownImGui();
+                
                 // COM 해제
                 CoUninitialize();
                 return;
@@ -111,6 +190,12 @@ void Application::run()
         // 입력 상태 업데이트
         input.Update();
 
+        // F1 키로 ImGui 도구 창 토글
+        if (input.WasKeyPressed(VK_F1) && spriteImporterWindow)
+        {
+            spriteImporterWindow->SetOpen(!spriteImporterWindow->IsOpen());
+        }
+
         // Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
@@ -134,6 +219,31 @@ void Application::run()
             RenderManager::Instance().EndDebug();
         }
         #endif
+
+        // ImGui 렌더링
+        if (imguiInitialized)
+        {
+            // ImGui 새 프레임 시작
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
+
+            // AnimationScene에서만 Sprite Importer 도구 창 렌더링
+            if (spriteImporterWindow)
+            {
+                // 현재 씬이 AnimationScene인지 확인
+                std::string currentSceneName = sceneManager.GetCurrentSceneName();
+                
+                if (currentSceneName == "AnimationScene")
+                {
+                    spriteImporterWindow->Render();
+                }
+            }
+
+            // ImGui 렌더링 완료
+            ImGui::Render();
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        }
 
         // 프레임 종료
         d3dDevice.endFrame();
