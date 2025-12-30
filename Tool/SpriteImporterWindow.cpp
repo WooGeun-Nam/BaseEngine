@@ -1,4 +1,4 @@
-#include "SpriteImporterWindow.h"
+ï»¿#include "SpriteImporterWindow.h"
 #include "SpriteImporter.h"
 #include "Resource/Resources.h"
 #include <ImGui/imgui.h>
@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <DirectXTex.h>
 #include <d3d11.h>
+#include <shellapi.h>
 
 namespace fs = std::filesystem;
 
@@ -16,23 +17,33 @@ SpriteImporterWindow::SpriteImporterWindow(ID3D11Device* device, ID3D11DeviceCon
     , isOpen(true)
     , frameWidth(64)
     , frameHeight(64)
+    , cropTopLeftX(0)
+    , cropTopLeftY(0)
+    , cropBottomRightX(0)
+    , cropBottomRightY(0)
+    , regionSelected(false)
     , showSuccessMessage(false)
     , showErrorMessage(false)
     , previewTexture(nullptr)
     , previewWidth(0)
     , previewHeight(0)
+    , selectedFileIndex(-1)
 {
     memset(imagePathBuffer, 0, sizeof(imagePathBuffer));
     memset(outputFolderBuffer, 0, sizeof(outputFolderBuffer));
     memset(spriteNameBuffer, 0, sizeof(spriteNameBuffer));
 
-    // ±âº»°ª ¼³Á¤
+    // ê¸°ë³¸ê°’ ì„¤ì •
     strcpy_s(outputFolderBuffer, "Assets/Sheets/");
+    
+    // Assets/Textures í´ë” ìŠ¤ìº”
+    ScanTextureFolder();
 }
 
 SpriteImporterWindow::~SpriteImporterWindow()
 {
     ReleasePreviewTexture();
+    ReleaseThumbnails();
 }
 
 void SpriteImporterWindow::Render()
@@ -40,46 +51,210 @@ void SpriteImporterWindow::Render()
     if (!isOpen)
         return;
 
-    ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(1000, 700), ImGuiCond_FirstUseEver);
     ImGui::Begin("Sprite Importer Tool", &isOpen);
 
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Import Sprite Sheet");
     ImGui::Separator();
     ImGui::Spacing();
 
-    // ÀÌ¹ÌÁö ÆÄÀÏ °æ·Î
-    ImGui::Text("Image Path:");
-    ImGui::PushItemWidth(-100);
-    ImGui::InputText("##ImagePath", imagePathBuffer, sizeof(imagePathBuffer));
-    ImGui::PopItemWidth();
-    ImGui::SameLine();
-    if (ImGui::Button("Browse##Image", ImVec2(90, 0)))
+    // 2ê°œì˜ ì»¬ëŸ¼ìœ¼ë¡œ ë¶„í• 
+    ImGui::Columns(2, "MainColumns", true);
+    ImGui::SetColumnWidth(0, 300); 
+
+    // ì™¼ìª½: íŒŒì¼ ëª©ë¡
+    ImGui::BeginChild("FileList", ImVec2(0, 0), true);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Assets/Textures");
+    ImGui::Separator();
+    
+    // ìƒˆë¡œê³ ì¹¨ê³¼ Browse ë²„íŠ¼ (ìƒë‹¨ì— ë°°ì¹˜)
+    // Refresh ë²„íŠ¼
+    if (ImGui::Button("Refresh", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f - 2, 0)))
     {
-        OpenFileDialog();
+        ScanTextureFolder();
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Refresh texture list");
     }
     
-    // ¼±ÅÃµÈ °æ·Î°¡ ÀÖÀ¸¸é ÆÄÀÏ¸í¸¸ Ç¥½Ã
+    ImGui::SameLine();
+    
+    // Browse ë²„íŠ¼ (í´ë” ì—´ê¸°)
+    if (ImGui::Button("Open Folder", ImVec2(-1, 0)))
+    {
+        OpenFileBrowser();
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Open Assets/Textures folder in Windows Explorer");
+    }
+    
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // 2ì—´ ê·¸ë¦¬ë“œë¡œ í‘œì‹œ
+    int columnsCount = 2;
+    float thumbnailSize = 100.0f;
+    float cellWidth = thumbnailSize + 20.0f;
+    float cellHeight = thumbnailSize + 50.0f;
+    
+    for (int i = 0; i < textureFiles.size(); ++i)
+    {
+        const auto& fileInfo = textureFiles[i];
+        
+        ImGui::PushID(i);
+        
+        bool isSelected = (selectedFileIndex == i);
+        
+        // ì¸ë„¤ì¼ í‘œì‹œ
+        if (fileInfo.thumbnail)
+        {
+            // ê° ì…€ì„ ê·¸ë£¹ìœ¼ë¡œ ì‹œì‘
+            ImGui::BeginGroup();
+            
+            ImVec2 thumbSize(thumbnailSize, thumbnailSize);
+            
+            // Selectable ë°°ê²½
+            if (ImGui::Selectable("##select", isSelected, 0, ImVec2(cellWidth - 5, cellHeight)))
+            {
+                selectedFileIndex = i;
+                selectedImagePath = fileInfo.fullPath;
+                LoadPreviewImage(selectedImagePath);
+                
+                // ì˜ì—­ ì´ˆê¸°í™” (ì „ì²´ ì´ë¯¸ì§€ë¡œ ì„¤ì •)
+                cropTopLeftX = 0;
+                cropTopLeftY = 0;
+                cropBottomRightX = previewWidth;
+                cropBottomRightY = previewHeight;
+                regionSelected = true;
+                
+                // íŒŒì¼ëª…ì„ imagePathBufferì— í‘œì‹œ
+                std::string fileName = WStringToString(fileInfo.filename);
+                strcpy_s(imagePathBuffer, fileName.c_str());
+            }
+            
+            // ê°™ì€ ìœ„ì¹˜ì— ì¸ë„¤ì¼ ì´ë¯¸ì§€ í‘œì‹œ
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - cellHeight + 5);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+            ImGui::Image((void*)fileInfo.thumbnail, thumbSize);
+            
+            // íŒŒì¼ëª…
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+            std::string displayName = WStringToString(fileInfo.filename);
+            if (displayName.length() > 15)
+                displayName = displayName.substr(0, 12) + "...";
+            ImGui::TextWrapped("%s", displayName.c_str());
+            
+            // í¬ê¸° ì •ë³´
+            if (fileInfo.width > 0 && fileInfo.height > 0)
+            {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+                ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), 
+                    "%dx%d", fileInfo.width, fileInfo.height);
+            }
+            
+            ImGui::EndGroup();
+            
+            // ë‹¤ìŒ ì—´ë¡œ ì´ë™ (2ì—´ë§ˆë‹¤ ì¤„ë°”ê¿ˆ)
+            if ((i + 1) % columnsCount != 0)
+            {
+                ImGui::SameLine();
+            }
+        }
+        
+        ImGui::PopID();
+    }
+
+    ImGui::EndChild();
+
+    ImGui::NextColumn();
+
+    // === ì˜¤ë¥¸ìª½: ì„¤ì • ë° ë¯¸ë¦¬ë³´ê¸° ===
+    ImGui::BeginChild("Settings");
+
+    // ì„ íƒëœ íŒŒì¼ í‘œì‹œ
+    ImGui::Text("Selected File:");
     if (strlen(imagePathBuffer) > 0)
     {
         std::string displayPath = imagePathBuffer;
-        size_t lastSlash = displayPath.find_last_of("\\/");
-        if (lastSlash != std::string::npos)
-        {
-            std::string fileName = displayPath.substr(lastSlash + 1);
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Selected: %s", fileName.c_str());
-        }
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", displayPath.c_str());
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "No file selected");
     }
 
     ImGui::Spacing();
 
-    // ÀÌ¹ÌÁö ¹Ì¸®º¸±â
+    // ì´ë¯¸ì§€ ë¯¸ë¦¬ë³´ê¸°
     if (previewTexture)
     {
         ImGui::Separator();
         ImGui::Text("Preview:");
+
+        // ì˜ì—­ ì§€ì • UI
+        ImGui::Text("Crop Region:");
+        ImGui::PushItemWidth(80);
+        ImGui::Text("Top-Left:");
+        ImGui::SameLine();
+        if (ImGui::InputInt("X##TopLeft", &cropTopLeftX))
+        {
+            if (cropTopLeftX < 0) cropTopLeftX = 0;
+            if (cropTopLeftX >= previewWidth) cropTopLeftX = previewWidth - 1;
+            regionSelected = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::InputInt("Y##TopLeft", &cropTopLeftY))
+        {
+            if (cropTopLeftY < 0) cropTopLeftY = 0;
+            if (cropTopLeftY >= previewHeight) cropTopLeftY = previewHeight - 1;
+            regionSelected = true;
+        }
         
-        // ¹Ì¸®º¸±â Å©±â °è»ê (ÃÖ´ë 400px)
-        float maxPreviewSize = 400.0f;
+        ImGui::Text("Bottom-Right:");
+        ImGui::SameLine();
+        if (ImGui::InputInt("X##BottomRight", &cropBottomRightX))
+        {
+            if (cropBottomRightX <= cropTopLeftX) cropBottomRightX = cropTopLeftX + 1;
+            if (cropBottomRightX > previewWidth) cropBottomRightX = previewWidth;
+            regionSelected = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::InputInt("Y##BottomRight", &cropBottomRightY))
+        {
+            if (cropBottomRightY <= cropTopLeftY) cropBottomRightY = cropTopLeftY + 1;
+            if (cropBottomRightY > previewHeight) cropBottomRightY = previewHeight;
+            regionSelected = true;
+        }
+        ImGui::PopItemWidth();
+        
+        // ì „ì²´ ì˜ì—­ ì„ íƒ ë²„íŠ¼
+        ImGui::SameLine();
+        if (ImGui::Button("Reset##Region"))
+        {
+            cropTopLeftX = 0;
+            cropTopLeftY = 0;
+            cropBottomRightX = previewWidth;
+            cropBottomRightY = previewHeight;
+            regionSelected = true;
+        }
+        
+        ImGui::Spacing();
+
+        ImGui::Text("Frame Size:");
+        ImGui::PushItemWidth(120);
+        ImGui::InputInt("Width##Frame", &frameWidth);
+        ImGui::SameLine();
+        ImGui::InputInt("Height##Frame", &frameHeight);
+        ImGui::PopItemWidth();
+
+        // ìµœì†Œê°’ ì œí•œ
+        if (frameWidth < 1) frameWidth = 1;
+        if (frameHeight < 1) frameHeight = 1;
+
+        // ë¯¸ë¦¬ë³´ê¸° í¬ê¸° ê³„ì‚° (ìµœëŒ€ 500px)
+        float maxPreviewSize = 500.0f;
         float scale = 1.0f;
         if (previewWidth > maxPreviewSize || previewHeight > maxPreviewSize)
         {
@@ -90,83 +265,128 @@ void SpriteImporterWindow::Render()
         
         ImVec2 previewSize(previewWidth * scale, previewHeight * scale);
         
-        // ÀÌ¹ÌÁö Ç¥½Ã
+        // ì´ë¯¸ì§€ í‘œì‹œ
         ImVec2 cursorPos = ImGui::GetCursorScreenPos();
         ImGui::Image((void*)previewTexture, previewSize);
         
-        // ±×¸®µå ±×¸®±â
-        if (frameWidth > 0 && frameHeight > 0)
+        // ë§ˆìš°ìŠ¤ë¡œ ì˜ì—­ ì„ íƒ
+        ImVec2 mousePos = ImGui::GetMousePos();
+        bool isHovered = ImGui::IsItemHovered();
+        
+        // ì¢Œí´ë¦­ - TopLeft ì„¤ì •
+        if (isHovered && ImGui::IsMouseClicked(0))
+        {
+            float relX = (mousePos.x - cursorPos.x) / scale;
+            float relY = (mousePos.y - cursorPos.y) / scale;
+            
+            cropTopLeftX = static_cast<int>(relX);
+            cropTopLeftY = static_cast<int>(relY);
+            
+            // ë²”ìœ„ ì œí•œ
+            if (cropTopLeftX < 0) cropTopLeftX = 0;
+            if (cropTopLeftY < 0) cropTopLeftY = 0;
+            if (cropTopLeftX >= previewWidth) cropTopLeftX = previewWidth - 1;
+            if (cropTopLeftY >= previewHeight) cropTopLeftY = previewHeight - 1;
+            
+            // BottomRightê°€ TopLeftë³´ë‹¤ ì‘ìœ¼ë©´ ì¡°ì •
+            if (cropBottomRightX <= cropTopLeftX) cropBottomRightX = cropTopLeftX + 1;
+            if (cropBottomRightY <= cropTopLeftY) cropBottomRightY = cropTopLeftY + 1;
+            
+            regionSelected = true;
+        }
+        
+        // ìš°í´ë¦­ - BottomRight ì„¤ì •
+        if (isHovered && ImGui::IsMouseClicked(1))
+        {
+            float relX = (mousePos.x - cursorPos.x) / scale;
+            float relY = (mousePos.y - cursorPos.y) / scale;
+            
+            cropBottomRightX = static_cast<int>(relX);
+            cropBottomRightY = static_cast<int>(relY);
+            
+            // ë²”ìœ„ ì œí•œ
+            if (cropBottomRightX <= cropTopLeftX) cropBottomRightX = cropTopLeftX + 1;
+            if (cropBottomRightY <= cropTopLeftY) cropBottomRightY = cropTopLeftY + 1;
+            if (cropBottomRightX > previewWidth) cropBottomRightX = previewWidth;
+            if (cropBottomRightY > previewHeight) cropBottomRightY = previewHeight;
+            
+            regionSelected = true;
+        }
+        
+        // ê·¸ë¦¬ë“œ ê·¸ë¦¬ê¸°
+        if (regionSelected && frameWidth > 0 && frameHeight > 0)
         {
             ImDrawList* drawList = ImGui::GetWindowDrawList();
             
-            // ±×¸®µå °è»ê
-            int cols = previewWidth / frameWidth;
-            int rows = previewHeight / frameHeight;
+            // ì„ íƒëœ ì˜ì—­ í¬ê¸° ê³„ì‚°
+            int cropWidth = cropBottomRightX - cropTopLeftX;
+            int cropHeight = cropBottomRightY - cropTopLeftY;
             
-            ImU32 gridColor = IM_COL32(255, 255, 0, 180); // ³ë¶õ»ö
+            // ê·¸ë¦¬ë“œ ê³„ì‚° (ì„ íƒëœ ì˜ì—­ ê¸°ì¤€)
+            int cols = cropWidth / frameWidth;
+            int rows = cropHeight / frameHeight;
+            
+            // ì„ íƒ ì˜ì—­ í‘œì‹œ (ë°˜íˆ¬ëª… ì‚¬ê°í˜•)
+            ImVec2 regionTopLeft(cursorPos.x + cropTopLeftX * scale, cursorPos.y + cropTopLeftY * scale);
+            ImVec2 regionBottomRight(cursorPos.x + cropBottomRightX * scale, cursorPos.y + cropBottomRightY * scale);
+            
+            ImU32 regionColor = IM_COL32(0, 255, 255, 50); // ë°ì€ ì²­ë¡ìƒ‰ ë°˜íˆ¬ëª…
+            drawList->AddRectFilled(regionTopLeft, regionBottomRight, regionColor);
+            
+            // ì„ íƒ ì˜ì—­ í…Œë‘ë¦¬
+            ImU32 borderColor = IM_COL32(0, 255, 255, 255); // ì²­ë¡ìƒ‰
+            drawList->AddRect(regionTopLeft, regionBottomRight, borderColor, 0.0f, 0, 2.0f);
+            
+            // ê·¸ë¦¬ë“œ ì„ 
+            ImU32 gridColor = IM_COL32(255, 255, 0, 180); // ë…¸ë€ìƒ‰
             float thickness = 1.5f;
             
-            // ¼¼·Î¼±
+            // ì„¸ë¡œì„ 
             for (int x = 0; x <= cols; ++x)
             {
-                float xPos = cursorPos.x + (x * frameWidth * scale);
+                float xPos = regionTopLeft.x + (x * frameWidth * scale);
                 drawList->AddLine(
-                    ImVec2(xPos, cursorPos.y),
-                    ImVec2(xPos, cursorPos.y + previewSize.y),
+                    ImVec2(xPos, regionTopLeft.y),
+                    ImVec2(xPos, regionBottomRight.y),
                     gridColor,
                     thickness
                 );
             }
             
-            // °¡·Î¼±
+            // ê°€ë¡œì„ 
             for (int y = 0; y <= rows; ++y)
             {
-                float yPos = cursorPos.y + (y * frameHeight * scale);
+                float yPos = regionTopLeft.y + (y * frameHeight * scale);
                 drawList->AddLine(
-                    ImVec2(cursorPos.x, yPos),
-                    ImVec2(cursorPos.x + previewSize.x, yPos),
+                    ImVec2(regionTopLeft.x, yPos),
+                    ImVec2(regionBottomRight.x, yPos),
                     gridColor,
                     thickness
                 );
             }
             
-            // Á¤º¸ Ç¥½Ã
+            // ì •ë³´ í‘œì‹œ
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), 
-                "Grid: %d x %d = %d frames", cols, rows, cols * rows);
+                "Grid: %d x %d = %d frames (Region: %dx%d)", 
+                cols, rows, cols * rows, cropWidth, cropHeight);
+        }
+        
+        // ì„ íƒ ì¤‘ì¼ ë•Œ ì•ˆë‚´ ë©”ì‹œì§€
+        if (!regionSelected)
+        {
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), 
+                "Left-click: Top-Left | Right-click: Bottom-Right");
         }
         
         ImGui::Separator();
         ImGui::Spacing();
     }
 
-    // Ãâ·Â Æú´õ
-    ImGui::Text("Output Folder:");
-    ImGui::PushItemWidth(-100);
-    ImGui::InputText("##OutputFolder", outputFolderBuffer, sizeof(outputFolderBuffer));
-    ImGui::PopItemWidth();
-    ImGui::SameLine();
-    if (ImGui::Button("Clear##Folder", ImVec2(90, 0)))
-    {
-        strcpy_s(outputFolderBuffer, "Assets/Sheets/");
-    }
-
+    // ì¶œë ¥ í´ë”
+    ImGui::Text("Output Folder: %s", outputFolderBuffer);
     ImGui::Spacing();
 
-    // ÇÁ·¹ÀÓ Å©±â
-    ImGui::Text("Frame Size:");
-    ImGui::PushItemWidth(120);
-    ImGui::InputInt("Width##Frame", &frameWidth);
-    ImGui::SameLine();
-    ImGui::InputInt("Height##Frame", &frameHeight);
-    ImGui::PopItemWidth();
-
-    // ÃÖ¼Ò°ª Á¦ÇÑ
-    if (frameWidth < 1) frameWidth = 1;
-    if (frameHeight < 1) frameHeight = 1;
-
-    ImGui::Spacing();
-
-    // ½ºÇÁ¶óÀÌÆ® ÀÌ¸§ (¼±ÅÃ»çÇ×)
+    // ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„ (ì„ íƒì‚¬í•­)
     ImGui::Text("Sprite Name (Optional):");
     ImGui::PushItemWidth(-1);
     ImGui::InputText("##SpriteName", spriteNameBuffer, sizeof(spriteNameBuffer));
@@ -177,7 +397,7 @@ void SpriteImporterWindow::Render()
     ImGui::Separator();
     ImGui::Spacing();
 
-    // Import ¹öÆ°
+    // Import ë²„íŠ¼
     if (ImGui::Button("Import Sprite Sheet", ImVec2(-1, 40)))
     {
         ExecuteImport();
@@ -185,65 +405,34 @@ void SpriteImporterWindow::Render()
 
     ImGui::Spacing();
 
-    // »óÅÂ ¸Ş½ÃÁö
+    // ìƒíƒœ ë©”ì‹œì§€
     if (showSuccessMessage)
     {
         ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "? Success!");
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "[SUCCESS]");
         ImGui::TextWrapped("%s", statusMessage.c_str());
     }
 
     if (showErrorMessage)
     {
         ImGui::Separator();
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "? Error!");
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "[ERROR]");
         ImGui::TextWrapped("%s", statusMessage.c_str());
     }
 
+    ImGui::EndChild();
+    
+    ImGui::Columns(1);
     ImGui::End();
-}
-
-void SpriteImporterWindow::OpenFileDialog()
-{
-    OPENFILENAMEW ofn;
-    wchar_t szFile[512] = { 0 };
-
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile) / sizeof(wchar_t);
-    ofn.lpstrFilter = L"Image Files\0*.PNG;*.JPG;*.JPEG;*.BMP\0All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = L"Assets/Textures/";
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-    if (GetOpenFileNameW(&ofn) == TRUE)
-    {
-        // À¯´ÏÄÚµå °æ·Î¸¦ Á÷Á¢ ÀúÀå
-        selectedImagePath = szFile;
-        
-        // Ç¥½Ã¿ëÀ¸·Î UTF-8 º¯È¯ (°æ·Î Ç¥½Ã¸¸À» À§ÇÔ)
-        int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, NULL, 0, NULL, NULL);
-        if (sizeNeeded > 0 && sizeNeeded < sizeof(imagePathBuffer))
-        {
-            WideCharToMultiByte(CP_UTF8, 0, szFile, -1, imagePathBuffer, sizeof(imagePathBuffer), NULL, NULL);
-        }
-        
-        // ÀÌ¹ÌÁö ¹Ì¸®º¸±â ·Îµå
-        LoadPreviewImage(selectedImagePath);
-    }
 }
 
 void SpriteImporterWindow::ExecuteImport()
 {
     showSuccessMessage = false;
     showErrorMessage = false;
-    statusMessage = ""; // ÃÊ±âÈ­
+    statusMessage = ""; // ì´ˆê¸°í™”
 
-    // ÀÔ·Â °ËÁõ
+    // ì…ë ¥ ê²€ì¦
     if (selectedImagePath.empty())
     {
         showErrorMessage = true;
@@ -258,30 +447,21 @@ void SpriteImporterWindow::ExecuteImport()
         return;
     }
 
-    // °æ·Î º¯È¯
-    std::wstring imagePath = selectedImagePath; // Á÷Á¢ »ç¿ë
+    // ê²½ë¡œ ë³€í™˜
+    std::wstring imagePath = selectedImagePath; // ì§ì ‘ ì‚¬ìš©
     std::wstring outputFolder = CharToWString(outputFolderBuffer);
     std::wstring spriteName = CharToWString(spriteNameBuffer);
 
-    // µğ¹ö±×: º¯È¯µÈ °æ·Î Ç¥½Ã
-    statusMessage = "Debug Info:\n";
-    statusMessage += "Selected path (Unicode): " + WStringToString(imagePath) + "\n\n";
-
-    // 1. ÀÌ¹ÌÁö ÆÄÀÏÀ» Assets Æú´õ·Î º¹»ç
-    std::wstring copiedFileName;
-    if (!CopyImageToAssetsFolders(imagePath, copiedFileName))
-    {
-        showErrorMessage = true;
-        statusMessage = "Failed to copy image file to Assets folders.\n\n" + statusMessage;
-        return;
-    }
-
-    // 2. º¹»çµÈ ÆÄÀÏ °æ·Î·Î SpriteImporter È£Ãâ
-    std::wstring newImagePath = L"Assets/Textures/" + copiedFileName;
+    // íŒŒì¼ëª… ì¶”ì¶œ
+    fs::path sourceFile(imagePath);
+    std::wstring fileName = sourceFile.filename().wstring();
     
-    // SpriteImporter È£Ãâ
+    // Assets/Textures/ ê¸°ì¤€ ìƒëŒ€ ê²½ë¡œ ìƒì„±
+    std::wstring relativeImagePath = L"Assets/Textures/" + fileName;
+    
+    // SpriteImporter í˜¸ì¶œ
     bool success = SpriteImporter::ImportSheet(
-        newImagePath,
+        relativeImagePath,
         outputFolder,
         frameWidth,
         frameHeight,
@@ -290,14 +470,17 @@ void SpriteImporterWindow::ExecuteImport()
 
     if (success)
     {
-        // 3. ¸®¼Ò½º ¸®·Îµå
+        // ë¦¬ì†ŒìŠ¤ ë¦¬ë¡œë“œ
         Resources::LoadAllAssetsFromFolder(L"Assets");
         
-        showSuccessMessage = true;
-        statusMessage = "Sprite sheet imported successfully!\n\nImage copied to: Assets/Textures/" + 
-                        WStringToString(copiedFileName) + "\n\nOutput: ";
+        // íŒŒì¼ ëª©ë¡ ìƒˆë¡œê³ ì¹¨
+        ScanTextureFolder();
         
-        // Ãâ·Â ÆÄÀÏ¸í Ç¥½Ã
+        showSuccessMessage = true;
+        statusMessage = "Sprite sheet imported successfully!\n\nSource: Assets/Textures/" + 
+                        WStringToString(fileName) + "\n\nOutput: ";
+        
+        // ì¶œë ¥ íŒŒì¼ëª… í‘œì‹œ
         std::string outputPath = std::string(outputFolderBuffer);
         if (strlen(spriteNameBuffer) > 0)
         {
@@ -305,8 +488,8 @@ void SpriteImporterWindow::ExecuteImport()
         }
         else
         {
-            // ÆÄÀÏ¸í¿¡¼­ È®ÀåÀÚ Á¦°Å
-            std::wstring nameWithoutExt = copiedFileName.substr(0, copiedFileName.find_last_of(L"."));
+            // íŒŒì¼ëª…ì—ì„œ í™•ì¥ì ì œê±°
+            std::wstring nameWithoutExt = fileName.substr(0, fileName.find_last_of(L"."));
             outputPath += WStringToString(nameWithoutExt) + ".sheet";
         }
         
@@ -315,112 +498,37 @@ void SpriteImporterWindow::ExecuteImport()
     else
     {
         showErrorMessage = true;
-        statusMessage = "Failed to import sprite sheet.\n\n" + statusMessage + "\nPlease check:\n"
-            "? Image file exists and is valid\n"
-            "? Frame size is correct\n"
-            "? Output folder path is valid\n"
-            "? You have write permissions";
+        statusMessage = "Failed to import sprite sheet.\n\nPlease check:\n"
+            "- Image file exists and is valid\n"
+            "- Frame size is correct\n"
+            "- Output folder path is valid\n"
+            "- You have write permissions";
     }
 }
 
-bool SpriteImporterWindow::CopyImageToAssetsFolders(const std::wstring& sourcePath, std::wstring& outFileName)
+void SpriteImporterWindow::OpenFileBrowser()
 {
-    statusMessage += "=== Copy Process Start ===\n";
+    // Assets/Textures í´ë”ë¥¼ ìœˆë„ìš° íƒìƒ‰ê¸°ë¡œ ì—´ê¸°
+    fs::path texturePath = fs::current_path() / L"Assets" / L"Textures";
     
-    try
+    // í´ë”ê°€ ì—†ìœ¼ë©´ ìƒì„±
+    if (!fs::exists(texturePath))
     {
-        statusMessage += "1. Checking source file...\n";
-        statusMessage += "   Path: " + WStringToString(sourcePath) + "\n";
-        
-        // ¿øº» ÆÄÀÏ Á¸Àç È®ÀÎ
-        if (!fs::exists(sourcePath))
-        {
-            statusMessage += "   Result: FILE NOT FOUND!\n";
-            return false;
-        }
-        
-        statusMessage += "   Result: File exists OK\n";
-
-        // ÆÄÀÏ¸í ÃßÃâ
-        fs::path sourceFile(sourcePath);
-        outFileName = sourceFile.filename().wstring();
-        statusMessage += "2. Filename: " + WStringToString(outFileName) + "\n\n";
-
-        // ÇöÀç ÀÛ¾÷ µğ·ºÅä¸® (½ÇÇà ÆÄÀÏ À§Ä¡: x64/Debug/)
-        fs::path currentPath = fs::current_path();
-        statusMessage += "Current working directory: " + WStringToString(currentPath.wstring()) + "\n\n";
-
-        // ´ë»ó Æú´õ (½ÇÇà ÆÄÀÏ ±âÁØ)
-        fs::path targetDir = currentPath / L"Assets" / L"Textures";
-
-        statusMessage += "3. Processing folder: " + WStringToString(targetDir.wstring()) + "\n";
-        
-        // Æú´õ »ı¼º (¾øÀ¸¸é)
-        if (!fs::exists(targetDir))
-        {
-            statusMessage += "   Creating directory...\n";
-            try
-            {
-                fs::create_directories(targetDir);
-                statusMessage += "   Created OK\n";
-            }
-            catch (const std::exception& e)
-            {
-                statusMessage += "   Create FAILED: " + std::string(e.what()) + "\n";
-                return false;
-            }
-        }
-        else
-        {
-            statusMessage += "   Directory exists\n";
-        }
-
-        // ´ë»ó ÆÄÀÏ °æ·Î
-        fs::path targetPath = targetDir / outFileName;
-        statusMessage += "   Target: " + WStringToString(targetPath.wstring()) + "\n";
-
-        // ÆÄÀÏ º¹»ç (µ¤¾î¾²±â)
-        try
-        {
-            fs::copy_file(sourcePath, targetPath, fs::copy_options::overwrite_existing);
-            
-            // º¹»ç È®ÀÎ
-            if (fs::exists(targetPath))
-            {
-                statusMessage += "   Copy SUCCESS (verified)\n\n";
-            }
-            else
-            {
-                statusMessage += "   Copy FAILED (file not found after copy)\n\n";
-                return false;
-            }
-        }
-        catch (const std::exception& e)
-        {
-            statusMessage += "   Copy FAILED: " + std::string(e.what()) + "\n\n";
-            return false;
-        }
-
-        statusMessage += "=== Copy Process End ===\n";
-        statusMessage += "Result: SUCCESS\n\n";
-
-        return true;
+        fs::create_directories(texturePath);
     }
-    catch (const std::exception& e)
-    {
-        statusMessage += "EXCEPTION: " + std::string(e.what()) + "\n";
-        return false;
-    }
+    
+    // ìœˆë„ìš° íƒìƒ‰ê¸°ë¡œ í´ë” ì—´ê¸°
+    ShellExecuteW(NULL, L"open", texturePath.wstring().c_str(), NULL, NULL, SW_SHOW);
 }
 
 bool SpriteImporterWindow::LoadPreviewImage(const std::wstring& imagePath)
 {
-    // ±âÁ¸ ÅØ½ºÃ³ ÇØÁ¦
+    // ê¸°ì¡´ í…ìŠ¤ì²˜ í•´ì œ
     ReleasePreviewTexture();
 
     try
     {
-        // DirectXTex·Î ÀÌ¹ÌÁö ·Îµå
+        // DirectXTexë¡œ ì´ë¯¸ì§€ ë¡œë“œ
         DirectX::ScratchImage image;
         HRESULT hr = DirectX::LoadFromWICFile(
             imagePath.c_str(),
@@ -432,12 +540,12 @@ bool SpriteImporterWindow::LoadPreviewImage(const std::wstring& imagePath)
         if (FAILED(hr))
             return false;
 
-        // ¸ŞÅ¸µ¥ÀÌÅÍ¿¡¼­ Å©±â °¡Á®¿À±â
+        // ë©”íƒ€ë°ì´í„°ì—ì„œ í¬ê¸° ê°€ì ¸ì˜¤ê¸°
         const DirectX::TexMetadata& metadata = image.GetMetadata();
         previewWidth = static_cast<int>(metadata.width);
         previewHeight = static_cast<int>(metadata.height);
 
-        // ShaderResourceView »ı¼º
+        // ShaderResourceView ìƒì„±
         hr = DirectX::CreateShaderResourceView(
             d3dDevice,
             image.GetImages(),
@@ -465,12 +573,152 @@ void SpriteImporterWindow::ReleasePreviewTexture()
     previewHeight = 0;
 }
 
+void SpriteImporterWindow::ScanTextureFolder()
+{
+    ReleaseThumbnails();
+    
+    try
+    {
+        fs::path texturePath = fs::current_path() / L"Assets" / L"Textures";
+        
+        // path í™•ì¸
+        if (!fs::exists(texturePath))
+            return;
+
+        for (const auto& entry : fs::directory_iterator(texturePath))
+        {
+            if (!entry.is_regular_file())
+                continue;
+            
+            std::wstring ext = entry.path().extension().wstring();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::towlower);
+            
+            // ì´ë¯¸ì§€ íŒŒì¼
+            if (ext == L".png" || ext == L".jpg")
+            {
+                TextureFileInfo info;
+                info.filename = entry.path().filename().wstring();
+                info.fullPath = entry.path().wstring();
+                info.thumbnail = LoadThumbnail(info.fullPath, 128);
+                info.width = 0;
+                info.height = 0;
+                
+                // í¬ê¸° ì •ë³´ ë¡œë“œ
+                if (info.thumbnail)
+                {
+                    DirectX::ScratchImage tempImage;
+                    HRESULT hr = DirectX::LoadFromWICFile(
+                        info.fullPath.c_str(),
+                        DirectX::WIC_FLAGS_NONE,
+                        nullptr,
+                        tempImage
+                    );
+                    
+                    if (SUCCEEDED(hr))
+                    {
+                        const DirectX::TexMetadata& metadata = tempImage.GetMetadata();
+                        info.width = static_cast<int>(metadata.width);
+                        info.height = static_cast<int>(metadata.height);
+                    }
+                }
+                
+                textureFiles.push_back(info);
+            }
+        }
+    }
+    catch (...)
+    {
+        // ì—ëŸ¬ ì²˜ë¦¬
+    }
+}
+
+void SpriteImporterWindow::ReleaseThumbnails()
+{
+    for (auto& info : textureFiles)
+    {
+        if (info.thumbnail)
+        {
+            info.thumbnail->Release();
+            info.thumbnail = nullptr;
+        }
+    }
+    textureFiles.clear();
+}
+
+ID3D11ShaderResourceView* SpriteImporterWindow::LoadThumbnail(const std::wstring& imagePath, int maxSize)
+{
+    try
+    {
+        DirectX::ScratchImage image;
+        HRESULT hr = DirectX::LoadFromWICFile(
+            imagePath.c_str(),
+            DirectX::WIC_FLAGS_NONE,
+            nullptr,
+            image
+        );
+
+        if (FAILED(hr))
+            return nullptr;
+
+        const DirectX::TexMetadata& metadata = image.GetMetadata();
+        
+        // ë¦¬ì‚¬ì´ì¦ˆê°€ í•„ìš”í•œ ê²½ìš°
+        if (metadata.width > maxSize || metadata.height > maxSize)
+        {
+            size_t maxDim = (metadata.width > metadata.height) ? metadata.width : metadata.height;
+            float scale = static_cast<float>(maxSize) / maxDim;
+            size_t newWidth = static_cast<size_t>(metadata.width * scale);
+            size_t newHeight = static_cast<size_t>(metadata.height * scale);
+            
+            DirectX::ScratchImage resized;
+            hr = DirectX::Resize(
+                image.GetImages(),
+                image.GetImageCount(),
+                metadata,
+                newWidth,
+                newHeight,
+                DirectX::TEX_FILTER_LINEAR,
+                resized
+            );
+            
+            if (SUCCEEDED(hr))
+            {
+                ID3D11ShaderResourceView* srv = nullptr;
+                hr = DirectX::CreateShaderResourceView(
+                    d3dDevice,
+                    resized.GetImages(),
+                    resized.GetImageCount(),
+                    resized.GetMetadata(),
+                    &srv
+                );
+                return srv;
+            }
+        }
+        
+        // ë¦¬ì‚¬ì´ì¦ˆ í•„ìš” ì—†ìŒ
+        ID3D11ShaderResourceView* srv = nullptr;
+        hr = DirectX::CreateShaderResourceView(
+            d3dDevice,
+            image.GetImages(),
+            image.GetImageCount(),
+            metadata,
+            &srv
+        );
+        
+        return srv;
+    }
+    catch (...)
+    {
+        return nullptr;
+    }
+}
+
 std::wstring SpriteImporterWindow::CharToWString(const char* str)
 {
     if (str == nullptr || strlen(str) == 0)
         return L"";
 
-    // CP_ACP »ç¿ë (½Ã½ºÅÛ ±âº» ÄÚµå ÆäÀÌÁö - ÇÑ±¹¾î Windows¿¡¼­´Â CP949)
+    // CP_ACP ì‚¬ìš© (ì‹œìŠ¤í…œ ê¸°ë³¸ ì½”ë“œ í˜ì´ì§€ - í•œêµ­ì–´ Windowsì—ì„œëŠ” CP949)
     int sizeNeeded = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
     if (sizeNeeded <= 0)
         return L"";

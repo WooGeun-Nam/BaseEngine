@@ -191,7 +191,7 @@ void Application::run()
         input.Update();
 
         // F1 키로 ImGui 도구 창 토글
-        if (input.WasKeyPressed(VK_F1) && spriteImporterWindow)
+        if (input.WasKeyPressed(113) && spriteImporterWindow)
         {
             spriteImporterWindow->SetOpen(!spriteImporterWindow->IsOpen());
         }
@@ -210,7 +210,8 @@ void Application::run()
 		RenderManager::Instance().EndUI();
 
         #ifdef _DEBUG
-        // 디버그 렌더링 여부 확인
+        // 디버그 렌더링 여부 F1 키로 토글
+		// Release 빌드에서는 디버그 렌더링이 수행되지 않음
         if (DebugRenderer::Instance().IsRendering())
         {
             // 디버그 렌더링 (PrimitiveBatch)
