@@ -14,7 +14,7 @@ public:
 
     // 창 열림 상태
     bool IsOpen() const { return isOpen; }
-    void SetOpen(bool open) { isOpen = open; }
+    void SetOpen() { isOpen = !isOpen; }
 
 private:
     // UI 입력 필드

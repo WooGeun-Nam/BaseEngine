@@ -62,13 +62,13 @@ void SpriteImporterWindow::Render()
     ImGui::Columns(2, "MainColumns", true);
     ImGui::SetColumnWidth(0, 300); 
 
-    // 왼쪽: 파일 목록
+    // 파일 목록 (왼쪽 영역)
     ImGui::BeginChild("FileList", ImVec2(0, 0), true);
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Assets/Textures");
     ImGui::Separator();
     
-    // 새로고침과 Browse 버튼 (상단에 배치)
-    // Refresh 버튼
+    // 새로고침과 Browse 버튼
+    // 새로고침 버튼
     if (ImGui::Button("Refresh", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f - 2, 0)))
     {
         ScanTextureFolder();
@@ -80,7 +80,7 @@ void SpriteImporterWindow::Render()
     
     ImGui::SameLine();
     
-    // Browse 버튼 (폴더 열기)
+    // Browse 버튼 (폴더 열기) - Assets/Textures 위치의 파일탐색기 열어주기
     if (ImGui::Button("Open Folder", ImVec2(-1, 0)))
     {
         OpenFileBrowser();
@@ -156,7 +156,7 @@ void SpriteImporterWindow::Render()
             
             ImGui::EndGroup();
             
-            // 다음 열로 이동 (2열마다 줄바꿈)
+            // 다음 열로 이동, (행이 채워지지 않았다면 SameLine)
             if ((i + 1) % columnsCount != 0)
             {
                 ImGui::SameLine();
@@ -191,12 +191,12 @@ void SpriteImporterWindow::Render()
     if (previewTexture)
     {
         ImGui::Separator();
-        ImGui::Text("Preview:");
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Preview");
 
         // 영역 지정 UI
-        ImGui::Text("Crop Region:");
+        ImGui::Text("Crop :");
         ImGui::PushItemWidth(80);
-        ImGui::Text("Top-Left:");
+        ImGui::Text("Top-Left(LeftClick) : ");
         ImGui::SameLine();
         if (ImGui::InputInt("X##TopLeft", &cropTopLeftX))
         {
@@ -212,7 +212,7 @@ void SpriteImporterWindow::Render()
             regionSelected = true;
         }
         
-        ImGui::Text("Bottom-Right:");
+        ImGui::Text("Bottom-Right(RightClick) : ");
         ImGui::SameLine();
         if (ImGui::InputInt("X##BottomRight", &cropBottomRightX))
         {
@@ -242,11 +242,14 @@ void SpriteImporterWindow::Render()
         
         ImGui::Spacing();
 
-        ImGui::Text("Frame Size:");
+        ImGui::Text("Frame Size :");
         ImGui::PushItemWidth(120);
-        ImGui::InputInt("Width##Frame", &frameWidth);
+        ImGui::Text("Width : ");
         ImGui::SameLine();
-        ImGui::InputInt("Height##Frame", &frameHeight);
+        ImGui::InputInt("##Width", &frameWidth);
+        ImGui::Text("Height : ");
+        ImGui::SameLine();
+        ImGui::InputInt("##Height", & frameHeight);
         ImGui::PopItemWidth();
 
         // 최소값 제한

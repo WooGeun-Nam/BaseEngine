@@ -72,6 +72,7 @@
     <ClCompile Include="Inc\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Inc\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Tool\AnimationImporter.cpp" />
+    <ClCompile Include="Tool\AnimationImporterWindow.cpp" />
     <ClCompile Include="Tool\SpriteImporter.cpp" />
     <ClCompile Include="Tool\SpriteImporterWindow.cpp" />
   </ItemGroup>
@@ -139,6 +140,7 @@
     <ClInclude Include="Inc\ImGui\imstb_textedit.h" />
     <ClInclude Include="Inc\ImGui\imstb_truetype.h" />
     <ClInclude Include="Tool\AnimationImporter.h" />
+    <ClInclude Include="Tool\AnimationImporterWindow.h" />
     <ClInclude Include="Tool\SpriteImporter.h" />
     <ClInclude Include="Tool\SpriteImporterWindow.h" />
   </ItemGroup>

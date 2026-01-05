@@ -9,12 +9,14 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_impl_win32.h>
 #include <ImGui/imgui_impl_dx11.h>
-#include "../Tool/SpriteImporterWindow.h"
+#include "SpriteImporterWindow.h"
+#include "AnimationImporterWindow.h"
 
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
     , spriteImporterWindow(nullptr)
+	, animationImporterWindow(nullptr)
     , imguiInitialized(false)
 {
 }
@@ -24,19 +26,29 @@ Application::~Application()
     ShutdownImGui();
 }
 
+// ImGui 초기화
 void Application::InitializeImGui()
 {
     if (imguiInitialized)
         return;
-
-    // ImGui 초기화
+    
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;     // 다중 뷰포트 활성화 (창을 프로그램 밖으로)
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // 도킹 활성화
 
     // ImGui 스타일 설정
     ImGui::StyleColorsDark();
+    
+    // Multi-Viewport 사용 시 스타일 조정
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 
     // 한글 폰트 로드
     ImFontConfig fontConfig;
@@ -52,7 +64,7 @@ void Application::InitializeImGui()
     };
     
     // Windows 기본 한글 폰트 (맑은 고딕) 로드
-    ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 16.0f, &fontConfig, ranges);
+    ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\NanumGothic.ttf", 16.0f, &fontConfig, ranges);
     if (font == nullptr)
     {
         // 폰트 로드 실패 시 기본 폰트 사용
@@ -65,6 +77,7 @@ void Application::InitializeImGui()
 
     // Sprite Importer 창 생성 (Device와 Context 전달)
     spriteImporterWindow = new SpriteImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
+	animationImporterWindow = new AnimationImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
 
     imguiInitialized = true;
 }
@@ -76,6 +89,9 @@ void Application::ShutdownImGui()
 
     delete spriteImporterWindow;
     spriteImporterWindow = nullptr;
+
+	delete animationImporterWindow;
+	animationImporterWindow = nullptr;
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
@@ -190,12 +206,6 @@ void Application::run()
         // 입력 상태 업데이트
         input.Update();
 
-        // F1 키로 ImGui 도구 창 토글
-        if (input.WasKeyPressed(113) && spriteImporterWindow)
-        {
-            spriteImporterWindow->SetOpen(!spriteImporterWindow->IsOpen());
-        }
-
         // Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
@@ -229,8 +239,12 @@ void Application::run()
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
 
+            spriteImporterWindow->Render();
+            animationImporterWindow->Render();
+
+            /*
             // AnimationScene에서만 Sprite Importer 도구 창 렌더링
-            if (spriteImporterWindow)
+            if (spriteImporterWindow && spriteImporterWindow->IsOpen())
             {
                 // 현재 씬이 AnimationScene인지 확인
                 std::string currentSceneName = sceneManager.GetCurrentSceneName();
@@ -241,9 +255,28 @@ void Application::run()
                 }
             }
 
+            if (animationImporterWindow)
+            {
+                // 현재 씬이 AnimationScene인지 확인
+                std::string currentSceneName = sceneManager.GetCurrentSceneName();
+
+                if (currentSceneName == "AnimationScene")
+                {
+                    animationImporterWindow->Render();
+                }
+            }*/
+
             // ImGui 렌더링 완료
             ImGui::Render();
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            
+            // Multi-Viewport - 추가 뷰포트 렌더링
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                ImGui::UpdatePlatformWindows();
+                ImGui::RenderPlatformWindowsDefault();
+            }
         }
 
         // 프레임 종료

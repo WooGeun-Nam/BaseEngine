@@ -243,8 +243,8 @@
     <ClCompile Include="Engine\UI\Slider.cpp">
       <Filter>소스 파일\Engine\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Inc\ImGui\imgui_widgets.cpp">
-      <Filter>소스 파일\ImGui</Filter>
+    <ClCompile Include="Tool\SpriteImporterWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
     </ClCompile>
     <ClCompile Include="Inc\ImGui\imgui.cpp">
       <Filter>소스 파일\ImGui</Filter>
@@ -261,7 +261,10 @@
     <ClCompile Include="Inc\ImGui\imgui_tables.cpp">
       <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Tool\SpriteImporterWindow.cpp">
+    <ClCompile Include="Inc\ImGui\imgui_widgets.cpp">
+      <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\AnimationImporterWindow.cpp">
       <Filter>소스 파일\Tool</Filter>
     </ClCompile>
   </ItemGroup>
@@ -434,8 +437,8 @@
     <ClInclude Include="Game\Scripts\HpControll.h">
       <Filter>헤더 파일\Game\Scripts</Filter>
     </ClInclude>
-    <ClInclude Include="Inc\ImGui\imgui_internal.h">
-      <Filter>헤더 파일\ImGui</Filter>
+    <ClInclude Include="Tool\SpriteImporterWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
     <ClInclude Include="Inc\ImGui\imconfig.h">
       <Filter>헤더 파일\ImGui</Filter>
@@ -449,6 +452,9 @@
     <ClInclude Include="Inc\ImGui\imgui_impl_win32.h">
       <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="Inc\ImGui\imgui_internal.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
     <ClInclude Include="Inc\ImGui\imstb_rectpack.h">
       <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
@@ -458,7 +464,7 @@
     <ClInclude Include="Inc\ImGui\imstb_truetype.h">
       <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="Tool\SpriteImporterWindow.h">
+    <ClInclude Include="Tool\AnimationImporterWindow.h">
       <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
   </ItemGroup>

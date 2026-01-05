@@ -8,6 +8,7 @@
 #include "Graphics/DebugRenderer.h"
 
 class SpriteImporterWindow;
+class AnimationImporterWindow;
 
 class Application
 {
@@ -42,6 +43,8 @@ private:
 
     // ImGui µµ±¸ Ã¢
     SpriteImporterWindow* spriteImporterWindow;
+	AnimationImporterWindow* animationImporterWindow;
+
     bool imguiInitialized;
 
     void InitializeImGui();

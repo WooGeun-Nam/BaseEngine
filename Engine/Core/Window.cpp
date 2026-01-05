@@ -40,6 +40,7 @@ bool Window::Create(const std::wstring& title, int width, int height)
         0,
         windowClassName.c_str(),
         title.c_str(),
+        // WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         wr.right - wr.left, wr.bottom - wr.top,
