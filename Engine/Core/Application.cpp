@@ -11,12 +11,14 @@
 #include <ImGui/imgui_impl_dx11.h>
 #include "SpriteImporterWindow.h"
 #include "AnimationImporterWindow.h"
+#include "AnimatorWindow.h"
 
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
     , spriteImporterWindow(nullptr)
-	, animationImporterWindow(nullptr)
+    , animationImporterWindow(nullptr)
+    , animatorWindow(nullptr)
     , imguiInitialized(false)
 {
 }
@@ -75,9 +77,10 @@ void Application::InitializeImGui()
     ImGui_ImplWin32_Init(windowHandle);
     ImGui_ImplDX11_Init(d3dDevice.getDevice(), d3dDevice.getContext());
 
-    // Sprite Importer 창 생성 (Device와 Context 전달)
+    // 에디터 창 생성
     spriteImporterWindow = new SpriteImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
-	animationImporterWindow = new AnimationImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
+    animationImporterWindow = new AnimationImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
+    animatorWindow = new AnimatorWindow();
 
     imguiInitialized = true;
 }
@@ -90,8 +93,11 @@ void Application::ShutdownImGui()
     delete spriteImporterWindow;
     spriteImporterWindow = nullptr;
 
-	delete animationImporterWindow;
-	animationImporterWindow = nullptr;
+    delete animationImporterWindow;
+    animationImporterWindow = nullptr;
+
+    delete animatorWindow;
+    animatorWindow = nullptr;
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
@@ -241,30 +247,7 @@ void Application::run()
 
             spriteImporterWindow->Render();
             animationImporterWindow->Render();
-
-            /*
-            // AnimationScene에서만 Sprite Importer 도구 창 렌더링
-            if (spriteImporterWindow && spriteImporterWindow->IsOpen())
-            {
-                // 현재 씬이 AnimationScene인지 확인
-                std::string currentSceneName = sceneManager.GetCurrentSceneName();
-                
-                if (currentSceneName == "AnimationScene")
-                {
-                    spriteImporterWindow->Render();
-                }
-            }
-
-            if (animationImporterWindow)
-            {
-                // 현재 씬이 AnimationScene인지 확인
-                std::string currentSceneName = sceneManager.GetCurrentSceneName();
-
-                if (currentSceneName == "AnimationScene")
-                {
-                    animationImporterWindow->Render();
-                }
-            }*/
+            animatorWindow->Render();
 
             // ImGui 렌더링 완료
             ImGui::Render();

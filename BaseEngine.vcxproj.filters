@@ -97,6 +97,12 @@
     <Filter Include="헤더 파일\ImGui">
       <UniqueIdentifier>{0b5429ef-99af-49e4-a35a-0da73556e134}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Engine\Animation">
+      <UniqueIdentifier>{04fa31d4-792a-4739-86f8-cc20b033f31f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Engine\Animation">
+      <UniqueIdentifier>{0f8ef631-55ec-4b34-8898-f8e071a4bca5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -266,6 +272,24 @@
     </ClCompile>
     <ClCompile Include="Tool\AnimationImporterWindow.cpp">
       <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\AnimatorWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimationState.cpp">
+      <Filter>소스 파일\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimationStateMachine.cpp">
+      <Filter>소스 파일\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimationTransition.cpp">
+      <Filter>소스 파일\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimatorController.cpp">
+      <Filter>소스 파일\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimatorParameter.cpp">
+      <Filter>소스 파일\Engine\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -466,6 +490,24 @@
     </ClInclude>
     <ClInclude Include="Tool\AnimationImporterWindow.h">
       <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\AnimatorWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimationState.h">
+      <Filter>헤더 파일\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimationStateMachine.h">
+      <Filter>헤더 파일\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimationTransition.h">
+      <Filter>헤더 파일\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimatorController.h">
+      <Filter>헤더 파일\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimatorParameter.h">
+      <Filter>헤더 파일\Engine\Animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,7 @@
 #include "Resource/AnimationClip.h"
 #include "Resource/Font.h"
 #include "Audio/AudioClip.h"
+#include "Animation/AnimatorController.h"
 
 #include <filesystem>
 
@@ -43,6 +44,10 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         else if (extension == L".anim")
         {
             Load<AnimationClip>(stem, path.wstring());
+        }
+        else if (extension == L".controller")
+        {
+            Load<AnimatorController>(stem, path.wstring());
         }
         else if (extension == L".wav" || extension == L".mp3")
         {

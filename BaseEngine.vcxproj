@@ -19,6 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Animation\AnimationState.cpp" />
+    <ClCompile Include="Engine\Animation\AnimationStateMachine.cpp" />
+    <ClCompile Include="Engine\Animation\AnimationTransition.cpp" />
+    <ClCompile Include="Engine\Animation\AnimatorController.cpp" />
+    <ClCompile Include="Engine\Animation\AnimatorParameter.cpp" />
     <ClCompile Include="Engine\Audio\AudioClip.cpp" />
     <ClCompile Include="Engine\Audio\AudioManager.cpp" />
     <ClCompile Include="Engine\Audio\AudioSource.cpp" />
@@ -73,10 +78,16 @@
     <ClCompile Include="Inc\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Tool\AnimationImporter.cpp" />
     <ClCompile Include="Tool\AnimationImporterWindow.cpp" />
+    <ClCompile Include="Tool\AnimatorWindow.cpp" />
     <ClCompile Include="Tool\SpriteImporter.cpp" />
     <ClCompile Include="Tool\SpriteImporterWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Animation\AnimationState.h" />
+    <ClInclude Include="Engine\Animation\AnimationStateMachine.h" />
+    <ClInclude Include="Engine\Animation\AnimationTransition.h" />
+    <ClInclude Include="Engine\Animation\AnimatorController.h" />
+    <ClInclude Include="Engine\Animation\AnimatorParameter.h" />
     <ClInclude Include="Engine\Audio\AudioClip.h" />
     <ClInclude Include="Engine\Audio\AudioManager.h" />
     <ClInclude Include="Engine\Audio\AudioSource.h" />
@@ -141,6 +152,7 @@
     <ClInclude Include="Inc\ImGui\imstb_truetype.h" />
     <ClInclude Include="Tool\AnimationImporter.h" />
     <ClInclude Include="Tool\AnimationImporterWindow.h" />
+    <ClInclude Include="Tool\AnimatorWindow.h" />
     <ClInclude Include="Tool\SpriteImporter.h" />
     <ClInclude Include="Tool\SpriteImporterWindow.h" />
   </ItemGroup>

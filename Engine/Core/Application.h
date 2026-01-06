@@ -9,6 +9,7 @@
 
 class SpriteImporterWindow;
 class AnimationImporterWindow;
+class AnimatorWindow;
 
 class Application
 {
@@ -41,9 +42,10 @@ private:
 
     float clearColor[4] = { 0.1f, 0.1f, 0.3f, 1.f };
 
-    // ImGui 도구 창
+    // ImGui 에디터 창
     SpriteImporterWindow* spriteImporterWindow;
-	AnimationImporterWindow* animationImporterWindow;
+    AnimationImporterWindow* animationImporterWindow;
+    AnimatorWindow* animatorWindow;
 
     bool imguiInitialized;
 
