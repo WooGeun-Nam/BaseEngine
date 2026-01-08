@@ -35,14 +35,17 @@ void SceneBase::AddUIObject(GameObject* object, GameObject* canvasObj)
 
 void SceneBase::OnExit()
 {
-    // worldObjects 삭제
+    // PhysicsSystem의 collider 참조를 먼저 정리
+    physicsSystem.Clear();
+    
+    // worldObjects 정리
     for (auto* obj : worldObjects)
     {
         delete obj;
     }
     worldObjects.clear();
     
-    // Canvas와 UI 삭제
+    // Canvas와 UI 정리
     for (auto& group : canvasGroups)
     {
         // UI 오브젝트 삭제

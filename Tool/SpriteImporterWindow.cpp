@@ -12,9 +12,9 @@
 namespace fs = std::filesystem;
 
 SpriteImporterWindow::SpriteImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context)
-    : d3dDevice(device)
+    : EditorWindow("Sprite Importer", false) // EditorWindow 생성자 호출
+    , d3dDevice(device)
     , d3dContext(context)
-    , isOpen(true)
     , frameWidth(64)
     , frameHeight(64)
     , cropTopLeftX(0)
@@ -721,13 +721,13 @@ std::wstring SpriteImporterWindow::CharToWString(const char* str)
     if (str == nullptr || strlen(str) == 0)
         return L"";
 
-    // CP_ACP 사용 (시스템 기본 코드 페이지 - 한국어 Windows에서는 CP949)
-    int sizeNeeded = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    // Use CP_UTF8 instead of CP_ACP for proper Unicode handling
+    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
     if (sizeNeeded <= 0)
         return L"";
     
     std::wstring wstrTo(sizeNeeded, 0);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, &wstrTo[0], sizeNeeded);
+    MultiByteToWideChar(CP_UTF8, 0, str, -1, &wstrTo[0], sizeNeeded);
     
     // Remove null terminator
     if (!wstrTo.empty() && wstrTo.back() == L'\0')
@@ -741,16 +741,13 @@ std::string SpriteImporterWindow::WStringToString(const std::wstring& wstr)
     if (wstr.empty())
         return "";
 
-    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+    // Use proper size calculation
+    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()), NULL, 0, NULL, NULL);
     if (sizeNeeded <= 0)
         return "";
 
     std::string strTo(sizeNeeded, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &strTo[0], sizeNeeded, NULL, NULL);
-
-    // Remove null terminator
-    if (!strTo.empty() && strTo.back() == '\0')
-        strTo.pop_back();
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()), &strTo[0], sizeNeeded, NULL, NULL);
 
     return strTo;
 }

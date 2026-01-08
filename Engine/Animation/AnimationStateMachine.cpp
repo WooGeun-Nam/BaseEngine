@@ -68,12 +68,28 @@ void AnimationStateMachine::SetDefaultState(AnimationState* state)
 
 void AnimationStateMachine::Update(float deltaTime, AnimatorController* controller)
 {
-    // 현재 상태가 없으면 기본 상태로 시작
+    // 현재 상태가 없으면 기본 상태로 설정
     if (!currentState)
     {
         currentState = defaultState;
         accumulatedTime = 0.0f;
         normalizedTime = 0.0f;
+        
+        // 디버깅: defaultState가 null인지 확인
+        if (!currentState)
+        {
+            // defaultState가 없음 - 첫 번째 상태를 사용
+            if (!states.empty())
+            {
+                currentState = states[0];
+                defaultState = states[0];
+            }
+            else
+            {
+                // 상태가 하나도 없음
+                return;
+            }
+        }
     }
 
     if (!currentState)
@@ -86,7 +102,7 @@ void AnimationStateMachine::Update(float deltaTime, AnimatorController* controll
         return;
     }
 
-    // 현재 애니메이션 진행
+    // 현재 애니메이션 업데이트
     auto clip = currentState->GetClip();
     if (clip)
     {

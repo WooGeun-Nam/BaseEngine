@@ -1,17 +1,16 @@
 #pragma once
+#include "EditorWindow.h"
 #include <string>
 #include <vector>
 #include <d3d11.h>
 
-class AnimationImporterWindow
+class AnimationImporterWindow : public EditorWindow
 {
 public:
     AnimationImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context);
     ~AnimationImporterWindow();
 
-    void Render();
-    bool IsOpen() const { return isOpen; }
-    void SetOpen(bool open) { isOpen = open; }
+    void Render() override;
 
 private:
     struct AnimationFrame

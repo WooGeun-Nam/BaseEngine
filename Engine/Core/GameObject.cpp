@@ -71,6 +71,48 @@ void GameObject::RemoveChild(GameObject* child)
     }
 }
 
+// 자식 순서 변경: child를 target 앞에 배치
+bool GameObject::MoveChildBefore(GameObject* child, GameObject* target)
+{
+    if (!child || !target || child == target)
+        return false;
+    
+    auto childIt = std::find(children.begin(), children.end(), child);
+    auto targetIt = std::find(children.begin(), children.end(), target);
+    
+    if (childIt == children.end() || targetIt == children.end())
+        return false;
+    
+    // child를 제거하고 target 앞에 삽입
+    children.erase(childIt);
+    targetIt = std::find(children.begin(), children.end(), target); // iterator 재탐색
+    children.insert(targetIt, child);
+    
+    return true;
+}
+
+// 자식 순서 변경: child를 target 뒤에 배치
+bool GameObject::MoveChildAfter(GameObject* child, GameObject* target)
+{
+    if (!child || !target || child == target)
+        return false;
+    
+    auto childIt = std::find(children.begin(), children.end(), child);
+    auto targetIt = std::find(children.begin(), children.end(), target);
+    
+    if (childIt == children.end() || targetIt == children.end())
+        return false;
+    
+    // child를 제거하고 target 다음에 삽입
+    children.erase(childIt);
+    targetIt = std::find(children.begin(), children.end(), target); // iterator 재탐색
+    if (targetIt != children.end())
+        ++targetIt;
+    children.insert(targetIt, child);
+    
+    return true;
+}
+
 void GameObject::FixedUpdate(float fixedDelta)
 {
     for (auto* comp : components)

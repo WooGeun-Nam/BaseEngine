@@ -149,10 +149,14 @@ void Animator::UpdateWithController(float deltaTime)
     if (!stateMachine)
         return;
 
+    // SpriteRenderer 매 프레임 체크 (안전성)
+    if (!spriteRenderer)
+        spriteRenderer = gameObject->GetComponent<SpriteRenderer>();
+
     // 상태 머신 업데이트
     stateMachine->Update(deltaTime, animatorController.get());
 
-    // 현재 상태의 애니메이션 프레임 적용
+    // 현재 상태의 애니메이션 클립을 가져옴
     auto* currentState = stateMachine->GetCurrentState();
     if (currentState)
     {
@@ -167,9 +171,6 @@ void Animator::UpdateWithController(float deltaTime)
                 frameIndex = frameCount - 1;
             if (frameIndex < 0)
                 frameIndex = 0;
-
-            if (!spriteRenderer)
-                spriteRenderer = gameObject->GetComponent<SpriteRenderer>();
 
             if (spriteRenderer)
             {

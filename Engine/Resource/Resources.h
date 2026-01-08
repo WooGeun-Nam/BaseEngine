@@ -5,6 +5,7 @@
 #include <string>
 #include <cassert>
 #include <type_traits>
+#include <vector>
 
 class Texture;
 class AnimationClip;
@@ -12,6 +13,7 @@ class SpriteSheet;
 class AudioClip;
 class Font;
 class AnimatorController;
+class SceneData;
 
 // Resources: 에셋 리소스 통합 로드 시스템
 // 
@@ -22,6 +24,7 @@ class AnimatorController;
 // - AnimatorController (.controller) : 애니메이션 상태 머신 컨트롤러
 // - AudioClip       (.wav/.mp3)    : 오디오 클립
 // - Font            (.spritefont)  : DirectXTK SpriteFont 폰트
+// - SceneData       (.scene)       : 씬 데이터
 class Resources final
 {
 public:
@@ -41,6 +44,8 @@ public:
             return base;
         if constexpr (std::is_same_v<T, Font>)
             return base + L".spritefont";
+        if constexpr (std::is_same_v<T, SceneData>)
+            return base + L".scene";
 
         return base;
     }
@@ -89,6 +94,33 @@ public:
 
     // Assets 폴더의 모든 에셋을 재귀적으로 로드
     static void LoadAllAssetsFromFolder(const std::wstring& rootFolder);
+
+    // 특정 타입의 모든 에셋 목록 가져오기
+    template<typename T>
+    static std::vector<std::wstring> GetAllAssetNames()
+    {
+        std::vector<std::wstring> names;
+        
+        for (const auto& pair : cache)
+        {
+            if (std::dynamic_pointer_cast<T>(pair.second))
+            {
+                // 확장자 제거
+                std::wstring key = pair.first;
+                size_t dotPos = key.find_last_of(L'.');
+                if (dotPos != std::wstring::npos)
+                {
+                    names.push_back(key.substr(0, dotPos));
+                }
+                else
+                {
+                    names.push_back(key);
+                }
+            }
+        }
+        
+        return names;
+    }
 
 private:
     static std::map<std::wstring, std::shared_ptr<Asset>> cache;

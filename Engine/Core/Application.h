@@ -7,10 +7,6 @@
 #include "Core/SceneManager.h"
 #include "Graphics/DebugRenderer.h"
 
-class SpriteImporterWindow;
-class AnimationImporterWindow;
-class AnimatorWindow;
-
 class Application
 {
 public:
@@ -41,11 +37,6 @@ private:
     int windowHeight;
 
     float clearColor[4] = { 0.1f, 0.1f, 0.3f, 1.f };
-
-    // ImGui 에디터 창
-    SpriteImporterWindow* spriteImporterWindow;
-    AnimationImporterWindow* animationImporterWindow;
-    AnimatorWindow* animatorWindow;
 
     bool imguiInitialized;
 

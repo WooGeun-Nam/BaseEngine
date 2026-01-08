@@ -35,7 +35,8 @@ static std::string WStringToString(const std::wstring& wstr)
 }
 
 AnimationImporterWindow::AnimationImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context)
-    : d3dDevice(device)
+    : EditorWindow("Animation Importer", false) // EditorWindow 생성자 호출
+    , d3dDevice(device)
     , d3dContext(context)
     , isOpen(true)
     , showSuccessMessage(false)

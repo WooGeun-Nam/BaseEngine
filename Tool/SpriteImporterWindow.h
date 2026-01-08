@@ -1,16 +1,17 @@
 #pragma once
+#include "EditorWindow.h" // 추가
 #include <string>
 #include <d3d11.h>
 #include <vector>
 
-class SpriteImporterWindow
+class SpriteImporterWindow : public EditorWindow // 상속 추가
 {
 public:
     SpriteImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context);
     ~SpriteImporterWindow();
 
-    // ImGui 렌더링
-    void Render();
+    // ImGui 렌더링 (오버라이드)
+    void Render() override;
 
     // 창 열림 상태
     bool IsOpen() const { return isOpen; }

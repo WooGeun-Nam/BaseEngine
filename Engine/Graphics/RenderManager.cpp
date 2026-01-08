@@ -1,4 +1,5 @@
 ﻿#include "Graphics/RenderManager.h"
+#include "Graphics/RenderTexture.h"  // 추가
 #include "Graphics/Camera2D.h"
 #include "Graphics/DebugRenderer.h"
 #include "Core/GameObject.h"
@@ -88,6 +89,59 @@ void RenderManager::EndDebug()
 {
     // DebugRenderer 사용
     DebugRenderer::Instance().End();
+}
+
+// === RenderTexture 지원 함수 ===
+void RenderManager::BeginSceneRender(RenderTexture* renderTexture)
+{
+    if (!renderTexture || !context)
+        return;
+
+    isRenderingToTexture = true;
+
+    // 현재 렌더 타겟 저장
+    UINT numViewports = 1;
+    context->OMGetRenderTargets(1, &savedRenderTarget, &savedDepthStencil);
+    context->RSGetViewports(&numViewports, &savedViewport);
+
+    // RenderTexture를 렌더 타겟으로 설정
+    renderTexture->SetAsRenderTarget(context);
+    
+    // 클리어
+    float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    renderTexture->ClearRenderTarget(context, clearColor);
+}
+
+void RenderManager::EndSceneRender()
+{
+    if (!isRenderingToTexture)
+        return;
+
+    // 저장된 렌더 타겟 복원
+    RestoreBackBuffer();
+    isRenderingToTexture = false;
+}
+
+void RenderManager::RestoreBackBuffer()
+{
+    if (!context)
+        return;
+
+    // 백버퍼로 복원
+    context->OMSetRenderTargets(1, &savedRenderTarget, savedDepthStencil);
+    context->RSSetViewports(1, &savedViewport);
+
+    // Release COM 참조
+    if (savedRenderTarget)
+    {
+        savedRenderTarget->Release();
+        savedRenderTarget = nullptr;
+    }
+    if (savedDepthStencil)
+    {
+        savedDepthStencil->Release();
+        savedDepthStencil = nullptr;
+    }
 }
 
 void RenderManager::SetScreenSize(int width, int height)

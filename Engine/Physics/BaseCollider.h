@@ -18,6 +18,10 @@ public:
     void SetTrigger(bool triggerEnabled) { isTrigger = triggerEnabled; }
     bool IsTrigger() const { return isTrigger; }
 
+    // Collider offset (local space)
+    void SetOffset(float x, float y) { offset = { x, y }; }
+    DirectX::XMFLOAT2 GetOffset() const { return offset; }
+
     // 충돌 검사 (자식 콜라이더가 구현)
     virtual bool Intersects(BaseCollider* other) = 0;
 
@@ -39,4 +43,5 @@ public:
 protected:
     bool enabled = true;
     bool isTrigger = false;
+    DirectX::XMFLOAT2 offset{ 0.f, 0.f };  // Collider offset in local space
 };

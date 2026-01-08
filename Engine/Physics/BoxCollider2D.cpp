@@ -55,7 +55,11 @@ void BoxCollider2D::FitToTexture()
 
 XMFLOAT2 BoxCollider2D::GetCenter() const
 {
-    return gameObject->transform.GetPosition();
+    XMFLOAT2 pos = gameObject->transform.GetPosition();
+    // Apply offset
+    pos.x += offset.x;
+    pos.y += offset.y;
+    return pos;
 }
 
 float BoxCollider2D::GetRotation() const
@@ -72,7 +76,7 @@ void BoxCollider2D::GetVertices(std::array<XMFLOAT2, 4>& out) const
     float cosR = cosf(rot);
     float sinR = sinf(rot);
 
-    // === 스케일 적용된 halfSize ===
+    // Apply scale to halfSize
     float hx = halfSize.x * scale.x;
     float hy = halfSize.y * scale.y;
 
@@ -84,13 +88,19 @@ void BoxCollider2D::GetVertices(std::array<XMFLOAT2, 4>& out) const
         { -hx,  hy }
     };
 
+    // Apply rotation and offset
     for (int i = 0; i < 4; i++)
     {
         float x = pts[i].x;
         float y = pts[i].y;
 
-        float wx = x * cosR - y * sinR + pos.x;
-        float wy = x * sinR + y * cosR + pos.y;
+        // Rotate around origin
+        float rotX = x * cosR - y * sinR;
+        float rotY = x * sinR + y * cosR;
+
+        // Apply offset (in rotated space) and position
+        float wx = rotX + offset.x * cosR - offset.y * sinR + pos.x;
+        float wy = rotY + offset.x * sinR + offset.y * cosR + pos.y;
 
         out[i] = { wx, wy };
     }

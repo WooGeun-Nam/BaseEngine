@@ -19,6 +19,7 @@
 using json = nlohmann::json;
 
 AnimatorWindow::AnimatorWindow()
+    : EditorWindow("Animator", false) // EditorWindow 생성자 호출
 {
     // 기본 컨트롤러 생성하지 않음 - 사용자가 New 버튼으로 생성
     ScanControllerFolder();
@@ -2053,7 +2054,7 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
             DirectX::XMFLOAT2 fromEdge = calculateBoxIntersection(fromCenter, nodeWidth, nodeHeight, dirX, dirY);
             DirectX::XMFLOAT2 toEdge = calculateBoxIntersection(toCenter, nodeWidth, nodeHeight, -dirX, -dirY);
             
-            // 화면 좌표로 변환
+            // 캔버스 좌표를 화면 좌표로 변환
             DirectX::XMFLOAT2 fromPosScreen = CanvasToScreen(fromEdge);
             DirectX::XMFLOAT2 toPosScreen = CanvasToScreen(toEdge);
             

@@ -61,7 +61,17 @@ float CircleCollider::GetWorldRadius() const
 
 XMFLOAT2 CircleCollider::GetWorldCenter() const
 {
-    return gameObject->transform.GetPosition();
+    XMFLOAT2 pos = gameObject->transform.GetPosition();
+    float rot = gameObject->transform.GetRotation();
+    
+    // Apply offset with rotation
+    float cosR = cosf(rot);
+    float sinR = sinf(rot);
+    
+    pos.x += offset.x * cosR - offset.y * sinR;
+    pos.y += offset.x * sinR + offset.y * cosR;
+    
+    return pos;
 }
 
 bool CircleCollider::Intersects(BaseCollider* other)

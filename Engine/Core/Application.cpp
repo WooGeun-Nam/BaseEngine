@@ -9,16 +9,24 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_impl_win32.h>
 #include <ImGui/imgui_impl_dx11.h>
+
+// EditorManager 포함
+#include "EditorManager.h"
+#include "HierarchyWindow.h"
+#include "InspectorWindow.h"
+#include "SceneViewWindow.h"
 #include "SpriteImporterWindow.h"
 #include "AnimationImporterWindow.h"
 #include "AnimatorWindow.h"
+#include "ConsoleWindow.h"
+#include "ProjectWindow.h"
+#include "GameViewWindow.h"
+#include "SheetViewerWindow.h"
+#include "Core/EditorState.h"
 
 Application::Application()
     : windowWidth(0)
     , windowHeight(0)
-    , spriteImporterWindow(nullptr)
-    , animationImporterWindow(nullptr)
-    , animatorWindow(nullptr)
     , imguiInitialized(false)
 {
 }
@@ -40,6 +48,9 @@ void Application::InitializeImGui()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;     // 다중 뷰포트 활성화 (창을 프로그램 밖으로)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // 도킹 활성화
+
+    // ImGui 레이아웃 파일 경로 설정
+    io.IniFilename = "EditorLayout.ini";
 
     // ImGui 스타일 설정
     ImGui::StyleColorsDark();
@@ -77,10 +88,41 @@ void Application::InitializeImGui()
     ImGui_ImplWin32_Init(windowHandle);
     ImGui_ImplDX11_Init(d3dDevice.getDevice(), d3dDevice.getContext());
 
-    // 에디터 창 생성
-    spriteImporterWindow = new SpriteImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
-    animationImporterWindow = new AnimationImporterWindow(d3dDevice.getDevice(), d3dDevice.getContext());
-    animatorWindow = new AnimatorWindow();
+    // EditorManager에 SceneManager 설정
+    EditorManager::Instance().SetSceneManager(&sceneManager);
+    
+    // EditorManager에 Application 설정
+    EditorManager::Instance().SetApplication(this);
+
+    // EditorManager에 에디터 창 등록
+    auto* hierarchyWnd = EditorManager::Instance().RegisterWindow<HierarchyWindow>();
+    hierarchyWnd->SetSceneManager(&sceneManager);
+    hierarchyWnd->SetApplication(this);
+
+    EditorManager::Instance().RegisterWindow<InspectorWindow>();
+    
+    auto* sceneViewWnd = EditorManager::Instance().RegisterWindow<SceneViewWindow>();
+    sceneViewWnd->Initialize(d3dDevice.getDevice(), 800, 600);  // SceneView 초기화
+    sceneViewWnd->SetSceneManager(&sceneManager);  // SceneManager 설정
+    
+    auto* gameViewWnd = EditorManager::Instance().RegisterWindow<GameViewWindow>();
+    gameViewWnd->Initialize(d3dDevice.getDevice(), 800, 600);  // GameView 초기화
+    gameViewWnd->SetSceneManager(&sceneManager);  // SceneManager 설정
+    
+    EditorManager::Instance().RegisterWindow<ConsoleWindow>();
+    
+    auto* projectWnd = EditorManager::Instance().RegisterWindow<ProjectWindow>();
+    projectWnd->Initialize(d3dDevice.getDevice(), d3dDevice.getContext());  // ProjectWindow 초기화
+    
+    EditorManager::Instance().RegisterWindow<SpriteImporterWindow>(d3dDevice.getDevice(), d3dDevice.getContext());
+    EditorManager::Instance().RegisterWindow<AnimationImporterWindow>(d3dDevice.getDevice(), d3dDevice.getContext());
+    EditorManager::Instance().RegisterWindow<AnimatorWindow>();
+    
+    auto* sheetViewerWnd = EditorManager::Instance().RegisterWindow<SheetViewerWindow>();
+    sheetViewerWnd->Initialize(d3dDevice.getDevice(), d3dDevice.getContext());  // SheetViewer 초기화
+
+    // 에디터 모드 활성화
+    EditorState::Instance().SetEditorMode(true);
 
     imguiInitialized = true;
 }
@@ -90,14 +132,7 @@ void Application::ShutdownImGui()
     if (!imguiInitialized)
         return;
 
-    delete spriteImporterWindow;
-    spriteImporterWindow = nullptr;
-
-    delete animationImporterWindow;
-    animationImporterWindow = nullptr;
-
-    delete animatorWindow;
-    animatorWindow = nullptr;
+    // EditorManager가 자동으로 모든 윈도우를 정리함
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
@@ -196,18 +231,74 @@ void Application::run()
 
         fixedAccumulator += deltaTime;
 
-        // FixedUpdate — 고정 주기 호출
-        while (fixedAccumulator >= fixedDelta)
+        // GameViewWindow에서 게임 플레이 상태 확인
+        auto* gameViewWnd = dynamic_cast<GameViewWindow*>(
+            EditorManager::Instance().GetEditorWindow("Game")
+        );
+        bool isGamePlaying = (gameViewWnd && gameViewWnd->GetPlayState() == PlayState::Playing);
+
+        // PlayState 변경 감지 및 처리
+        if (gameViewWnd && gameViewWnd->WasPlayStateChanged())
         {
-            sceneManager.FixedUpdate(fixedDelta);
-            fixedAccumulator -= fixedDelta;
+            PlayState currentState = gameViewWnd->GetPlayState();
+            PlayState previousState = gameViewWnd->GetPreviousPlayState();
+            
+            // Play 시작 시 현재 씬 상태를 스냅샷으로 저장
+            if (currentState == PlayState::Playing && previousState == PlayState::Stopped)
+            {
+                // Play 시작 시점의 씬 인덱스 저장
+                gameViewWnd->SavePlayStartScene(sceneManager.GetCurrentIndex());
+                
+                // 현재 씬 상태를 JSON으로 저장 (에디터 편집 상태 보존)
+                auto snapshot = sceneManager.SaveSceneSnapshot();
+                gameViewWnd->SaveSceneSnapshot(snapshot);
+            }
+            
+            // Stop 상태로 변경되었을 때 저장된 스냅샷으로 복원
+            if (currentState == PlayState::Stopped && previousState != PlayState::Stopped)
+            {
+                // 에디터 선택 초기화 (무효화된 포인터 제거)
+                EditorManager::Instance().ClearAllSelections();
+                
+                // 저장된 스냅샷이 있으면 복원
+                if (gameViewWnd->HasSceneSnapshot())
+                {
+                    const auto& snapshot = gameViewWnd->GetSceneSnapshot();
+                    sceneManager.RestoreSceneSnapshot(snapshot);
+                    
+                    // 스냅샷 클리어 (메모리 절약)
+                    gameViewWnd->ClearSceneSnapshot();
+                }
+            }
+            
+            // PlayState 변경 확인 완료
+            gameViewWnd->AcknowledgePlayStateChange();
         }
 
-        // Update — 매 프레임
-        sceneManager.Update(deltaTime);
+        // 씬이 활성화되어 있는지 확인
+        bool hasActiveScene = (sceneManager.GetCurrentScene() != nullptr);
 
-        // LateUpdate — Update 후 처리
-        sceneManager.LateUpdate(deltaTime);
+        // 게임이 플레이 중일 때만 업데이트
+        if (isGamePlaying && hasActiveScene)
+        {
+            // FixedUpdate — 고정 주기 호출
+            while (fixedAccumulator >= fixedDelta)
+            {
+                sceneManager.FixedUpdate(fixedDelta);
+                fixedAccumulator -= fixedDelta;
+            }
+
+            // Update — 매 프레임
+            sceneManager.Update(deltaTime);
+
+            // LateUpdate — Update 후 처리
+            sceneManager.LateUpdate(deltaTime);
+        }
+        else
+        {
+            // 에디터 모드 또는 일시정지: 업데이트 안 함, 누적기만 리셋
+            fixedAccumulator = 0.0f;
+        }
 
         // 입력 상태 업데이트
         input.Update();
@@ -215,27 +306,122 @@ void Application::run()
         // Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 
-        // Game Objects 렌더링 (카메라 적용)
-        RenderManager::Instance().BeginFrame();
-        sceneManager.Render();  // SpriteRenderer
-        RenderManager::Instance().EndFrame();
+        // 게임 플레이 상태 확인 (렌더링용)
+        bool isGameActive = (gameViewWnd && gameViewWnd->GetPlayState() != PlayState::Stopped);
 
-		// UI 렌더링 (Canvas의 uiObjects만 순회)
-		RenderManager::Instance().BeginUI();
-        sceneManager.RenderUI(); // UIBase 컴포넌트들 Rendering
-		RenderManager::Instance().EndUI();
-
-        #ifdef _DEBUG
-        // 디버그 렌더링 여부 F1 키로 토글
-		// Release 빌드에서는 디버그 렌더링이 수행되지 않음
-        if (DebugRenderer::Instance().IsRendering())
+        // === Scene View 렌더링 (항상 렌더링) ===
+        auto* sceneViewWnd = dynamic_cast<SceneViewWindow*>(
+            EditorManager::Instance().GetEditorWindow("Scene View")
+        );
+        
+        if (sceneViewWnd && sceneViewWnd->GetRenderTexture() && hasActiveScene)
         {
-            // 디버그 렌더링 (PrimitiveBatch)
+            RenderManager::Instance().BeginSceneRender(sceneViewWnd->GetRenderTexture());
+            
+            // SceneView 전용 카메라 설정
+            RenderManager::Instance().SetCamera(sceneViewWnd->GetCamera());
+            
+            // 씬 렌더링
+            RenderManager::Instance().BeginFrame();
+            sceneManager.Render();
+            RenderManager::Instance().EndFrame();
+            
+            // UI 렌더링
+            RenderManager::Instance().BeginUI();
+            sceneManager.RenderUI();
+            RenderManager::Instance().EndUI();
+            
+            // 디버그 렌더링 (씬뷰에서는 항상 표시)
             RenderManager::Instance().BeginDebug();
             sceneManager.DebugRender();
             RenderManager::Instance().EndDebug();
+            
+            RenderManager::Instance().EndSceneRender();
         }
-        #endif
+
+        // === Game View 렌더링 (게임이 활성화된 경우) ===
+        if (isGameActive && gameViewWnd && gameViewWnd->GetRenderTexture() && hasActiveScene)
+        {
+            RenderManager::Instance().BeginSceneRender(gameViewWnd->GetRenderTexture());
+            
+            // GameView는 씬에서 Camera 컴포넌트 찾기
+            Camera2D* gameCamera = nullptr;
+            auto* currentScene = sceneManager.GetCurrentScene();
+            if (currentScene)
+            {
+                // 씬의 모든 GameObject에서 Camera 컴포넌트 찾기
+                const auto& allObjects = currentScene->GetAllGameObjects();
+                for (GameObject* obj : allObjects)
+                {
+                    if (obj)
+                    {
+                        auto* camera = obj->GetComponent<Camera2D>();
+                        if (camera && !camera->GetIsEditorCamera())
+                        {
+                            gameCamera = camera;
+                            
+                            // 게임뷰 크기에 맞춰 카메라 뷰포트 조정
+                            auto* renderTex = gameViewWnd->GetRenderTexture();
+                            if (renderTex)
+                            {
+                                float gameViewWidth = static_cast<float>(renderTex->GetWidth());
+                                float gameViewHeight = static_cast<float>(renderTex->GetHeight());
+                                
+                                // 카메라 뷰포트 크기가 게임뷰와 다르면 업데이트
+                                if (camera->GetViewportWidth() != gameViewWidth || 
+                                    camera->GetViewportHeight() != gameViewHeight)
+                                {
+                                    // 이전 뷰포트 중심점
+                                    float oldCenterX = camera->GetViewportWidth() / 2.0f;
+                                    float oldCenterY = camera->GetViewportHeight() / 2.0f;
+                                    
+                                    // 새 뷰포트 중심점
+                                    float newCenterX = gameViewWidth / 2.0f;
+                                    float newCenterY = gameViewHeight / 2.0f;
+                                    
+                                    // Transform 위치 조정 (중심점 유지)
+                                    auto currentPos = obj->transform.GetPosition();
+                                    obj->transform.SetPosition(
+                                        currentPos.x + (oldCenterX - newCenterX),
+                                        currentPos.y + (oldCenterY - newCenterY)
+                                    );
+                                    
+                                    // 뷰포트 크기 업데이트
+                                    camera->SetViewportSize(gameViewWidth, gameViewHeight);
+                                }
+                            }
+                            
+                            break; // 첫 번째 게임 카메라 사용
+                        }
+                    }
+                }
+            }
+            
+            // 카메라 설정 (없으면 기본 렌더링)
+            if (gameCamera)
+            {
+                RenderManager::Instance().SetCamera(gameCamera);
+            }
+            else
+            {
+                // 카메라가 없으면 기본 카메라 없이 렌더링
+                RenderManager::Instance().SetCamera(nullptr);
+            }
+            
+            // 씬 렌더링
+            RenderManager::Instance().BeginFrame();
+            sceneManager.Render();
+            RenderManager::Instance().EndFrame();
+            
+            // UI 렌더링
+            RenderManager::Instance().BeginUI();
+            sceneManager.RenderUI();
+            RenderManager::Instance().EndUI();
+            
+            RenderManager::Instance().EndSceneRender();
+        }
+
+        // 백버퍼에는 ImGui만 렌더링
 
         // ImGui 렌더링
         if (imguiInitialized)
@@ -245,9 +431,35 @@ void Application::run()
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
 
-            spriteImporterWindow->Render();
-            animationImporterWindow->Render();
-            animatorWindow->Render();
+            // DockSpace 생성 (전체 화면)
+            ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+            ImGui::SetNextWindowViewport(viewport->ID);
+            
+            ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+            window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            
+            ImGui::Begin("DockSpace", nullptr, window_flags);
+            ImGui::PopStyleVar(3);
+
+            // DockSpace
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+
+            ImGui::End();
+
+            // 메인 메뉴바 렌더링 (DockSpace 외부에서)
+            EditorManager::Instance().RenderMainMenuBar();
+
+            // 모든 에디터 창 렌더링
+            EditorManager::Instance().RenderAll();
 
             // ImGui 렌더링 완료
             ImGui::Render();

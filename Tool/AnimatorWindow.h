@@ -1,4 +1,5 @@
 #pragma once
+#include "EditorWindow.h" // 추가
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,20 +30,16 @@ struct ControllerFileInfo
 };
 
 // Animator Window - 애니메이션 상태머신 에디터
-class AnimatorWindow
+class AnimatorWindow : public EditorWindow // 상속 추가
 {
 public:
     AnimatorWindow();
     ~AnimatorWindow();
 
-    // ImGui 렌더링
-    void Render();
+    // ImGui 렌더링 (오버라이드)
+    void Render() override;
 
-    // 창 상태
-    bool IsOpen() const { return isOpen; }
-    void SetOpen() { isOpen = !isOpen; }
-
-    // 현재 편집 중인 컨트롤러
+    // 현재 열린 컨트롤러
     std::shared_ptr<AnimatorController> GetCurrentController() const { return currentController; }
 
 private:

@@ -103,6 +103,12 @@
     <Filter Include="헤더 파일\Engine\Animation">
       <UniqueIdentifier>{0f8ef631-55ec-4b34-8898-f8e071a4bca5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Engine\Serialization">
+      <UniqueIdentifier>{b2fd613c-84c5-4c68-a013-bef785585441}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Engine\Serialization">
+      <UniqueIdentifier>{a41c9a2e-22ae-46e1-82d0-a84b59d6f146}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -143,9 +149,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Core\GameObject.cpp">
       <Filter>소스 파일\Engine\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Scenes\MyScene.cpp">
-      <Filter>소스 파일\Game\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Game\main.cpp">
       <Filter>소스 파일\Game</Filter>
@@ -197,9 +200,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Physics\Rigidbody2D.cpp">
       <Filter>소스 파일\Engine\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Scenes\TestScene.cpp">
-      <Filter>소스 파일\Game\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Physics\Quadtree.cpp">
       <Filter>소스 파일\Engine\Physics</Filter>
@@ -291,6 +291,48 @@
     <ClCompile Include="Engine\Animation\AnimatorParameter.cpp">
       <Filter>소스 파일\Engine\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Tool\EditorManager.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\EditorWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\HierarchyWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\InspectorWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\SceneViewWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\ConsoleWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\ProjectWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\RenderTexture.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Serialization\SceneSerializer.cpp">
+      <Filter>소스 파일\Engine\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Resource\SceneData.cpp">
+      <Filter>소스 파일\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\GameViewWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\GridRenderer.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Core\ScriptComponent.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\SheetViewerWindow.cpp">
+      <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Core\Application.h">
@@ -326,12 +368,6 @@
     <ClInclude Include="Engine\Core\SceneManager.h">
       <Filter>헤더 파일\Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Scenes\TestScene.h">
-      <Filter>헤더 파일\Game\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\RegisterScenes.h">
-      <Filter>헤더 파일\Game</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Core\ExceptionCOM.h">
       <Filter>헤더 파일\Engine\Core</Filter>
     </ClInclude>
@@ -343,9 +379,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Core\Component.h">
       <Filter>헤더 파일\Engine\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\Scenes\MyScene.h">
-      <Filter>헤더 파일\Game\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Core\SceneRegistry.h">
       <Filter>헤더 파일\Engine\Core</Filter>
@@ -508,6 +541,57 @@
     </ClInclude>
     <ClInclude Include="Engine\Animation\AnimatorParameter.h">
       <Filter>헤더 파일\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\EditorManager.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\EditorWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\HierarchyWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\InspectorWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\SceneViewWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\ConsoleWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\ProjectWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\RenderTexture.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Serialization\SceneSerializer.h">
+      <Filter>헤더 파일\Engine\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Resource\SceneData.h">
+      <Filter>헤더 파일\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\EditorState.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\GameViewWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\GridRenderer.h">
+      <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\ScriptComponent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Scripts\PlayerController.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Scripts\RotateScript.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\SheetViewerWindow.h">
+      <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

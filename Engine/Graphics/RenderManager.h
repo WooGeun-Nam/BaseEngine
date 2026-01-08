@@ -7,13 +7,14 @@
 using namespace DirectX;
 
 class Canvas;
+class RenderTexture;  // 추가
 
 // RenderLayer: 렌더링 레이어 분리
 enum class RenderLayer : int
 {
     Background = 0,  // 0.0 ~ 0.2: 배경
     Game = 1,        // 0.2 ~ 0.5: 게임 오브젝트
-    UI = 2,          // 0.5 ~ 0.8: UI 요소
+    UI = 2,          // 0.5 ~ 0.8: UI 레이어
     Debug = 3        // 0.8 ~ 1.0: 디버그 (기즈모, 충돌박스)
 };
 
@@ -33,9 +34,14 @@ public:
     void BeginUI();
     void EndUI();
 
-    // 디버그 렌더링 사이클 (DebugRenderer로 위임)
+    // 디버그 렌더링 사이클 (DebugRenderer와 연동)
     void BeginDebug();
     void EndDebug();
+
+    // === RenderTexture 지원 (씬 뷰용) ===
+    void BeginSceneRender(RenderTexture* renderTexture);
+    void EndSceneRender();
+    void RestoreBackBuffer();
 
     // SpriteBatch 접근
     SpriteBatch* GetSpriteBatch() const { return spriteBatch.get(); }
@@ -44,7 +50,7 @@ public:
     ID3D11Device* GetDevice() const { return device; }
     ID3D11DeviceContext* GetContext() const { return context; }
 
-    // Layer depth 계산 헬퍼
+    // Layer depth 범위 계산
     static float GetLayerDepth(RenderLayer layer, float subDepth = 0.5f);
 
     // 카메라 설정
@@ -69,4 +75,10 @@ private:
     
     int screenWidth = 1280;
     int screenHeight = 720;
+
+    // 백버퍼 복원용
+    ID3D11RenderTargetView* savedRenderTarget = nullptr;
+    ID3D11DepthStencilView* savedDepthStencil = nullptr;
+    D3D11_VIEWPORT savedViewport = {};
+    bool isRenderingToTexture = false;
 };

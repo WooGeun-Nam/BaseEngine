@@ -3,6 +3,7 @@
 #include "Resource/SpriteSheet.h"
 #include "Resource/AnimationClip.h"
 #include "Resource/Font.h"
+#include "Resource/SceneData.h"
 #include "Audio/AudioClip.h"
 #include "Animation/AnimatorController.h"
 
@@ -32,7 +33,7 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         std::wstring extension = path.extension().wstring();
         std::wstring stem = path.stem().wstring();
 
-        // 확장자 별 로드
+        // 확장자별 로드
         if (extension == L".png")
         {
             Load<Texture>(stem, path.wstring());
@@ -49,17 +50,14 @@ void Resources::LoadAllAssetsFromFolder(const std::wstring& rootFolder)
         {
             Load<AnimatorController>(stem, path.wstring());
         }
+        else if (extension == L".scene")
+        {
+            Load<SceneData>(stem, path.wstring());
+        }
         else if (extension == L".wav" || extension == L".mp3")
         {
             Load<AudioClip>(stem, path.wstring());
         }
-        // Font 로드: .spritefont 파일
-        // DirectXTK SpriteFont는 .spritefont 전용 바이너리 포맷 사용
-        // MakeSpriteFont 도구로 .ttf/.otf를 .spritefont로 변환 필요
-        //
-        // 변환 예시:
-        // MakeSpriteFont "Arial.ttf" Arial.spritefont /FontSize:32 /CharacterRegion:0x0020-0x007E
-        // MakeSpriteFont "NanumGothic.ttf" NanumGothic.spritefont /FontSize:24 /CharacterRegion:0xAC00-0xD7A3
         else if (extension == L".spritefont")
         {
             Load<Font>(stem, path.wstring());
