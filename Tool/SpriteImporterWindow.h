@@ -1,10 +1,10 @@
 #pragma once
-#include "EditorWindow.h" // 추가
+#include "EditorWindow.h"
 #include <string>
 #include <d3d11.h>
 #include <vector>
 
-class SpriteImporterWindow : public EditorWindow // 상속 추가
+class SpriteImporterWindow : public EditorWindow
 {
 public:
     SpriteImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context);
@@ -12,10 +12,6 @@ public:
 
     // ImGui 렌더링 (오버라이드)
     void Render() override;
-
-    // 창 열림 상태
-    bool IsOpen() const { return isOpen; }
-    void SetOpen() { isOpen = !isOpen; }
 
 private:
     // UI 입력 필드
@@ -25,20 +21,19 @@ private:
     int frameWidth;
     int frameHeight;
 
-    // 영역 지정
+    // 영역 선택
     int cropTopLeftX;
     int cropTopLeftY;
     int cropBottomRightX;
     int cropBottomRightY;
-    bool regionSelected;     // 영역이 선택되었는지
+    bool regionSelected;
     
     // 상태
-    bool isOpen;
     bool showSuccessMessage;
     bool showErrorMessage;
     std::string statusMessage;
     
-    // 실제 파일 경로 (유니코드)
+    // 선택된 경로 저장 (유니코드)
     std::wstring selectedImagePath;
     
     // 이미지 미리보기

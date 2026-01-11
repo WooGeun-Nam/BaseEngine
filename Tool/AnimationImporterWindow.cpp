@@ -38,7 +38,6 @@ AnimationImporterWindow::AnimationImporterWindow(ID3D11Device* device, ID3D11Dev
     : EditorWindow("Animation Importer", false) // EditorWindow 생성자 호출
     , d3dDevice(device)
     , d3dContext(context)
-    , isOpen(true)
     , showSuccessMessage(false)
     , showErrorMessage(false)
     , selectedSheetIndex(-1)

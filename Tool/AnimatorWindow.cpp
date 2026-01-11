@@ -6,6 +6,7 @@
 #include "Animation/AnimatorParameter.h"
 #include "Resource/Resources.h"
 #include "Resource/AnimationClip.h"
+#include "ConsoleWindow.h"
 
 #include <ImGui/imgui.h>
 #include <nlohmann/json.hpp>
@@ -2019,7 +2020,7 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
             DirectX::XMFLOAT2 fromCenter(fromNode->position.x + nodeWidth * 0.5f, fromNode->position.y + nodeHeight * 0.5f);
             DirectX::XMFLOAT2 toCenter(toNode->position.x + nodeWidth * 0.5f, toNode->position.y + nodeHeight * 0.5f);
             
-            // 역방향 트랜지션 확인
+            // 역방향 트랜지션이 있는지 확인 (양방향 트랜지션 감지)
             bool hasReverseTransition = false;
             for (auto* reverseTransition : toNode->state->GetTransitions())
             {
@@ -2030,7 +2031,7 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
                 }
             }
             
-            // 방향 벡터
+            // 방향 벡터 계산
             float dx = toCenter.x - fromCenter.x;
             float dy = toCenter.y - fromCenter.y;
             float length = sqrtf(dx * dx + dy * dy);
@@ -2038,19 +2039,27 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
             if (length < 1.0f)
                 continue;
             
+            // 정규화된 방향 벡터
             float dirX = dx / length;
             float dirY = dy / length;
             
-            // 노드 경계 교점 계산
+            // 노드 경계까지의 교점 계산 (박스의 가장자리)
             auto calculateBoxIntersection = [](DirectX::XMFLOAT2 center, float width, float height, float dirX, float dirY) -> DirectX::XMFLOAT2 {
+                // 박스의 반 크기
                 float halfW = width * 0.5f;
                 float halfH = height * 0.5f;
+                
+                // 각 방향에 대한 교점 시간(t) 계산
                 float tX = (dirX > 0) ? halfW / dirX : (dirX < 0 ? -halfW / dirX : FLT_MAX);
                 float tY = (dirY > 0) ? halfH / dirY : (dirY < 0 ? -halfH / dirY : FLT_MAX);
+                
+                // 더 작은 t 값이 실제 교점
                 float t = (tX < tY) ? tX : tY;
+                
                 return DirectX::XMFLOAT2(center.x + dirX * t, center.y + dirY * t);
             };
             
+            // 출발점과 도착점을 노드 경계로 조정
             DirectX::XMFLOAT2 fromEdge = calculateBoxIntersection(fromCenter, nodeWidth, nodeHeight, dirX, dirY);
             DirectX::XMFLOAT2 toEdge = calculateBoxIntersection(toCenter, nodeWidth, nodeHeight, -dirX, -dirY);
             
@@ -2058,10 +2067,8 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
             DirectX::XMFLOAT2 fromPosScreen = CanvasToScreen(fromEdge);
             DirectX::XMFLOAT2 toPosScreen = CanvasToScreen(toEdge);
             
-            fromPosScreen.x += canvasPos.x;
-            fromPosScreen.y += canvasPos.y;
-            toPosScreen.x += canvasPos.x;
-            toPosScreen.y += canvasPos.y;
+            ImVec2 fromPos(fromPosScreen.x + canvasPos.x, fromPosScreen.y + canvasPos.y);
+            ImVec2 toPos(toPosScreen.x + canvasPos.x, toPosScreen.y + canvasPos.y);
             
             float distance;
             
@@ -2073,14 +2080,14 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
                 float offsetAmount = 20.0f; // 오프셋 크기
         
                 // 베지어 곡선을 위한 제어점 계산
-                float midX = (fromPosScreen.x + toPosScreen.x) * 0.5f;
-                float midY = (fromPosScreen.y + toPosScreen.y) * 0.5f;
+                float midX = (fromPos.x + toPos.x) * 0.5f;
+                float midY = (fromPos.y + toPos.y) * 0.5f;
         
-                DirectX::XMFLOAT2 cp1(fromPosScreen.x * 0.75f + midX * 0.25f + perpX * offsetAmount,
-                                      fromPosScreen.y * 0.75f + midY * 0.25f + perpY * offsetAmount);
+                DirectX::XMFLOAT2 cp1(fromPos.x * 0.75f + midX * 0.25f + perpX * offsetAmount,
+                                      fromPos.y * 0.75f + midY * 0.25f + perpY * offsetAmount);
         
-                DirectX::XMFLOAT2 cp2(toPosScreen.x * 0.75f + midX * 0.25f + perpX * offsetAmount,
-                                      toPosScreen.y * 0.75f + midY * 0.25f + perpY * offsetAmount);
+                DirectX::XMFLOAT2 cp2(toPos.x * 0.75f + midX * 0.25f + perpX * offsetAmount,
+                                      toPos.y * 0.75f + midY * 0.25f + perpY * offsetAmount);
         
                 // 베지어 곡선 상의 여러 점을 샘플링
                 distance = FLT_MAX;
@@ -2092,15 +2099,15 @@ AnimationTransition* AnimatorWindow::GetTransitionAtPosition(DirectX::XMFLOAT2 p
                     float invT = 1.0f - t;
         
                     // 3차 베지어 곡선 공식
-                    float x = invT * invT * invT * fromPosScreen.x +
+                    float x = invT * invT * invT * fromPos.x +
                              3.0f * invT * invT * t * cp1.x +
                              3.0f * invT * t * t * cp2.x +
-                             t * t * t * toPosScreen.x;
+                             t * t * t * toPos.x;
         
-                    float y = invT * invT * invT * fromPosScreen.y +
+                    float y = invT * invT * invT * fromPos.y +
                              3.0f * invT * invT * t * cp1.y +
                              3.0f * invT * t * t * cp2.y +
-                             t * t * t * toPosScreen.y;
+                             t * t * t * toPos.y;
         
                     float distX = position.x - x;
                     float distY = position.y - y;
@@ -2159,4 +2166,26 @@ float AnimatorWindow::DistancePointToLine(DirectX::XMFLOAT2 point, DirectX::XMFL
     float distY = point.y - closestY;
     
     return sqrtf(distX * distX + distY * distY);
+}
+
+void AnimatorWindow::OpenControllerFile(const std::wstring& filePath)
+{
+    // 로그 추가 - 디버깅용
+    ConsoleWindow::Log("OpenControllerFile called", LogType::Info);
+    
+    // 창이 닫혀있으면 열기
+    SetOpen(true);
+    
+    // 상태 확인 로그
+    if (IsOpen())
+    {
+        ConsoleWindow::Log("AnimatorWindow is now open", LogType::Info);
+    }
+    else
+    {
+        ConsoleWindow::Log("AnimatorWindow failed to open", LogType::Error);
+    }
+    
+    // 컨트롤러 파일 열기
+    OpenController(filePath);
 }

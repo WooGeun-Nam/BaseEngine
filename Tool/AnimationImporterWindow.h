@@ -31,7 +31,6 @@ private:
         std::vector<ID3D11ShaderResourceView*> frameThumbnails;
     };
 
-    bool isOpen;
     bool showSuccessMessage;
     bool showErrorMessage;
     std::string statusMessage;

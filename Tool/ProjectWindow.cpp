@@ -1,6 +1,7 @@
 #include "ProjectWindow.h"
 #include "EditorManager.h"
 #include "SheetViewerWindow.h"
+#include "AnimatorWindow.h"
 #include "ConsoleWindow.h"
 #include <ImGui/imgui.h>
 #include <algorithm>
@@ -212,7 +213,26 @@ void ProjectWindow::RenderFileList()
             );
             ImGui::GetWindowDrawList()->AddText(textPos, IM_COL32(255, 255, 255, 255), "CTRL");
             
-            color = ImVec4(1.0f, 0.8f, 0.2f, 1.0f); // 주황색 (Controller)
+            // 더블 클릭 체크 - IsItemHovered() 대신 IsItemClicked() 사용
+            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+            {
+                std::wstring filePath = file.wstring();
+                auto* animatorWindow = dynamic_cast<AnimatorWindow*>(
+                    EditorManager::Instance().GetEditorWindow("Animator")
+                );
+                
+                if (animatorWindow)
+                {
+                    animatorWindow->OpenControllerFile(filePath);
+                    ConsoleWindow::Log("Opening controller: " + fileName, LogType::Info);
+                }
+                else
+                {
+                    ConsoleWindow::Log("Animator Window not found", LogType::Error);
+                }
+            }
+            
+            color = ImVec4(1.0f, 0.8f, 0.2f, 1.0f); // 황금색 (Controller)
         }
         else if (isScene)
         {

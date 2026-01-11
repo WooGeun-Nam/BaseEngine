@@ -12,7 +12,7 @@
 namespace fs = std::filesystem;
 
 SpriteImporterWindow::SpriteImporterWindow(ID3D11Device* device, ID3D11DeviceContext* context)
-    : EditorWindow("Sprite Importer", false) // EditorWindow 생성자 호출
+    : EditorWindow("Sprite Importer", false) // 기본값을 false로 유지 (Window 메뉴에서 열기)
     , d3dDevice(device)
     , d3dContext(context)
     , frameWidth(64)

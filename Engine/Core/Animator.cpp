@@ -30,12 +30,19 @@ void Animator::SetController(std::shared_ptr<AnimatorController> controller)
 {
     animatorController = controller;
     
-    // Controller 사용 시 기존 단일 클립 비활성화
+    // Controller 설정 후 현재 재생 클립 비활성화
     if (animatorController)
     {
         currentClip = nullptr;
         accumulatedTimeSeconds = 0.0f;
         currentFrameIndex = 0;
+        
+        // 상태 머신 초기화 - 기본 상태로 진입
+        auto* stateMachine = animatorController->GetStateMachine();
+        if (stateMachine)
+        {
+            stateMachine->Reset();
+        }
     }
 }
 

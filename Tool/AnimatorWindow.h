@@ -41,6 +41,9 @@ public:
 
     // 현재 열린 컨트롤러
     std::shared_ptr<AnimatorController> GetCurrentController() const { return currentController; }
+    
+    // 외부에서 컨트롤러 파일 열기 (ProjectWindow에서 호출)
+    void OpenControllerFile(const std::wstring& filePath);
 
 private:
     // 현재 편집 중인 컨트롤러
