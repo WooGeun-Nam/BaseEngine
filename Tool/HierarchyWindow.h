@@ -37,6 +37,8 @@ private:
     void CreateImageGameObject();
     void CreateTextGameObject();
     void CreatePanelGameObject();
+    void CreateSliderGameObject();
+    void CreateScrollViewGameObject();
     
     // 자식 GameObject 생성 함수
     void CreateChildGameObject(GameObject* parent, const std::wstring& name);
@@ -47,6 +49,8 @@ private:
     void CreateChildImageGameObject(GameObject* parent);
     void CreateChildTextGameObject(GameObject* parent);
     void CreateChildPanelGameObject(GameObject* parent);
+    void CreateChildSliderGameObject(GameObject* parent);
+    void CreateChildScrollViewGameObject(GameObject* parent);
     
     // GameObject 삭제
     void DeleteGameObject(GameObject* obj);
@@ -71,6 +75,8 @@ private:
         CreateChildImage,
         CreateChildText,
         CreateChildPanel,
+        CreateChildSlider,
+        CreateChildScrollView,
         DeleteObject,
         SetParent,           // 부모 설정
         ReorderBefore,       // 이전 위치로 이동

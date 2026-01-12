@@ -3,6 +3,8 @@
 #include "Resource/Resources.h"
 #include "Audio/AudioManager.h"
 #include "Graphics/RenderManager.h"
+#include "Scripting/ScriptCompiler.h"
+#include "Scripting/ScriptLoader.h"
 #include <combaseapi.h>
 
 // ImGui 포함
@@ -185,8 +187,44 @@ bool Application::initialize(HWND window, int width, int height)
 
     // ImGui 초기화
     InitializeImGui();
+    
+    // Auto-compile scripts on startup
+    AutoCompileScripts();
 
     return true;
+}
+
+void Application::AutoCompileScripts()
+{
+    Scripting::ScriptCompiler::SetOutputCallback([](const std::string& msg) {
+        ConsoleWindow::Log(msg, LogType::Info);
+    });
+    
+    auto result = Scripting::ScriptCompiler::CompileScripts();
+    
+    if (result.result == Scripting::CompilationResult::MSBuildNotFound)
+    {
+        ConsoleWindow::Log("MSBuild not found - scripting disabled", LogType::Warning);
+        return;
+    }
+    
+    if (result.result != Scripting::CompilationResult::Success)
+    {
+        ConsoleWindow::Log("Script compilation failed on startup", LogType::Warning);
+        return;
+    }
+    
+    // Load DLL
+    if (Scripting::ScriptLoader::LoadScriptDLL())
+    {
+        auto scripts = Scripting::ScriptLoader::GetRegisteredScripts();
+        std::string msg = "Loaded " + std::to_string(scripts.size()) + " script(s)";
+        ConsoleWindow::Log(msg, LogType::Info);
+    }
+    else
+    {
+        ConsoleWindow::Log("Failed to load Scripts.dll", LogType::Warning);
+    }
 }
 
 void Application::run()

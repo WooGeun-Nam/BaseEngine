@@ -57,15 +57,14 @@ void ConsoleWindow::RenderToolbar()
     ImGui::Checkbox("Auto Scroll", &autoScroll);
 }
 
-void ConsoleWindow::RenderLogList()
+void ConsoleWindow::UpdateLogTextBuffer()
 {
-    ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-
+    logTextBuffer.clear();
     std::string searchText(searchBuffer);
     
     for (const auto& log : logs)
     {
-        // 필터링
+        // Filter
         if ((log.type == LogType::Info && !showInfo) ||
             (log.type == LogType::Warning && !showWarning) ||
             (log.type == LogType::Error && !showError))
@@ -73,23 +72,36 @@ void ConsoleWindow::RenderLogList()
             continue;
         }
 
-        // 검색 필터
+        // Search filter
         if (!searchText.empty() && log.message.find(searchText) == std::string::npos)
         {
             continue;
         }
 
-        // 로그 표시
-        ImGui::TextColored(ImVec4(log.color.x, log.color.y, log.color.z, log.color.w), "%s", log.message.c_str());
+        logTextBuffer += log.message + "\n";
     }
+}
 
-    // Auto Scroll
-    if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+void ConsoleWindow::RenderLogList()
+{
+    // Update the text buffer with current filters
+    UpdateLogTextBuffer();
+    
+    // Use InputTextMultiline for Unity-like console
+    // This allows full text selection, Ctrl+A, drag selection, and Ctrl+C
+    ImGui::InputTextMultiline(
+        "##ConsoleLog",
+        const_cast<char*>(logTextBuffer.c_str()),
+        logTextBuffer.size() + 1,
+        ImVec2(-1, -1),
+        ImGuiInputTextFlags_ReadOnly
+    );
+    
+    // Auto Scroll to bottom
+    if (autoScroll && logs.size() > 0)
     {
         ImGui::SetScrollHereY(1.0f);
     }
-
-    ImGui::EndChild();
 }
 
 void ConsoleWindow::Log(const std::string& message, LogType type)
@@ -98,7 +110,7 @@ void ConsoleWindow::Log(const std::string& message, LogType type)
     log.message = message;
     log.type = type;
 
-    // 타입에 따라 색상 설정
+    // 타입에 따른 색상 설정 (현재는 사용하지 않지만 나중을 위해 보존)
     switch (type)
     {
     case LogType::Info:

@@ -10,8 +10,15 @@
 #include "Physics/Rigidbody2D.h"
 #include "Core/Animator.h"
 #include "Animation/AnimatorController.h"
+#include "UI/RectTransform.h"
+#include "UI/Canvas.h"
+#include "UI/Image.h"
+#include "UI/Button.h"
+#include "UI/Text.h"
+#include "Audio/AudioSource.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
+#include "Scripting/ScriptLoader.h"
 #include <fstream>
 #include <filesystem>
 
@@ -309,14 +316,14 @@ json SceneSerializer::SerializeComponent(Component* component)
             j["texture"] = WStringToString(fileName);
         }
         
-        // Color는 API가 없으므로 스킵
-        // auto color = spr->GetColor();
-        // j["color"] = {
-        //     {"r", color.x},
-        //     {"g", color.y},
-        //     {"b", color.z},
-        //     {"a", color.w}
-        // };
+        // Color 직렬화
+        auto color = spr->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
     }
     // Camera2D
     else if (auto* cam = dynamic_cast<Camera2D*>(component))
@@ -341,12 +348,15 @@ json SceneSerializer::SerializeComponent(Component* component)
     {
         j["type"] = "BoxCollider2D";
         
-        // GetSize(), GetOffset() API가 없으므로 스킵
-        // auto size = box->GetSize();
-        // j["size"] = { {"x", size.x}, {"y", size.y} };
+        // HalfSize 저장
+        j["halfSize"] = {
+            {"x", box->halfSize.x},
+            {"y", box->halfSize.y}
+        };
         
-        // auto offset = box->GetOffset();
-        // j["offset"] = { {"x", offset.x}, {"y", offset.y} };
+        // Offset 저장
+        auto offset = box->GetOffset();
+        j["offset"] = { {"x", offset.x}, {"y", offset.y} };
         
         j["isTrigger"] = box->IsTrigger();
     }
@@ -354,10 +364,13 @@ json SceneSerializer::SerializeComponent(Component* component)
     else if (auto* circle = dynamic_cast<CircleCollider*>(component))
     {
         j["type"] = "CircleCollider";
-        // j["radius"] = circle->GetRadius();  // API 없으므로 스킵
         
-        // auto offset = circle->GetOffset();
-        // j["offset"] = { {"x", offset.x}, {"y", offset.y} };
+        // Radius 저장
+        j["radius"] = circle->radius;
+        
+        // Offset 저장
+        auto offset = circle->GetOffset();
+        j["offset"] = { {"x", offset.x}, {"y", offset.y} };
         
         j["isTrigger"] = circle->IsTrigger();
     }
@@ -380,14 +393,12 @@ json SceneSerializer::SerializeComponent(Component* component)
         // AnimatorController 직렬화
         if (auto controller = animator->GetController())
         {
-            // 컨트롤러 경로에서 파일명 추출 (확장자 제거)
             std::wstring fullPath = controller->Path();
             size_t lastSlash = fullPath.find_last_of(L"/\\");
             std::wstring fileName = (lastSlash != std::wstring::npos) 
                 ? fullPath.substr(lastSlash + 1) 
                 : fullPath;
             
-            // 확장자 제거
             size_t lastDot = fileName.find_last_of(L".");
             if (lastDot != std::wstring::npos)
             {
@@ -397,9 +408,100 @@ json SceneSerializer::SerializeComponent(Component* component)
             j["controller"] = WStringToString(fileName);
         }
     }
+    // RectTransform (UI)
+    else if (auto* rectTransform = dynamic_cast<RectTransform*>(component))
+    {
+        j["type"] = "RectTransform";
+        
+        auto size = rectTransform->GetSize();
+        j["size"] = { {"x", size.x}, {"y", size.y} };
+    }
+    // Canvas (UI)
+    else if (auto* canvas = dynamic_cast<Canvas*>(component))
+    {
+        j["type"] = "Canvas";
+        j["screenWidth"] = canvas->GetScreenWidth();
+        j["screenHeight"] = canvas->GetScreenHeight();
+    }
+    // Image (UI)
+    else if (auto* image = dynamic_cast<Image*>(component))
+    {
+        j["type"] = "Image";
+        
+        if (auto texture = image->GetTexture())
+        {
+            std::wstring fullPath = texture->Path();
+            size_t lastSlash = fullPath.find_last_of(L"/\\");
+            std::wstring fileName = (lastSlash != std::wstring::npos) 
+                ? fullPath.substr(lastSlash + 1) 
+                : fullPath;
+            
+            size_t lastDot = fileName.find_last_of(L".");
+            if (lastDot != std::wstring::npos)
+            {
+                fileName = fileName.substr(0, lastDot);
+            }
+            
+            j["texture"] = WStringToString(fileName);
+        }
+        
+        // Color 직렬화
+        auto color = image->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
+    }
+    // Button (UI)
+    else if (auto* button = dynamic_cast<Button*>(component))
+    {
+        j["type"] = "Button";
+        // Button은 Image 컴포넌트도 함께 저장됨
+    }
+    // Text (UI)
+    else if (auto* text = dynamic_cast<Text*>(component))
+    {
+        j["type"] = "Text";
+        j["text"] = WStringToString(text->GetText());
+        
+        auto color = text->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
+    }
+    // AudioSource
+    else if (auto* audioSource = dynamic_cast<AudioSource*>(component))
+    {
+        j["type"] = "AudioSource";
+        // AudioSource API가 제한적이므로 type만 저장
+    }
+    // Script Component (custom user scripts)
     else
     {
-        // 알 수 없는 컴포넌트
+        // Check if this is a registered script
+        auto registeredScripts = Scripting::ScriptLoader::GetRegisteredScripts();
+        std::string componentTypeName = typeid(*component).name();
+        
+        // Remove "class " prefix if present
+        if (componentTypeName.find("class ") == 0)
+            componentTypeName = componentTypeName.substr(6);
+        
+        for (const auto& scriptName : registeredScripts)
+        {
+            if (componentTypeName.find(scriptName) != std::string::npos)
+            {
+                j["type"] = "Script";
+                j["scriptClass"] = scriptName;
+                return j;
+            }
+        }
+        
+        // Unknown component
         return json();
     }
 
@@ -439,16 +541,16 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
             }
         }
         
-        // SetColor API가 없으므로 스킵
-        // if (j.contains("color"))
-        // {
-        //     spr->SetColor(
-        //         j["color"]["r"],
-        //         j["color"]["g"],
-        //         j["color"]["b"],
-        //         j["color"]["a"]
-        //     );
-        // }
+        // Color 복원
+        if (j.contains("color"))
+        {
+            XMFLOAT4 color;
+            color.x = j["color"]["r"];
+            color.y = j["color"]["g"];
+            color.z = j["color"]["b"];
+            color.w = j["color"]["a"];
+            spr->SetColor(color);
+        }
         
         return spr;
     }
@@ -462,26 +564,11 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
             float width = j["viewportWidth"];
             float height = j["viewportHeight"];
             cam->SetViewportSize(width, height);
-            
-            // GameObject Transform 위치가 (0,0)이면 중앙으로 초기화
-            auto transformPos = obj->transform.GetPosition();
-            if (transformPos.x == 0.0f && transformPos.y == 0.0f)
-            {
-                // 뷰포트 중앙을 보도록 Transform 설정
-                obj->transform.SetPosition(-width / 2.0f, -height / 2.0f);
-            }
         }
         else
         {
             // 뷰포트 크기가 저장되지 않은 경우 기본값 사용
             cam->SetViewportSize(800.0f, 600.0f);
-            
-            // Transform 위치가 (0,0)이면 중앙으로 초기화
-            auto transformPos = obj->transform.GetPosition();
-            if (transformPos.x == 0.0f && transformPos.y == 0.0f)
-            {
-                obj->transform.SetPosition(-400.0f, -300.0f);
-            }
         }
         
         // 줌 스케일 복원 (저장되어 있는 경우만)
@@ -497,16 +584,18 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
     {
         auto* box = obj->AddComponent<BoxCollider2D>();
         
-        // SetSize, SetOffset API가 없으므로 스킵
-        // if (j.contains("size"))
-        // {
-        //     box->SetSize(j["size"]["x"], j["size"]["y"]);
-        // }
+        // HalfSize 복원
+        if (j.contains("halfSize"))
+        {
+            box->halfSize.x = j["halfSize"]["x"];
+            box->halfSize.y = j["halfSize"]["y"];
+        }
         
-        // if (j.contains("offset"))
-        // {
-        //     box->SetOffset(j["offset"]["x"], j["offset"]["y"]);
-        // }
+        // Offset 복원
+        if (j.contains("offset"))
+        {
+            box->SetOffset(j["offset"]["x"], j["offset"]["y"]);
+        }
         
         if (j.contains("isTrigger"))
         {
@@ -519,16 +608,17 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
     {
         auto* circle = obj->AddComponent<CircleCollider>();
         
-        // SetRadius, SetOffset API가 없으므로 스킵
-        // if (j.contains("radius"))
-        // {
-        //     circle->SetRadius(j["radius"]);
-        // }
+        // Radius 복원
+        if (j.contains("radius"))
+        {
+            circle->radius = j["radius"];
+        }
         
-        // if (j.contains("offset"))
-        // {
-        //     circle->SetOffset(j["offset"]["x"], j["offset"]["y"]);
-        // }
+        // Offset 복원
+        if (j.contains("offset"))
+        {
+            circle->SetOffset(j["offset"]["x"], j["offset"]["y"]);
+        }
         
         if (j.contains("isTrigger"))
         {
@@ -564,11 +654,9 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
                 {
                     std::wstring controllerNameW = StringToWString(controllerName);
                     
-                    // Resources에서 컨트롤러 로드
                     auto controller = Resources::Get<AnimatorController>(controllerNameW);
                     if (!controller)
                     {
-                        // 캐시에 없으면 파일에서 로드
                         std::wstring controllerPath = L"Assets/Controllers/" + controllerNameW + L".controller";
                         controller = Resources::Load<AnimatorController>(controllerNameW, controllerPath);
                     }
@@ -581,11 +669,121 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
             }
             catch (...)
             {
-                // 컨트롤러 로드 실패 - 무시하고 진행
             }
         }
         
         return animator;
+    }
+    else if (type == "RectTransform")
+    {
+        auto* rectTransform = obj->AddComponent<RectTransform>();
+        
+        if (j.contains("size"))
+        {
+            rectTransform->SetSize(j["size"]["x"], j["size"]["y"]);
+        }
+        
+        return rectTransform;
+    }
+    else if (type == "Canvas")
+    {
+        auto* canvas = obj->AddComponent<Canvas>();
+        
+        if (j.contains("screenWidth") && j.contains("screenHeight"))
+        {
+            int width = j["screenWidth"];
+            int height = j["screenHeight"];
+            canvas->SetScreenSize(width, height);
+        }
+        
+        return canvas;
+    }
+    else if (type == "Image")
+    {
+        auto* image = obj->AddComponent<Image>();
+        
+        if (j.contains("texture"))
+        {
+            try
+            {
+                std::string textureName = j["texture"];
+                if (!textureName.empty())
+                {
+                    std::wstring textureNameW = StringToWString(textureName);
+                    auto texture = Resources::Get<Texture>(textureNameW);
+                    if (texture)
+                    {
+                        image->SetTexture(texture);
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        
+        // Color 복원
+        if (j.contains("color"))
+        {
+            image->SetColor(
+                j["color"]["r"],
+                j["color"]["g"],
+                j["color"]["b"],
+                j["color"]["a"]
+            );
+        }
+        
+        return image;
+    }
+    else if (type == "Button")
+    {
+        auto* button = obj->AddComponent<Button>();
+        return button;
+    }
+    else if (type == "Text")
+    {
+        auto* text = obj->AddComponent<Text>();
+        
+        if (j.contains("text"))
+        {
+            text->SetText(StringToWString(j["text"]));
+        }
+        
+        if (j.contains("color"))
+        {
+            text->SetColor(
+                j["color"]["r"],
+                j["color"]["g"],
+                j["color"]["b"],
+                j["color"]["a"]
+            );
+        }
+        
+        return text;
+    }
+    else if (type == "AudioSource")
+    {
+        auto* audioSource = obj->AddComponent<AudioSource>();
+        // AudioSource API가 제한적이므로 복원 생략
+        return audioSource;
+    }
+    else if (type == "Script")
+    {
+        if (!j.contains("scriptClass"))
+            return nullptr;
+        
+        std::string scriptClass = j["scriptClass"];
+        
+        // Create component from script DLL
+        Component* scriptComponent = Scripting::ScriptLoader::CreateComponent(scriptClass);
+        if (scriptComponent)
+        {
+            scriptComponent->SetOwner(obj);
+            scriptComponent->SetApplication(obj->GetApplication());
+            obj->AddComponentDirect(scriptComponent);
+        }
+        
+        return scriptComponent;
     }
 
     return nullptr;

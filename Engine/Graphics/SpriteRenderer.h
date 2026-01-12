@@ -65,6 +65,7 @@ public:
 
     void SetColor(const XMFLOAT4& colorValue) { color = colorValue; }
     void SetAlpha(float alpha) { color.w = alpha; }
+    XMFLOAT4 GetColor() const { return color; }
 
     void SetFlip(bool flipXValue, bool flipYValue) { flipX = flipXValue; flipY = flipYValue; }
 

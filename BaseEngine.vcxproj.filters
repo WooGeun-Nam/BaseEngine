@@ -109,6 +109,12 @@
     <Filter Include="헤더 파일\Engine\Serialization">
       <UniqueIdentifier>{a41c9a2e-22ae-46e1-82d0-a84b59d6f146}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Engine\Scripting">
+      <UniqueIdentifier>{aa410482-ff69-47f0-a075-6f6f3c0ede96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Engine\Scripting">
+      <UniqueIdentifier>{3588f9ec-e482-4d4b-9cb9-9729ce2c115f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Application.cpp">
@@ -327,11 +333,23 @@
     <ClCompile Include="Engine\Graphics\GridRenderer.cpp">
       <Filter>소스 파일\Tool</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Core\ScriptComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Tool\SheetViewerWindow.cpp">
       <Filter>소스 파일\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scripting\ScriptProjectGenerator.cpp">
+      <Filter>소스 파일\Engine\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scripting\ScriptLoader.cpp">
+      <Filter>소스 파일\Engine\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scripting\ScriptCompiler.cpp">
+      <Filter>소스 파일\Engine\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scripting\MSBuildLocator.cpp">
+      <Filter>소스 파일\Engine\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scripting\PathResolver.cpp">
+      <Filter>소스 파일\Engine\Scripting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -581,17 +599,29 @@
     <ClInclude Include="Engine\Graphics\GridRenderer.h">
       <Filter>헤더 파일\Tool</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Core\ScriptComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Scripts\PlayerController.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\Scripts\RotateScript.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Tool\SheetViewerWindow.h">
       <Filter>헤더 파일\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\ScriptMacros.h">
+      <Filter>헤더 파일\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scripting\ScriptProjectGenerator.h">
+      <Filter>헤더 파일\Engine\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scripting\ScriptLoader.h">
+      <Filter>헤더 파일\Engine\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scripting\ScriptCompiler.h">
+      <Filter>헤더 파일\Engine\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scripting\MSBuildLocator.h">
+      <Filter>헤더 파일\Engine\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scripting\PathResolver.h">
+      <Filter>헤더 파일\Engine\Scripting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

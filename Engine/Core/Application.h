@@ -42,4 +42,5 @@ private:
 
     void InitializeImGui();
     void ShutdownImGui();
+    void AutoCompileScripts();  // Auto-compile scripts on startup
 };

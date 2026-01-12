@@ -1,4 +1,5 @@
 #include "InspectorWindow.h"
+#include "ConsoleWindow.h"
 #include "Graphics/SpriteRenderer.h"
 #include "Graphics/Camera2D.h"
 #include "Physics/BoxCollider2D.h"
@@ -6,9 +7,15 @@
 #include "Physics/Rigidbody2D.h"
 #include "Core/Animator.h"
 #include "Animation/AnimatorController.h"
+#include "UI/RectTransform.h"
+#include "UI/Canvas.h"
+#include "UI/Image.h"
+#include "UI/Button.h"
+#include "UI/Text.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
 #include "Resource/SpriteSheet.h"
+#include "Scripting/ScriptLoader.h"
 #include <ImGui/imgui.h>
 #include <DirectXMath.h>
 #include <typeinfo>
@@ -57,8 +64,7 @@ void InspectorWindow::Render()
         std::string name = "GameObject";
         if (!selectedObject->GetName().empty())
         {
-            std::wstring wname = selectedObject->GetName();
-            name = WStringToString(wname); // 올바른 변환 함수 사용
+            name = WStringToString(selectedObject->GetName());
         }
         
         static char nameBuffer[256] = "";
@@ -69,9 +75,10 @@ void InspectorWindow::Render()
         ImGui::SetNextItemWidth(-1);
         if (ImGui::InputText("##Name", nameBuffer, sizeof(nameBuffer)))
         {
-            // 이름 변경
-            std::string newName(nameBuffer);
-            std::wstring wNewName(newName.begin(), newName.end());
+            // Convert UTF-8 string to wstring
+            int size_needed = MultiByteToWideChar(CP_UTF8, 0, nameBuffer, -1, nullptr, 0);
+            std::wstring wNewName(size_needed - 1, 0);
+            MultiByteToWideChar(CP_UTF8, 0, nameBuffer, -1, &wNewName[0], size_needed);
             selectedObject->SetName(wNewName);
         }
 
@@ -88,6 +95,61 @@ void InspectorWindow::Render()
 
         // 컴포넌트 목록
         RenderComponents(selectedObject);
+        
+        // ===== 전체 Inspector에 드롭 타겟으로 등록 =====
+        if (ImGui::BeginDragDropTarget())
+        {
+            // .h 스크립트 파일 드롭 처리
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SCRIPT_FILE"))
+            {
+                const wchar_t* scriptPath = (const wchar_t*)payload->Data;
+                
+                // 파일명에서 클래스 이름 추출 (확장자 제거)
+                std::filesystem::path path(scriptPath);
+                std::wstring className = path.stem().wstring();
+                std::string classNameStr = WStringToString(className);  // Use helper function
+                
+                // Check if scripts are loaded (Play mode with compiled DLL)
+                if (Scripting::ScriptLoader::IsLoaded())
+                {
+                    // Try to create and add component
+                    Component* scriptComponent = Scripting::ScriptLoader::CreateComponent(classNameStr);
+                    if (scriptComponent)
+                    {
+                        scriptComponent->SetOwner(selectedObject);
+                        scriptComponent->SetApplication(selectedObject->GetApplication());
+                        selectedObject->AddComponentDirect(scriptComponent);
+                        scriptComponent->Awake();
+                        
+                        ConsoleWindow::Log("Added script component: " + classNameStr, LogType::Info);
+                    }
+                    else
+                    {
+                        ConsoleWindow::Log("Failed to create script component: " + classNameStr, LogType::Error);
+                        ConsoleWindow::Log("Make sure the script has DEFINE_SCRIPT() macro and was compiled.", LogType::Warning);
+                    }
+                }
+                else
+                {
+                    // Scripts not loaded - show info popup
+                    ImGui::OpenPopup("ScriptDragInfo");
+                }
+            }
+            
+            ImGui::EndDragDropTarget();
+        }
+        
+        // 스크립트 드래그 안내 팝업
+        if (ImGui::BeginPopup("ScriptDragInfo"))
+        {
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Script Component");
+            ImGui::Separator();
+            ImGui::Text("Scripts can be added in Play mode after compilation.");
+            ImGui::Text("1. Press Play button");
+            ImGui::Text("2. Scripts will be compiled");
+            ImGui::Text("3. Drag script to Inspector again");
+            ImGui::EndPopup();
+        }
     }
 
     ImGui::End();
@@ -208,16 +270,16 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         
         ImGui::SameLine();
         
-        // Delete Component 버튼 (비활성화 - GameObject::RemoveComponent 미구현)
-        ImGui::BeginDisabled();
+        // Delete Component 버튼
         if (ImGui::Button("Delete##Component"))
         {
-            // TODO: GameObject::RemoveComponent 구현 필요
-        }
-        ImGui::EndDisabled();
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        {
-            ImGui::SetTooltip("RemoveComponent not implemented yet");
+            // Mark for deletion (will be removed after loop)
+            obj->RemoveComponent(comp);
+            
+            ImGui::PopID();
+            
+            // Break out of loop since we modified the components vector
+            break;
         }
 
         // SpriteRenderer 특정 처리
@@ -308,6 +370,15 @@ void InspectorWindow::RenderComponents(GameObject* obj)
                 
                 ImGui::EndDragDropTarget();
             }
+            
+            // Color 편집
+            ImGui::Spacing();
+            auto color = spriteRenderer->GetColor();
+            float colorArray[4] = { color.x, color.y, color.z, color.w };
+            if (ImGui::ColorEdit4("Color", colorArray))
+            {
+                spriteRenderer->SetColor(DirectX::XMFLOAT4(colorArray[0], colorArray[1], colorArray[2], colorArray[3]));
+            }
         }
 
         // BoxCollider2D 특정 처리
@@ -368,6 +439,17 @@ void InspectorWindow::RenderComponents(GameObject* obj)
             {
                 circleCollider->FitToTexture();
             }
+        }
+        
+        // Rigidbody2D 특정 처리
+        if (auto* rigidbody = dynamic_cast<Rigidbody2D*>(comp))
+        {
+            ImGui::DragFloat("Mass", &rigidbody->mass, 0.1f, 0.01f, 1000.0f);
+            ImGui::DragFloat("Gravity Scale", &rigidbody->gravityScale, 0.1f, -10.0f, 10.0f);
+            ImGui::DragFloat("Restitution", &rigidbody->restitution, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Friction", &rigidbody->friction, 0.01f, 0.0f, 1.0f);
+            ImGui::Checkbox("Use Gravity", &rigidbody->useGravity);
+            ImGui::Checkbox("Freeze Rotation", &rigidbody->freezeRotation);
         }
 
         // Animator 특정 처리
@@ -439,18 +521,35 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         // Camera2D 특정 처리
         if (auto* camera = dynamic_cast<Camera2D*>(comp))
         {
-            // 카메라 위치
-            auto camPos = camera->GetPosition();
-            float posArray[2] = { camPos.x, camPos.y };
-            if (ImGui::DragFloat2("Camera Position", posArray, 1.0f))
-            {
-                camera->SetPosition(posArray[0], posArray[1]);
-            }
-            
-            // 뷰포트 크기
+            // 뷰포트 크기 먼저 가져오기
             float viewportWidth = camera->GetViewportWidth();
             float viewportHeight = camera->GetViewportHeight();
             
+            // 카메라 위치 - 사용자 친화적 표시 (중앙 기준)
+            auto camPos = camera->GetPosition();
+            
+            // 실제 내부 값: (-viewportWidth/2, -viewportHeight/2)가 중앙
+            // 사용자에게 표시: (0, 0)이가 중앙
+            float displayPosX = camPos.x + (viewportWidth / 2.0f);
+            float displayPosY = camPos.y + (viewportHeight / 2.0f);
+            
+            float posArray[2] = { displayPosX, displayPosY };
+            if (ImGui::DragFloat2("Camera Position", posArray, 1.0f))
+            {
+                // 사용자 입력을 내부 좌표로 변환
+                float actualPosX = posArray[0] - (viewportWidth / 2.0f);
+                float actualPosY = posArray[1] - (viewportHeight / 2.0f);
+                camera->SetPosition(actualPosX, actualPosY);
+            }
+            
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("Position relative to viewport center\n"
+                    "(0, 0) = Center of viewport\n"
+                    "Actual position: (%.1f, %.1f)", camPos.x, camPos.y);
+            }
+            
+            // 뷰포트 크기
             if (ImGui::DragFloat("Viewport Width", &viewportWidth, 1.0f, 100.0f, 5000.0f))
             {
                 camera->SetViewportSize(viewportWidth, viewportHeight);
@@ -463,6 +562,123 @@ void InspectorWindow::RenderComponents(GameObject* obj)
             
             ImGui::Spacing();
             ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Viewport size shown in Scene View");
+        }
+        
+        // RectTransform (UI) 특정 처리
+        if (auto* rectTransform = dynamic_cast<RectTransform*>(comp))
+        {
+            auto size = rectTransform->GetSize();
+            if (ImGui::DragFloat2("Size", &size.x, 1.0f, 0.0f, 10000.0f))
+            {
+                rectTransform->SetSize(size.x, size.y);
+            }
+        }
+        
+        // Canvas (UI) 특정 처리
+        if (auto* canvas = dynamic_cast<Canvas*>(comp))
+        {
+            int screenWidth = canvas->GetScreenWidth();
+            int screenHeight = canvas->GetScreenHeight();
+            
+            if (ImGui::DragInt("Screen Width", &screenWidth, 1.0f, 100, 10000))
+            {
+                canvas->SetScreenSize(screenWidth, screenHeight);
+            }
+            
+            if (ImGui::DragInt("Screen Height", &screenHeight, 1.0f, 100, 10000))
+            {
+                canvas->SetScreenSize(screenWidth, screenHeight);
+            }
+            
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "UI Root Container");
+        }
+        
+        // Image (UI) 특정 처리
+        if (auto* image = dynamic_cast<Image*>(comp))
+        {
+            // 텍스처 필드
+            ImGui::Text("Texture:");
+            ImGui::SameLine();
+            
+            if (image->GetTexture())
+            {
+                std::wstring texturePath = image->GetTexture()->Path();
+                std::filesystem::path path(texturePath);
+                std::wstring fileName = path.stem().wstring();
+                std::string displayName = WStringToString(fileName);
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "%s", displayName.c_str());
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[None]");
+            }
+            
+            // 드롭 타겟
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_PATH"))
+                {
+                    const wchar_t* filePath = (const wchar_t*)payload->Data;
+                    std::wstring fullPath(filePath);
+                    std::filesystem::path path(fullPath);
+                    std::wstring stem = path.stem().wstring();
+                    
+                    auto texture = Resources::Get<Texture>(stem);
+                    if (!texture)
+                    {
+                        texture = Resources::Load<Texture>(stem, fullPath);
+                    }
+                    
+                    if (texture)
+                    {
+                        image->SetTexture(texture);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+            
+            // Color 편집
+            ImGui::Spacing();
+            auto color = image->GetColor();
+            float colorArray[4] = { color.x, color.y, color.z, color.w };
+            if (ImGui::ColorEdit4("Color##Image", colorArray))
+            {
+                image->SetColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]);
+            }
+        }
+        
+        // Text (UI) 특정 처리
+        if (auto* text = dynamic_cast<Text*>(comp))
+        {
+            // Text 내용 편집
+            std::string textContent = WStringToString(text->GetText());
+            static char textBuffer[1024] = "";
+            strncpy_s(textBuffer, textContent.c_str(), sizeof(textBuffer) - 1);
+            
+            if (ImGui::InputTextMultiline("Text Content", textBuffer, sizeof(textBuffer), ImVec2(-1, 60)))
+            {
+                int size_needed = MultiByteToWideChar(CP_UTF8, 0, textBuffer, -1, nullptr, 0);
+                std::wstring wText(size_needed - 1, 0);
+                MultiByteToWideChar(CP_UTF8, 0, textBuffer, -1, &wText[0], size_needed);
+                text->SetText(wText);
+            }
+            
+            // Color 편집
+            ImGui::Spacing();
+            auto color = text->GetColor();
+            float colorArray[4] = { color.x, color.y, color.z, color.w };
+            if (ImGui::ColorEdit4("Color##Text", colorArray))
+            {
+                text->SetColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]);
+            }
+        }
+        
+        // Button (UI) 특정 처리
+        if (auto* button = dynamic_cast<Button*>(comp))
+        {
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Button uses Image component for visuals");
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Set click handler in code");
         }
 
         ImGui::Separator();
@@ -482,6 +698,10 @@ void InspectorWindow::RenderComponents(GameObject* obj)
     if (ImGui::BeginPopup("AddComponentPopup"))
     {
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Add Component");
+        ImGui::Separator();
+        
+        // Built-in Components
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), "Built-in Components");
         ImGui::Separator();
         
         if (ImGui::Selectable("SpriteRenderer"))
@@ -508,6 +728,81 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         {
             obj->AddComponent<Animator>();
         }
+        
+        if (ImGui::Selectable("Camera2D"))
+        {
+            obj->AddComponent<Camera2D>();
+        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // UI Components
+        ImGui::TextColored(ImVec4(0.5f, 1.0f, 1.0f, 1.0f), "UI Components");
+        ImGui::Separator();
+        
+        if (ImGui::Selectable("RectTransform"))
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
+        if (ImGui::Selectable("Image"))
+        {
+            obj->AddComponent<Image>();
+        }
+        
+        if (ImGui::Selectable("Button"))
+        {
+            obj->AddComponent<Button>();
+        }
+        
+        if (ImGui::Selectable("Text"))
+        {
+            obj->AddComponent<Text>();
+        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // User Scripts (only if DLL is loaded)
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "User Scripts");
+        ImGui::Separator();
+        
+        // Check if scripts are loaded
+        if (Scripting::ScriptLoader::IsLoaded())
+        {
+            auto scripts = Scripting::ScriptLoader::GetRegisteredScripts();
+            
+            if (!scripts.empty())
+            {
+                for (const auto& scriptName : scripts)
+                {
+                    if (ImGui::Selectable(scriptName.c_str()))
+                    {
+                        Component* scriptComponent = Scripting::ScriptLoader::CreateComponent(scriptName);
+                        if (scriptComponent)
+                        {
+                            scriptComponent->SetOwner(obj);
+                            scriptComponent->SetApplication(obj->GetApplication());
+                            obj->AddComponentDirect(scriptComponent);
+                            scriptComponent->Awake();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "No scripts registered");
+            }
+        }
+        else
+        {
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Press Play to load scripts");
+        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Tip: Drag .h files from Project");
         
         ImGui::EndPopup();
     }

@@ -1,6 +1,9 @@
 #include "GameViewWindow.h"
 #include "Core/GameObject.h"
 #include "Graphics/Camera2D.h"
+#include "Scripting/ScriptCompiler.h"
+#include "Scripting/ScriptLoader.h"
+#include "ConsoleWindow.h"
 #include <ImGui/imgui.h>
 
 GameViewWindow::GameViewWindow()
@@ -37,8 +40,11 @@ void GameViewWindow::Render()
 
     if (ImGui::Begin(windowName.c_str(), &isOpen))
     {
-        // Play/Pause/Stop 버튼만 간단하게 표시
+        // Toolbar - Play/Pause/Stop buttons
         bool wasPlaying = (playState == PlayState::Playing);
+        
+        // Play button (disabled while compiling)
+        ImGui::BeginDisabled(isCompiling);
         if (wasPlaying)
         {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
@@ -46,17 +52,19 @@ void GameViewWindow::Render()
         
         if (ImGui::Button("Play"))
         {
-            previousPlayState = playState;
-            playState = PlayState::Playing;
+            OnPlayClicked();
         }
         
         if (wasPlaying)
         {
             ImGui::PopStyleColor();
         }
+        ImGui::EndDisabled();
 
         ImGui::SameLine();
 
+        // Pause button
+        ImGui::BeginDisabled(isCompiling || playState == PlayState::Stopped);
         bool wasPaused = (playState == PlayState::Paused);
         if (wasPaused)
         {
@@ -65,46 +73,155 @@ void GameViewWindow::Render()
         
         if (ImGui::Button("Pause"))
         {
-            if (playState == PlayState::Playing)
-            {
-                previousPlayState = playState;
-                playState = PlayState::Paused;
-            }
+            OnPauseClicked();
         }
         
         if (wasPaused)
         {
             ImGui::PopStyleColor();
         }
+        ImGui::EndDisabled();
 
         ImGui::SameLine();
 
+        // Stop button
+        ImGui::BeginDisabled(isCompiling || playState == PlayState::Stopped);
         if (ImGui::Button("Stop"))
         {
-            previousPlayState = playState;
-            playState = PlayState::Stopped;
+            OnStopClicked();
         }
+        ImGui::EndDisabled();
 
         ImGui::SameLine();
         
-        // 상태 표시
-        switch (playState)
+        // Status display
+        if (isCompiling)
         {
-        case PlayState::Stopped:
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Stopped");
-            break;
-        case PlayState::Playing:
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "| Playing");
-            break;
-        case PlayState::Paused:
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.2f, 1.0f), "| Paused");
-            break;
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "| Compiling Scripts...");
+            ImGui::SameLine();
+            
+            // Simple spinner animation
+            static float spinnerAngle = 0.0f;
+            spinnerAngle += 0.1f;
+            if (spinnerAngle > 6.28f) spinnerAngle = 0.0f;
+            
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImGui::GetWindowDrawList()->AddCircle(
+                ImVec2(pos.x + 10, pos.y + 10), 8.0f,
+                IM_COL32(255, 255, 0, 255), 12, 2.0f);
+            ImGui::GetWindowDrawList()->AddLine(
+                ImVec2(pos.x + 10, pos.y + 10),
+                ImVec2(pos.x + 10 + 8.0f * cosf(spinnerAngle), pos.y + 10 + 8.0f * sinf(spinnerAngle)),
+                IM_COL32(255, 255, 0, 255), 2.0f);
+            ImGui::Dummy(ImVec2(20, 20));
+        }
+        else
+        {
+            switch (playState)
+            {
+            case PlayState::Stopped:
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Stopped");
+                break;
+            case PlayState::Playing:
+                ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "| Playing");
+                break;
+            case PlayState::Paused:
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.2f, 1.0f), "| Paused");
+                break;
+            }
+        }
+        
+        // Show compilation status message if available
+        if (!compilationStatus.empty())
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "| %s", compilationStatus.c_str());
         }
         
         RenderGameView();
     }
 
     ImGui::End();
+}
+
+void GameViewWindow::OnPlayClicked()
+{
+    if (playState == PlayState::Playing || isCompiling)
+        return;
+
+    // Start compilation (silent start)
+    isCompiling = true;
+    compilationStatus = "Compiling...";
+    
+    // 1. Compile scripts
+    Scripting::ScriptCompiler::SetOutputCallback([this](const std::string& msg) {
+        ConsoleWindow::Log(msg, LogType::Info);
+    });
+    
+    auto result = Scripting::ScriptCompiler::CompileScripts();
+    
+    isCompiling = false;
+    
+    if (result.result == Scripting::CompilationResult::MSBuildNotFound)
+    {
+        ConsoleWindow::Log("? MSBuild not found!", LogType::Error);
+        ConsoleWindow::Log("Install Visual Studio 2019+ with C++ workload to enable scripting.", LogType::Warning);
+        compilationStatus = "MSBuild not found!";
+        return;
+    }
+    
+    if (result.result != Scripting::CompilationResult::Success)
+    {
+        ConsoleWindow::Log("? Script compilation failed!", LogType::Error);
+        compilationStatus = "Compilation failed!";
+        return;
+    }
+    
+    // 2. Load DLL (or reload if already loaded)
+    if (Scripting::ScriptLoader::IsLoaded())
+    {
+        // Unload first to reload new version
+        Scripting::ScriptLoader::UnloadScriptDLL();
+    }
+    
+    if (!Scripting::ScriptLoader::LoadScriptDLL())
+    {
+        ConsoleWindow::Log("Failed to load Scripts.dll", LogType::Warning);
+        compilationStatus = "DLL load failed!";
+        // Continue anyway - maybe no scripts
+    }
+    else
+    {
+        auto scripts = Scripting::ScriptLoader::GetRegisteredScripts();
+        std::string msg = "? Loaded " + std::to_string(scripts.size()) + " script(s)";
+        ConsoleWindow::Log(msg, LogType::Info);
+        compilationStatus = msg;
+    }
+    
+    // 3. Start playing
+    previousPlayState = playState;
+    playState = PlayState::Playing;
+}
+
+void GameViewWindow::OnPauseClicked()
+{
+    if (playState == PlayState::Playing)
+    {
+        previousPlayState = playState;
+        playState = PlayState::Paused;
+        ConsoleWindow::Log("Game paused", LogType::Info);
+    }
+}
+
+void GameViewWindow::OnStopClicked()
+{
+    previousPlayState = playState;
+    playState = PlayState::Stopped;
+    
+    // Don't unload script DLL - keep it loaded so scripts are available in Editor
+    // Scripts will be reloaded when Play is pressed again and compilation occurs
+    
+    ConsoleWindow::Log("Play mode stopped", LogType::Info);
 }
 
 void GameViewWindow::RenderGameView()
@@ -149,7 +266,7 @@ void GameViewWindow::RenderGameView()
             ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), 
             IM_COL32(40, 40, 40, 255));
 
-        // 중앙에 안내 텍스트
+        // 센터에 안내 텍스트
         const char* text = "Game View (Press Play to Start)";
         ImVec2 textSize = ImGui::CalcTextSize(text);
         ImVec2 textPos(

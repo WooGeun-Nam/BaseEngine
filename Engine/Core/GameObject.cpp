@@ -1,5 +1,6 @@
 ﻿#include "Core/GameObject.h"
 #include "UI/UIBase.h"
+#include <algorithm>
 
 GameObject::~GameObject()
 {

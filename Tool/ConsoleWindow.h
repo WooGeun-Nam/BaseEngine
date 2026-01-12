@@ -41,4 +41,8 @@ private:
     bool showError = true;
 
     char searchBuffer[256] = {0};
+    
+    // Buffer for displaying all logs as plain text
+    std::string logTextBuffer;
+    void UpdateLogTextBuffer();
 };

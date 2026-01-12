@@ -6,6 +6,10 @@
 #include <ImGui/imgui.h>
 #include <algorithm>
 #include <DirectXTex.h>
+#include <fstream>
+#include <sstream>
+#include <Windows.h>
+#include <shellapi.h>
 
 ProjectWindow::ProjectWindow()
     : EditorWindow("Project", true)
@@ -40,23 +44,186 @@ void ProjectWindow::Render()
 
     if (ImGui::Begin(windowName.c_str(), &isOpen))
     {
-        // 상단 툴바
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Assets");
-        ImGui::SameLine();
-        
-        if (ImGui::Button("Refresh"))
-        {
-            ReleaseThumbnails();
-            ScanFolder(currentPath);
-        }
+        // Toolbar with buttons
+        RenderToolbar();
         
         ImGui::Separator();
 
-        // 파일 및 폴더 리스트
+        // File list
         RenderFileList();
     }
 
     ImGui::End();
+    
+    // Create Script Popup
+    if (showCreateScriptPopup)
+    {
+        ShowCreateScriptPopup();
+    }
+}
+
+void ProjectWindow::RenderToolbar()
+{
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Assets");
+    ImGui::SameLine();
+    
+    // Refresh button
+    if (ImGui::Button("Refresh"))
+    {
+        ReleaseThumbnails();
+        ScanFolder(currentPath);
+    }
+    
+    ImGui::SameLine();
+    
+    // "+ Create Script" button
+    if (ImGui::Button("+ Create Script"))
+    {
+        showCreateScriptPopup = true;
+        memset(scriptNameBuffer, 0, sizeof(scriptNameBuffer));
+    }
+    
+    ImGui::SameLine();
+    
+    // "Open Folder" button
+    if (ImGui::Button("Open Folder"))
+    {
+        OpenAssetsFolder();
+    }
+}
+
+void ProjectWindow::ShowCreateScriptPopup()
+{
+    ImGui::OpenPopup("Create Script");
+    
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    
+    if (ImGui::BeginPopupModal("Create Script", &showCreateScriptPopup, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Create a new C++ script that inherits from Component.");
+        ImGui::Separator();
+        
+        ImGui::Text("Script Name:");
+        ImGui::InputText("##ScriptName", scriptNameBuffer, sizeof(scriptNameBuffer));
+        
+        ImGui::Separator();
+        
+        if (ImGui::Button("Create", ImVec2(120, 0)))
+        {
+            std::string scriptName = scriptNameBuffer;
+            if (!scriptName.empty())
+            {
+                CreateScriptFiles(scriptName);
+                showCreateScriptPopup = false;
+                Refresh();
+            }
+            else
+            {
+                ConsoleWindow::Log("Script name cannot be empty", LogType::Warning);
+            }
+        }
+        
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            showCreateScriptPopup = false;
+        }
+        
+        ImGui::EndPopup();
+    }
+}
+
+void ProjectWindow::CreateScriptFiles(const std::string& scriptName)
+{
+    // Always create scripts in Assets/Scripts folder regardless of current path
+    fs::path scriptsFolder = L"Assets/Scripts";
+    
+    // Ensure Scripts folder exists
+    if (!fs::exists(scriptsFolder))
+    {
+        fs::create_directories(scriptsFolder);
+    }
+    
+    // Generate ONLY header file
+    fs::path headerPath = scriptsFolder / (scriptName + ".h");
+    
+    // Check if file already exists
+    if (fs::exists(headerPath))
+    {
+        ConsoleWindow::Log("Script " + scriptName + " already exists!", LogType::Error);
+        return;
+    }
+    
+    // Generate header file with all implementation
+    std::string headerContent = GenerateScriptHeader(scriptName);
+    std::ofstream headerFile(headerPath);
+    if (headerFile.is_open())
+    {
+        headerFile << headerContent;
+        headerFile.close();
+        ConsoleWindow::Log("Created: " + headerPath.string(), LogType::Info);
+        ConsoleWindow::Log("Script " + scriptName + " created successfully!", LogType::Info);
+        ConsoleWindow::Log("Add complex logic in .cpp if needed later", LogType::Info);
+    }
+    else
+    {
+        ConsoleWindow::Log("Failed to create header file", LogType::Error);
+    }
+}
+
+std::string ProjectWindow::GenerateScriptHeader(const std::string& className)
+{
+    std::ostringstream oss;
+    oss << "#pragma once\n";
+    oss << "#include \"Core/Component.h\"\n";
+    oss << "#include \"Core/GameObject.h\"\n";
+    oss << "#include \"Core/ScriptMacros.h\"\n";
+    oss << "\n";
+    oss << "// User-defined script component\n";
+    oss << "// All logic is implemented in this header file\n";
+    oss << "// Create a separate .cpp file if you need complex implementations\n";
+    oss << "class " << className << " : public Component\n";
+    oss << "{\n";
+    oss << "public:\n";
+    oss << "    void Awake() override\n";
+    oss << "    {\n";
+    oss << "        // Called when component is first added\n";
+    oss << "    }\n";
+    oss << "\n";
+    oss << "    void Update(float deltaTime) override\n";
+    oss << "    {\n";
+    oss << "        // Called every frame\n";
+    oss << "    }\n";
+    oss << "\n";
+    oss << "    void LateUpdate(float deltaTime) override\n";
+    oss << "    {\n";
+    oss << "        // Called after all Update() calls\n";
+    oss << "    }\n";
+    oss << "\n";
+    oss << "    void OnDestroy() override\n";
+    oss << "    {\n";
+    oss << "        // Called when component is destroyed\n";
+    oss << "    }\n";
+    oss << "\n";
+    oss << "private:\n";
+    oss << "    // Add your member variables here\n";
+    oss << "};\n";
+    oss << "\n";
+    oss << "// Register this script with the engine\n";
+    oss << "REGISTER_SCRIPT(" << className << ");\n";
+    
+    return oss.str();
+}
+
+void ProjectWindow::OpenAssetsFolder()
+{
+    // Get absolute path
+    fs::path absPath = fs::absolute(currentPath);
+    
+    // Open folder in Windows Explorer
+    ShellExecuteW(NULL, L"open", absPath.wstring().c_str(), NULL, NULL, SW_SHOW);
 }
 
 void ProjectWindow::RenderFileList()
@@ -280,6 +447,25 @@ void ProjectWindow::RenderFileList()
             
             color = ImVec4(1.0f, 0.5f, 0.5f, 1.0f); // 빨간색 (오디오)
         }
+        else if (extension == ".h")
+        {
+            // C++ Header file (Script)
+            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+            
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+            ImGui::Button("##script", ImVec2(thumbnailSize, thumbnailSize));
+            ImGui::PopStyleColor();
+            
+            ImVec2 textSize = ImGui::CalcTextSize("SCRIPT");
+            ImVec2 buttonMin = cursorPos;
+            ImVec2 textPos(
+                buttonMin.x + (thumbnailSize - textSize.x) * 0.5f,
+                buttonMin.y + (thumbnailSize - textSize.y) * 0.5f
+            );
+            ImGui::GetWindowDrawList()->AddText(textPos, IM_COL32(0, 0, 0, 255), "SCRIPT");
+            
+            color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색 (Script)
+        }
         else
         {
             ImVec2 cursorPos = ImGui::GetCursorScreenPos();
@@ -321,6 +507,11 @@ void ProjectWindow::RenderFileList()
             {
                 ImGui::SetDragDropPayload("AUDIO_PATH", filePath.c_str(), (filePath.size() + 1) * sizeof(wchar_t));
                 ImGui::Text("Audio: %s", fileName.c_str());
+            }
+            else if (extension == ".h")
+            {
+                ImGui::SetDragDropPayload("SCRIPT_FILE", filePath.c_str(), (filePath.size() + 1) * sizeof(wchar_t));
+                ImGui::Text("Script: %s", fileName.c_str());
             }
             
             ImGui::EndDragDropSource();

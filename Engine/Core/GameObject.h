@@ -52,6 +52,15 @@ public:
         return comp;
     }
 
+    // AddComponentDirect - for deserialization (skips Awake)
+    void AddComponentDirect(Component* comp)
+    {
+        if (comp)
+        {
+            components.push_back(comp);
+        }
+    }
+
     // GetComponent ≈€«√∏¥
     template<typename T>
     T* GetComponent()
@@ -84,6 +93,25 @@ public:
                 return;
             }
         }
+    }
+    
+    // RemoveComponent by pointer (for runtime/editor use)
+    bool RemoveComponent(Component* comp)
+    {
+        if (!comp)
+            return false;
+        
+        for (auto it = components.begin(); it != components.end(); ++it)
+        {
+            if (*it == comp)
+            {
+                comp->OnDestroy();
+                delete *it;
+                components.erase(it);
+                return true;
+            }
+        }
+        return false;
     }
 
     const std::vector<Component*>& GetComponents() const

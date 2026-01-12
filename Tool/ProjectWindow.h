@@ -22,15 +22,26 @@ public:
 private:
     void RenderFolderTree();
     void RenderFileList();
+    void RenderToolbar();  // New: render toolbar with buttons
     void ScanFolder(const std::wstring& folderPath);
     
-    // ½æ³×ÀÏ °ü·Ã
+    // Script generation
+    void ShowCreateScriptPopup();
+    void CreateScriptFiles(const std::string& scriptName);
+    std::string GenerateScriptHeader(const std::string& className);
+    void OpenAssetsFolder();
+    
+    // ½æ³×ÀÏ ·Îµå
     ID3D11ShaderResourceView* LoadThumbnail(const std::wstring& imagePath, int maxSize = 128);
     void ReleaseThumbnails();
 
     std::wstring currentPath;
     std::vector<fs::path> files;
     std::vector<fs::path> folders;
+    
+    // UI State
+    bool showCreateScriptPopup = false;
+    char scriptNameBuffer[128] = "";
     
     // ½æ³×ÀÏ Ä³½Ã
     ID3D11Device* d3dDevice = nullptr;

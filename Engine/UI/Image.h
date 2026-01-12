@@ -28,6 +28,7 @@ public:
     { 
         color = XMFLOAT4(r, g, b, a); 
     }
+    XMFLOAT4 GetColor() const { return color; }
 
 public:
     std::shared_ptr<Texture> texture;

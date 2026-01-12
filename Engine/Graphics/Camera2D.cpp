@@ -16,19 +16,10 @@ Camera2D::Camera2D()
 
 void Camera2D::InitializeDefault()
 {
-    // 뷰포트 중앙을 보도록 초기 위치 설정
-    // 에디터 카메라: editorCameraPosition 사용
-    // 게임 카메라: GameObject Transform 사용
-    if (isEditorCamera && viewportWidth > 0 && viewportHeight > 0)
-    {
-        editorCameraPosition = XMFLOAT2(-viewportWidth / 2.0f, -viewportHeight / 2.0f);
-    }
-    else if (!isEditorCamera && gameObject && viewportWidth > 0 && viewportHeight > 0)
-    {
-        // 게임 카메라: Transform 위치 설정
-        gameObject->transform.SetPosition(-viewportWidth / 2.0f, -viewportHeight / 2.0f);
-    }
-
+    // 뷰포트 중앙을 (0,0)으로 설정하기 위해 위치는 설정하지 않음
+    // 에디터 카메라: editorCameraPosition 사용 (기본값 0,0)
+    // 게임 카메라: GameObject Transform 사용 (기본값 0,0)
+    
     // Ortho(-1, 1, -1, 1, 0, 1) 기본값 유지
     orthographicLeft = -1.0f;
     orthographicRight = 1.0f;
@@ -43,7 +34,7 @@ void Camera2D::InitializeWithViewport(float width, float height)
     // 뷰포트 크기 먼저 설정
     SetViewportSize(width, height);
     
-    // 그 다음 초기화 (중앙 위치 자동 계산)
+    // 나머지 초기화 (위치는 (0,0) 유지)
     InitializeDefault();
 }
 
@@ -95,7 +86,7 @@ XMMATRIX Camera2D::GetViewMatrix() const
     XMMATRIX translation = XMMatrixTranslation(-pos.x, -pos.y, 0.0f);
     
     // 줌 스케일 적용: 에디터 카메라만 줌 적용
-    // 게임 카메라(GameObject에 부착된 카메라)는 줌을 무시하고 항상 1.0 사용
+    // 게임 카메라(GameObject에 부착된 카메라는 줌을 무시하고 항상 1.0 사용
     float actualZoom = isEditorCamera ? zoomScale : 1.0f;
     XMMATRIX scale = XMMatrixScaling(actualZoom, actualZoom, 1.0f);
     

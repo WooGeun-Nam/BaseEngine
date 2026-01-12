@@ -6,6 +6,8 @@
 #include "UI/UIBase.h"
 #include "UI/Canvas.h"
 #include "UI/Button.h"
+#include "UI/Slider.h"
+#include "UI/ScrollView.h"
 #include <ImGui/imgui.h>
 #include <locale>
 #include <codecvt>
@@ -116,7 +118,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
-    // 선택된 오브젝트 표시
+    // 선택된 오브ject 표시
     if (obj == selectedObject)
     {
         flags |= ImGuiTreeNodeFlags_Selected;
@@ -325,6 +327,20 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
                     ImGui::CloseCurrentPopup();
                 }
                 
+                if (ImGui::MenuItem("Slider"))
+                {
+                    pendingAction.action = DeferredAction::CreateChildSlider;
+                    pendingAction.parent = obj;
+                    ImGui::CloseCurrentPopup();
+                }
+                
+                if (ImGui::MenuItem("ScrollView"))
+                {
+                    pendingAction.action = DeferredAction::CreateChildScrollView;
+                    pendingAction.parent = obj;
+                    ImGui::CloseCurrentPopup();
+                }
+                
                 ImGui::EndMenu();
             }
             
@@ -422,6 +438,16 @@ void HierarchyWindow::RenderCreateMenu()
         if (ImGui::MenuItem("Panel"))
         {
             CreatePanelGameObject();
+        }
+        
+        if (ImGui::MenuItem("Slider"))
+        {
+            CreateSliderGameObject();
+        }
+        
+        if (ImGui::MenuItem("ScrollView"))
+        {
+            CreateScrollViewGameObject();
         }
         
         ImGui::EndMenu();
@@ -610,9 +636,9 @@ void HierarchyWindow::CreateImageGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Image");
     
-    // SpriteRenderer + UIBase 추가
-    auto* spr = obj->AddComponent<SpriteRenderer>();
-    auto* ui = obj->AddComponent<UIBase>();
+    // RectTransform + Image 컴포넌트만 추가
+    obj->AddComponent<RectTransform>();
+    obj->AddComponent<Image>();
     
     // Canvas의 자식으로 설정
     if (canvasObj)
@@ -677,9 +703,9 @@ void HierarchyWindow::CreatePanelGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
     
-    // SpriteRenderer + UIBase 추가
-    auto* spr = obj->AddComponent<SpriteRenderer>();
-    auto* ui = obj->AddComponent<UIBase>();
+    // RectTransform + Image 컴포넌트 (Panel은 Image로 구현)
+    obj->AddComponent<RectTransform>();
+    obj->AddComponent<Image>();
     
     // Canvas의 자식으로 설정
     if (canvasObj)
@@ -690,6 +716,72 @@ void HierarchyWindow::CreatePanelGameObject()
     currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created child Panel GameObject", LogType::Info);
+}
+
+void HierarchyWindow::CreateSliderGameObject()
+{
+    if (!sceneManager)
+        return;
+    
+    auto* currentScene = sceneManager->GetCurrentScene();
+    if (!currentScene)
+    {
+        ConsoleWindow::Log("No active scene to create GameObject", LogType::Warning);
+        return;
+    }
+    
+    // Canvas 찾기 또는 생성
+    GameObject* canvasObj = FindOrCreateCanvas();
+    
+    auto* obj = new GameObject();
+    obj->SetApplication(currentScene->GetApplication());
+    obj->SetName(L"Slider");
+    
+    // Slider 컴포넌트 추가
+    auto* slider = obj->AddComponent<Slider>();
+    
+    // Canvas의 자식으로 설정
+    if (canvasObj)
+    {
+        obj->SetParent(canvasObj);
+    }
+    
+    currentScene->AddGameObject(obj);
+    
+    ConsoleWindow::Log("Created new Slider GameObject", LogType::Info);
+}
+
+void HierarchyWindow::CreateScrollViewGameObject()
+{
+    if (!sceneManager)
+        return;
+    
+    auto* currentScene = sceneManager->GetCurrentScene();
+    if (!currentScene)
+    {
+        ConsoleWindow::Log("No active scene to create GameObject", LogType::Warning);
+        return;
+    }
+    
+    // Canvas 찾기 또는 생성
+    GameObject* canvasObj = FindOrCreateCanvas();
+    
+    auto* obj = new GameObject();
+    obj->SetApplication(currentScene->GetApplication());
+    obj->SetName(L"ScrollView");
+    
+    // ScrollView 컴포넌트 추가
+    auto* scrollView = obj->AddComponent<ScrollView>();
+    
+    // Canvas의 자식으로 설정
+    if (canvasObj)
+    {
+        obj->SetParent(canvasObj);
+    }
+    
+    currentScene->AddGameObject(obj);
+    
+    ConsoleWindow::Log("Created new ScrollView GameObject", LogType::Info);
 }
 
 // Canvas 찾기 또는 생성
@@ -802,8 +894,12 @@ void HierarchyWindow::ProcessDeferredActions()
         
     case DeferredAction::SetParent:
         // 자식으로 설정 (또는 루트로 이동)
-        if (pendingAction.target)
+        if (pendingAction.target && currentScene)
         {
+            // SceneBase의 MoveGameObjectBetweenArrays 호출하여 배열 간 이동
+            currentScene->MoveGameObjectBetweenArrays(pendingAction.target, pendingAction.parent);
+            
+            // 부모-자식 관계 설정
             pendingAction.target->SetParent(pendingAction.parent);
             
             if (pendingAction.parent)
@@ -1072,9 +1168,9 @@ void HierarchyWindow::CreateChildImageGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Image");
     
-    // SpriteRenderer + UIBase 추가
-    obj->AddComponent<SpriteRenderer>();
-    obj->AddComponent<UIBase>();
+    // RectTransform + Image 컴포넌트만 추가
+    obj->AddComponent<RectTransform>();
+    obj->AddComponent<Image>();
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1121,9 +1217,9 @@ void HierarchyWindow::CreateChildPanelGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
     
-    // SpriteRenderer + UIBase 추가
-    obj->AddComponent<SpriteRenderer>();
-    obj->AddComponent<UIBase>();
+    // RectTransform + Image 컴포넌트 (Panel은 Image로 구현)
+    obj->AddComponent<RectTransform>();
+    obj->AddComponent<Image>();
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1131,4 +1227,52 @@ void HierarchyWindow::CreateChildPanelGameObject(GameObject* parent)
     currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created child Panel GameObject", LogType::Info);
+}
+
+void HierarchyWindow::CreateChildSliderGameObject(GameObject* parent)
+{
+    if (!parent || !sceneManager)
+        return;
+    
+    auto* currentScene = sceneManager->GetCurrentScene();
+    if (!currentScene)
+        return;
+    
+    auto* obj = new GameObject();
+    obj->SetApplication(currentScene->GetApplication());
+    obj->SetName(L"Slider");
+    
+    // Slider 컴포넌트 추가
+    obj->AddComponent<Slider>();
+    
+    // 부모-자식 관계 설정
+    obj->SetParent(parent);
+    
+    currentScene->AddGameObject(obj);
+    
+    ConsoleWindow::Log("Created child Slider GameObject", LogType::Info);
+}
+
+void HierarchyWindow::CreateChildScrollViewGameObject(GameObject* parent)
+{
+    if (!parent || !sceneManager)
+        return;
+    
+    auto* currentScene = sceneManager->GetCurrentScene();
+    if (!currentScene)
+        return;
+    
+    auto* obj = new GameObject();
+    obj->SetApplication(currentScene->GetApplication());
+    obj->SetName(L"ScrollView");
+    
+    // ScrollView 컴포넌트 추가
+    obj->AddComponent<ScrollView>();
+    
+    // 부모-자식 관계 설정
+    obj->SetParent(parent);
+    
+    currentScene->AddGameObject(obj);
+    
+    ConsoleWindow::Log("Created child ScrollView GameObject", LogType::Info);
 }

@@ -33,7 +33,6 @@
     <ClCompile Include="Engine\Core\SceneBase.cpp" />
     <ClCompile Include="Engine\Core\SceneManager.cpp" />
     <ClCompile Include="Engine\Core\SceneRegistry.cpp" />
-    <ClCompile Include="Engine\Core\ScriptComponent.cpp" />
     <ClCompile Include="Engine\Core\Timer.cpp" />
     <ClCompile Include="Engine\Core\Transform.cpp" />
     <ClCompile Include="Engine\Core\Window.cpp" />
@@ -59,6 +58,11 @@
     <ClCompile Include="Engine\Resource\SceneData.cpp" />
     <ClCompile Include="Engine\Resource\SpriteSheet.cpp" />
     <ClCompile Include="Engine\Resource\Texture.cpp" />
+    <ClCompile Include="Engine\Scripting\MSBuildLocator.cpp" />
+    <ClCompile Include="Engine\Scripting\PathResolver.cpp" />
+    <ClCompile Include="Engine\Scripting\ScriptCompiler.cpp" />
+    <ClCompile Include="Engine\Scripting\ScriptLoader.cpp" />
+    <ClCompile Include="Engine\Scripting\ScriptProjectGenerator.cpp" />
     <ClCompile Include="Engine\Serialization\SceneSerializer.cpp" />
     <ClCompile Include="Engine\UI\Button.cpp" />
     <ClCompile Include="Engine\UI\Canvas.cpp" />
@@ -113,7 +117,7 @@
     <ClInclude Include="Engine\Core\SceneBase.h" />
     <ClInclude Include="Engine\Core\SceneManager.h" />
     <ClInclude Include="Engine\Core\SceneRegistry.h" />
-    <ClInclude Include="Engine\Core\ScriptComponent.h" />
+    <ClInclude Include="Engine\Core\ScriptMacros.h" />
     <ClInclude Include="Engine\Core\Timer.h" />
     <ClInclude Include="Engine\Core\Transform.h" />
     <ClInclude Include="Engine\Core\Window.h" />
@@ -141,6 +145,11 @@
     <ClInclude Include="Engine\Resource\SceneData.h" />
     <ClInclude Include="Engine\Resource\SpriteSheet.h" />
     <ClInclude Include="Engine\Resource\Texture.h" />
+    <ClInclude Include="Engine\Scripting\MSBuildLocator.h" />
+    <ClInclude Include="Engine\Scripting\PathResolver.h" />
+    <ClInclude Include="Engine\Scripting\ScriptCompiler.h" />
+    <ClInclude Include="Engine\Scripting\ScriptLoader.h" />
+    <ClInclude Include="Engine\Scripting\ScriptProjectGenerator.h" />
     <ClInclude Include="Engine\Serialization\SceneSerializer.h" />
     <ClInclude Include="Engine\UI\Button.h" />
     <ClInclude Include="Engine\UI\Canvas.h" />
@@ -157,7 +166,6 @@
     <ClInclude Include="Game\Scripts\MovementController.h" />
     <ClInclude Include="Game\Scripts\Player.h" />
     <ClInclude Include="Game\Scripts\PlayerController.h" />
-    <ClInclude Include="Game\Scripts\RotateScript.h" />
     <ClInclude Include="Game\Scripts\SceneController.h" />
     <ClInclude Include="Inc\ImGui\imconfig.h" />
     <ClInclude Include="Inc\ImGui\imgui.h" />
