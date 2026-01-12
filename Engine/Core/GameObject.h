@@ -10,7 +10,7 @@ class Application;
 class GameObject : public Component
 {
 public:
-    GameObject() = default;
+    explicit GameObject();
     ~GameObject();
 
     void FixedUpdate(float fixedDelta);

@@ -4,31 +4,39 @@
 
 GameObject::~GameObject()
 {
-    // 부모-자식 관계 해제 (중복 삭제 방지)
+    // 1. 먼저 자식들을 모두 삭제 (부모 참조를 끊고)
+    std::vector<GameObject*> childrenCopy = children;  // 복사본 생성
+    children.clear();  // 원본 비우기 (RemoveChild 호출 방지)
+    
+    for (auto* child : childrenCopy)
+    {
+        if (child)
+        {
+            child->parent = nullptr;  // 부모 참조 제거
+            delete child;  // 자식 삭제 (재귀적으로 손자들도 삭제)
+        }
+    }
+    
+    // 2. 부모-자식 관계 해제 (이제 자식이 없으므로 안전)
     if (parent)
     {
         parent->RemoveChild(this);
         parent = nullptr;
     }
-    
-    // 자식들의 부모 포인터 먼저 nullptr로 설정
-    for (auto* child : children)
-    {
-        if (child)
-        {
-            child->parent = nullptr;  // 부모 참조 제거
-            delete child;
-        }
-    }
-    children.clear();
 
-    // 컴포넌트 삭제
+    // 3. 컴포넌트 삭제
     for (auto* comp : components)
     {
         comp->OnDestroy();
         delete comp;
     }
     components.clear();
+}
+
+GameObject::GameObject()
+{
+    // Transform의 owner 설정
+    transform.SetOwner(this);
 }
 
 void GameObject::SetParent(GameObject* newParent)

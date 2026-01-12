@@ -20,6 +20,13 @@ public:
 
     void Awake() override;
 
+    // 화면 크기를 동적으로 업데이트 (RenderManager가 호출)
+    void UpdateScreenSize(int width, int height)
+    {
+        screenWidth = width;
+        screenHeight = height;
+    }
+
     // 화면 크기 설정
     void SetScreenSize(int width, int height)
     {

@@ -130,7 +130,7 @@ bool SceneSerializer::LoadScene(const std::wstring& filePath, SceneBase* scene, 
         // 씬 이름 설정
         if (sceneData.contains("sceneName"))
         {
-            // SceneBase는 이름 설정 함수가 없을 수 있으므로 일단 스킵
+            // SceneBase는 이름 설정 함수가 없을 수도 있으므로 일단 스킵
         }
 
         // GameObject 로드
@@ -138,10 +138,17 @@ bool SceneSerializer::LoadScene(const std::wstring& filePath, SceneBase* scene, 
         {
             for (const auto& objData : sceneData["gameObjects"])
             {
-                GameObject* obj = DeserializeGameObject(objData, app);
+                GameObject* obj = DeserializeGameObject(objData, app, scene);
                 if (obj)
                 {
+                    // 루트 오브젝트를 씬에 추가 (자식들도 평면화됨)
                     scene->AddGameObject(obj);
+                    
+                    // Canvas인 경우, 모든 자식을 평면 리스트에 추가
+                    if (obj->GetComponent<Canvas>() != nullptr)
+                    {
+                        scene->RebuildCanvasUIObjectsList(obj);
+                    }
                 }
             }
         }
@@ -195,7 +202,7 @@ json SceneSerializer::SerializeGameObject(GameObject* obj)
     return j;
 }
 
-GameObject* SceneSerializer::DeserializeGameObject(const json& j, Application* app)
+GameObject* SceneSerializer::DeserializeGameObject(const json& j, Application* app, SceneBase* scene)
 {
     if (!app)
         return nullptr;
@@ -208,12 +215,6 @@ GameObject* SceneSerializer::DeserializeGameObject(const json& j, Application* a
     {
         obj->SetName(StringToWString(j["name"]));
     }
-
-    // Active 상태 (GameObject에 SetActive가 없으면 스킵)
-    // if (j.contains("active"))
-    // {
-    //     obj->SetActive(j["active"]);
-    // }
 
     // Transform 역직렬화
     if (j.contains("transform"))
@@ -236,9 +237,11 @@ GameObject* SceneSerializer::DeserializeGameObject(const json& j, Application* a
     {
         for (const auto& childData : j["children"])
         {
-            GameObject* child = DeserializeGameObject(childData, app);
+            GameObject* child = DeserializeGameObject(childData, app, scene);
             if (child)
             {
+                // 자식은 씬 배열에 추가하지 않고, 부모-자식 관계만 설정
+                // GameObject 소멸자가 자식들을 자동으로 정리함
                 child->SetParent(obj);
             }
         }

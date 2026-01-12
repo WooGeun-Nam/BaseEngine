@@ -104,6 +104,13 @@ void RenderManager::BeginSceneRender(RenderTexture* renderTexture)
     context->OMGetRenderTargets(1, &savedRenderTarget, &savedDepthStencil);
     context->RSGetViewports(&numViewports, &savedViewport);
 
+    // 현재 화면 크기 저장 및 RenderTexture 크기로 업데이트
+    int savedWidth = screenWidth;
+    int savedHeight = screenHeight;
+    
+    screenWidth = renderTexture->GetWidth();
+    screenHeight = renderTexture->GetHeight();
+
     // RenderTexture를 렌더 타겟으로 설정
     renderTexture->SetAsRenderTarget(context);
     
@@ -130,6 +137,10 @@ void RenderManager::RestoreBackBuffer()
     // 백버퍼로 복원
     context->OMSetRenderTargets(1, &savedRenderTarget, savedDepthStencil);
     context->RSSetViewports(1, &savedViewport);
+    
+    // 화면 크기를 원래 크기로 복원
+    screenWidth = static_cast<int>(savedViewport.Width);
+    screenHeight = static_cast<int>(savedViewport.Height);
 
     // Release COM 참조
     if (savedRenderTarget)

@@ -25,6 +25,7 @@
 #include "GameViewWindow.h"
 #include "SheetViewerWindow.h"
 #include "Core/EditorState.h"
+#include "UI/Canvas.h"
 
 Application::Application()
     : windowWidth(0)
@@ -366,6 +367,40 @@ void Application::run()
             
             // UI 렌더링
             RenderManager::Instance().BeginUI();
+            
+            // Canvas 화면 크기 업데이트 (RenderTexture 크기 기준)
+            auto* currentScene = sceneManager.GetCurrentScene();
+            if (currentScene)
+            {
+                // World Objects의 Canvas 업데이트
+                const auto& allObjects = currentScene->GetAllGameObjects();
+                for (GameObject* obj : allObjects)
+                {
+                    if (obj)
+                    {
+                        Canvas* canvas = obj->GetComponent<Canvas>();
+                        if (canvas)
+                        {
+                            int renderWidth = RenderManager::Instance().GetScreenWidth();
+                            int renderHeight = RenderManager::Instance().GetScreenHeight();
+                            canvas->UpdateScreenSize(renderWidth, renderHeight);
+                        }
+                    }
+                }
+                
+                // Canvas Groups의 Canvas 업데이트
+                const auto& canvasGroups = currentScene->GetCanvasGroups();
+                for (const auto& group : canvasGroups)
+                {
+                    if (group.canvas)
+                    {
+                        int renderWidth = RenderManager::Instance().GetScreenWidth();
+                        int renderHeight = RenderManager::Instance().GetScreenHeight();
+                        group.canvas->UpdateScreenSize(renderWidth, renderHeight);
+                    }
+                }
+            }
+            
             sceneManager.RenderUI();
             RenderManager::Instance().EndUI();
             
@@ -453,6 +488,39 @@ void Application::run()
             
             // UI 렌더링
             RenderManager::Instance().BeginUI();
+            
+            // Canvas 화면 크기 업데이트 (RenderTexture 크기 기준)
+            if (currentScene)
+            {
+                // World Objects의 Canvas 업데이트
+                const auto& allObjects = currentScene->GetAllGameObjects();
+                for (GameObject* obj : allObjects)
+                {
+                    if (obj)
+                    {
+                        Canvas* canvas = obj->GetComponent<Canvas>();
+                        if (canvas)
+                        {
+                            int renderWidth = RenderManager::Instance().GetScreenWidth();
+                            int renderHeight = RenderManager::Instance().GetScreenHeight();
+                            canvas->UpdateScreenSize(renderWidth, renderHeight);
+                        }
+                    }
+                }
+                
+                // Canvas Groups의 Canvas 업데이트
+                const auto& canvasGroups = currentScene->GetCanvasGroups();
+                for (const auto& group : canvasGroups)
+                {
+                    if (group.canvas)
+                    {
+                        int renderWidth = RenderManager::Instance().GetScreenWidth();
+                        int renderHeight = RenderManager::Instance().GetScreenHeight();
+                        group.canvas->UpdateScreenSize(renderWidth, renderHeight);
+                    }
+                }
+            }
+            
             sceneManager.RenderUI();
             RenderManager::Instance().EndUI();
             

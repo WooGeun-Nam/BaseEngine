@@ -2,6 +2,7 @@
 #include "UI/Canvas.h"
 #include "Core/GameObject.h"
 #include "Graphics/RenderManager.h"
+#include "Resource/Resources.h"
 
 void Image::Awake()
 {

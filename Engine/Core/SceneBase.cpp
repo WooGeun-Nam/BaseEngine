@@ -20,8 +20,11 @@ void SceneBase::AddGameObject(GameObject* object)
     }
     else
     {
-        // 일반 GameObject는 worldObjects에 추가
+        // 일반 GameObject는 worldObjects에 추가 (자신 + 모든 자손)
         worldObjects.push_back(object);
+        
+        // 모든 자손도 평면 리스트에 추가
+        CollectChildrenRecursive(object, worldObjects);
     }
 }
 
@@ -47,10 +50,34 @@ void SceneBase::AddUIObject(GameObject* object, GameObject* canvasObj)
         {
             if (group.canvasObject == canvasObj)
             {
+                // UI 객체와 모든 자식을 평면 리스트에 추가
                 group.uiObjects.push_back(object);
                 object->SetParent(canvasObj);  // UI는 Canvas의 자식으로 설정
-                return;
+                
+                // 모든 자손도 uiObjects에 추가 (평면화)
+                CollectChildrenRecursive(object, group.uiObjects);
+                break;
             }
+        }
+    }
+}
+
+void SceneBase::RebuildCanvasUIObjectsList(GameObject* canvasObj)
+{
+    if (!canvasObj)
+        return;
+    
+    // 해당 Canvas의 CanvasGroup 찾기
+    for (auto& group : canvasGroups)
+    {
+        if (group.canvasObject == canvasObj)
+        {
+            // 기존 uiObjects 클리어
+            group.uiObjects.clear();
+            
+            // Canvas의 모든 자식을 평면 리스트로 수집
+            CollectChildrenRecursive(canvasObj, group.uiObjects);
+            break;
         }
     }
 }
@@ -156,23 +183,28 @@ void SceneBase::OnExit()
     // PhysicsSystem의 collider 참조를 먼저 정리
     physicsSystem.Clear();
     
-    // worldObjects 정리
+    // worldObjects에서 루트 객체만 찾아서 삭제
+    // (자식들은 worldObjects에 있지만 부모 소멸자가 자동으로 삭제함)
+    std::vector<GameObject*> rootObjects;
     for (auto* obj : worldObjects)
+    {
+        if (obj && obj->GetParent() == nullptr)
+        {
+            rootObjects.push_back(obj);
+        }
+    }
+    
+    // 루트 객체만 삭제 (각 소멸자가 자식들을 재귀적으로 삭제)
+    for (auto* obj : rootObjects)
     {
         delete obj;
     }
     worldObjects.clear();
     
-    // Canvas와 UI 정리
+    // Canvas와 UI 삭제
     for (auto& group : canvasGroups)
     {
-        // UI 오브젝트 삭제
-        for (auto* obj : group.uiObjects)
-        {
-            delete obj;
-        }
-        
-        // Canvas 오브젝트 삭제
+        // Canvas 오브젝트 삭제 (자식들도 재귀적으로 삭제됨)
         if (group.canvasObject)
         {
             delete group.canvasObject;
@@ -183,76 +215,89 @@ void SceneBase::OnExit()
 
 void SceneBase::FixedUpdate(float fixedDelta)
 {
-    // worldObjects FixedUpdate
+    // worldObjects FixedUpdate (평면 순회)
     for (auto* obj : worldObjects)
     {
-        obj->FixedUpdate(fixedDelta);
+        if (obj)
+            obj->FixedUpdate(fixedDelta);
     }
     
-    // Canvas와 UI FixedUpdate
+    // Canvas와 UI FixedUpdate (평면 순회)
     for (auto& group : canvasGroups)
     {
+        // Canvas 자체 업데이트
         if (group.canvasObject)
             group.canvasObject->FixedUpdate(fixedDelta);
         
-        for (auto* obj : group.uiObjects)
+        // 등록된 모든 UI 객체 업데이트
+        for (auto* uiObj : group.uiObjects)
         {
-            obj->FixedUpdate(fixedDelta);
+            if (uiObj)
+                uiObj->FixedUpdate(fixedDelta);
         }
     }
 
-    // PhysicsSystem 업데이트
+    // PhysicsSystem 업데이트 (루트만 전달)
     physicsSystem.Step(worldObjects, fixedDelta);
 }
 
 void SceneBase::Update(float deltaTime)
 {
-    // worldObjects Update
+    // worldObjects Update (평면 순회)
     for (auto* obj : worldObjects)
     {
-        obj->Update(deltaTime);
+        if (obj)
+            obj->Update(deltaTime);
     }
     
-    // Canvas와 UI Update
+    // Canvas와 UI Update (평면 순회)
     for (auto& group : canvasGroups)
     {
+        // Canvas 자체 업데이트
         if (group.canvasObject)
             group.canvasObject->Update(deltaTime);
         
-        for (auto* obj : group.uiObjects)
+        // 등록된 모든 UI 객체 업데이트
+        for (auto* uiObj : group.uiObjects)
         {
-            obj->Update(deltaTime);
+            if (uiObj)
+                uiObj->Update(deltaTime);
         }
     }
 }
 
 void SceneBase::LateUpdate(float deltaTime)
 {
-    // worldObjects LateUpdate
+    // worldObjects LateUpdate (평면 순회)
     for (auto* obj : worldObjects)
     {
-        obj->LateUpdate(deltaTime);
+        if (obj)
+            obj->LateUpdate(deltaTime);
     }
     
-    // Canvas와 UI LateUpdate
+    // Canvas와 UI LateUpdate (평면 순회)
     for (auto& group : canvasGroups)
     {
+        // Canvas 자체 업데이트
         if (group.canvasObject)
             group.canvasObject->LateUpdate(deltaTime);
         
-        for (auto* obj : group.uiObjects)
+        // 등록된 모든 UI 객체 업데이트
+        for (auto* uiObj : group.uiObjects)
         {
-            obj->LateUpdate(deltaTime);
+            if (uiObj)
+                uiObj->LateUpdate(deltaTime);
         }
     }
 }
 
 void SceneBase::Render()
 {
-    // worldObjects만 렌더링 (SpriteRenderer 등)
+    // worldObjects 렌더링 (평면 순회)
     for (auto* obj : worldObjects)
     {
-        obj->Render();
+        if (obj)
+            obj->Render();
     }
 }
 
@@ -262,7 +307,7 @@ void SceneBase::RenderUI()
     if (canvasGroups.empty())
         return;
     
-    // 각 Canvas별로 렌더링
+    // 각 Canvas별로 렌더링 (평면 순회)
     for (const auto& group : canvasGroups)
     {
         if (!group.canvas || !group.canvas->IsEnabled())
@@ -274,51 +319,54 @@ void SceneBase::RenderUI()
             group.canvasObject->RenderUI();
         }
         
-        // Canvas의 자식 UI들 재귀적으로 렌더링
-        if (group.canvasObject)
+        // 등록된 모든 UI 객체 렌더링
+        for (auto* uiObj : group.uiObjects)
         {
-            RenderUIRecursive(group.canvasObject);
-        }
-    }
-}
-
-// private 헬퍼 함수로 재귀적 UI 렌더링
-void SceneBase::RenderUIRecursive(GameObject* obj)
-{
-    if (!obj)
-        return;
-    
-    const auto& children = obj->GetChildren();
-    for (auto* child : children)
-    {
-        if (child)
-        {
-            // 자식 GameObject의 UI 렌더링
-            child->RenderUI();
-            
-            // 재귀적으로 자손들도 렌더링
-            RenderUIRecursive(child);
+            if (uiObj)
+            {
+                uiObj->RenderUI();
+            }
         }
     }
 }
 
 void SceneBase::DebugRender()
 {
-    // worldObjects 디버그 렌더
+    // worldObjects 디버그 렌더 (평면 순회)
     for (auto* obj : worldObjects)
     {
-        obj->DebugRender();
+        if (obj)
+            obj->DebugRender();
     }
     
-    // Canvas와 UI 디버그 렌더
+    // Canvas와 UI 디버그 렌더 (평면 순회)
     for (auto& group : canvasGroups)
     {
+        // Canvas 자체 디버그 렌더
         if (group.canvasObject)
             group.canvasObject->DebugRender();
         
-        for (auto* obj : group.uiObjects)
+        // 등록된 모든 UI 객체 디버그 렌더
+        for (auto* uiObj : group.uiObjects)
         {
-            obj->DebugRender();
+            if (uiObj)
+                uiObj->DebugRender();
+        }
+    }
+}
+
+// 모든 자식을 평면 리스트에 수집 (재귀적)
+void SceneBase::CollectChildrenRecursive(GameObject* parent, std::vector<GameObject*>& outList) const
+{
+    if (!parent) return;
+    
+    const auto& children = parent->GetChildren();
+    for (auto* child : children)
+    {
+        if (child)
+        {
+            outList.push_back(child);
+            CollectChildrenRecursive(child, outList);  // 자식의 자식도 수집
         }
     }
 }

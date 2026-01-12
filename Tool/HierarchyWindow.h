@@ -7,6 +7,7 @@
 #include "Resource/SceneData.h"
 #include <vector>
 #include <string>
+#include <set>
 
 class Application;
 

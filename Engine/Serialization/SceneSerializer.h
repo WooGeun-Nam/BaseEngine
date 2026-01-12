@@ -23,8 +23,8 @@ public:
     // GameObject를 JSON으로 직렬화
     static json SerializeGameObject(GameObject* obj);
     
-    // JSON에서 GameObject 역직렬화
-    static GameObject* DeserializeGameObject(const json& j, Application* app);
+    // JSON에서 GameObject 역직렬화 (scene 매개변수 추가)
+    static GameObject* DeserializeGameObject(const json& j, Application* app, SceneBase* scene = nullptr);
     
     // 문자열 변환 유틸리티
     static std::string WStringToString(const std::wstring& wstr);

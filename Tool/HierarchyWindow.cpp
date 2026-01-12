@@ -49,34 +49,43 @@ void HierarchyWindow::Render()
             return;
         }
 
-        // 현재 씬의 모든 GameObject 표시
+        // 빈 영역 우클릭 컨텍스트 메뉴
+        if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        {
+            RenderCreateMenu();
+            ImGui::EndPopup();
+        }
+
         auto* currentScene = sceneManager->GetCurrentScene();
         if (currentScene)
         {
-            // 빈 공간 우클릭 컨텍스트 메뉴
-            if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-            {
-                RenderCreateMenu();
-                ImGui::EndPopup();
-            }
-
             const auto& objects = currentScene->GetAllGameObjects();
+            const auto& canvasGroups = currentScene->GetCanvasGroups();
 
-            // 루트 오브젝트만 표시
+            // worldObjects의 순서를 보장하면서 루트 객체만 표시
+            // (자식은 부모의 children을 통해 재귀적으로 표시)
             for (auto* obj : objects)
             {
-                if (obj->GetParent() == nullptr)
+                if (obj->GetParent() == nullptr)  // ? 루트 객체만
                 {
                     RenderGameObjectTree(obj);
                 }
             }
             
-            // ===== 빈 공간 드롭 타겟 (루트 레벨로 이동) =====
-            // 드래그 중일 때만 드롭 타겟 표시
+            // Canvas 객체들도 표시
+            for (const auto& group : canvasGroups)
+            {
+                if (group.canvasObject)
+                {
+                    RenderGameObjectTree(group.canvasObject);
+                }
+            }
+            
+            // 빈 공간 드래그 앤 드롭 타겟 (루트 레벨로 이동)
             if (ImGui::GetDragDropPayload() != nullptr)
             {
                 ImVec2 availRegion = ImGui::GetContentRegionAvail();
-                if (availRegion.y > 20.0f) // 최소 높이 확보
+                if (availRegion.y > 20.0f)
                 {
                     ImGui::Dummy(ImVec2(availRegion.x, availRegion.y));
                     
@@ -86,7 +95,7 @@ void HierarchyWindow::Render()
                         {
                             GameObject* draggedObj = *(GameObject**)payload->Data;
                             
-                            // 루트 레벨로 이동 (부모 제거) - Deferred로 처리
+                            // 루트 레벨로 이동 (부모 해제) - Deferred로 처리
                             if (draggedObj->GetParent() != nullptr)
                             {
                                 pendingAction.action = DeferredAction::SetParent;
@@ -110,7 +119,7 @@ void HierarchyWindow::Render()
     // Process deferred actions after all ImGui rendering is done
     ProcessDeferredActions();
 }
-
+    
 void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
 {
     if (!obj)
@@ -606,13 +615,15 @@ void HierarchyWindow::CreateButtonGameObject()
     // Button 컴포넌트 추가 (Button은 Image를 상속하므로 이것만 추가)
     auto* button = obj->AddComponent<Button>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created new Button GameObject", LogType::Info);
 }
@@ -640,13 +651,15 @@ void HierarchyWindow::CreateImageGameObject()
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가 (AddGameObject가 worldObjects에 추가)
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정 (MoveGameObjectBetweenArrays 호출)
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created new Image GameObject", LogType::Info);
 }
@@ -673,13 +686,15 @@ void HierarchyWindow::CreateTextGameObject()
     // UIBase 컴포넌트 추가
     auto* ui = obj->AddComponent<UIBase>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created new Text GameObject", LogType::Info);
 }
@@ -707,13 +722,15 @@ void HierarchyWindow::CreatePanelGameObject()
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created child Panel GameObject", LogType::Info);
 }
@@ -740,13 +757,15 @@ void HierarchyWindow::CreateSliderGameObject()
     // Slider 컴포넌트 추가
     auto* slider = obj->AddComponent<Slider>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created new Slider GameObject", LogType::Info);
 }
@@ -773,13 +792,15 @@ void HierarchyWindow::CreateScrollViewGameObject()
     // ScrollView 컴포넌트 추가
     auto* scrollView = obj->AddComponent<ScrollView>();
     
-    // Canvas의 자식으로 설정
+    // 먼저 씬에 추가
+    currentScene->AddGameObject(obj);
+    
+    // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
     }
-    
-    currentScene->AddGameObject(obj);
     
     ConsoleWindow::Log("Created new ScrollView GameObject", LogType::Info);
 }
@@ -794,13 +815,23 @@ GameObject* HierarchyWindow::FindOrCreateCanvas()
     if (!currentScene)
         return nullptr;
     
-    // 현재 씬에서 Canvas 찾기
+    // 현재 씬에서 Canvas 찾기 (worldObjects에서)
     const auto& objects = currentScene->GetAllGameObjects();
     for (auto* obj : objects)
     {
         if (obj->GetComponent<Canvas>() != nullptr)
         {
             return obj;
+        }
+    }
+    
+    // canvasGroups에서도 찾기
+    const auto& canvasGroups = currentScene->GetCanvasGroups();
+    for (const auto& group : canvasGroups)
+    {
+        if (group.canvasObject)
+        {
+            return group.canvasObject;
         }
     }
     
@@ -915,16 +946,17 @@ void HierarchyWindow::ProcessDeferredActions()
         break;
         
     case DeferredAction::ReorderBefore:
-        // 이전 위치로 이동
-        if (pendingAction.target && pendingAction.reference)
+        // 위쪽 위치로 이동
+        if (pendingAction.target && pendingAction.reference && currentScene)
         {
             GameObject* targetParent = pendingAction.reference->GetParent();
             
-            // 같은 부모를 가진 경우 순서만 변경
+            // 같은 부모인 경우에만 순서 변경
             if (pendingAction.target->GetParent() == targetParent)
             {
                 if (targetParent)
                 {
+                    // 부모의 children 배열에서 순서 변경 (이것이 Hierarchy 표시 순서)
                     if (targetParent->MoveChildBefore(pendingAction.target, pendingAction.reference))
                     {
                         ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
@@ -933,27 +965,25 @@ void HierarchyWindow::ProcessDeferredActions()
                 }
                 else
                 {
-                    // 루트 레벨에서 순서 변경
-                    if (currentScene)
+                    // 루트 레벨: worldObjects 배열 순서 변경
+                    auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
+                    
+                    auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
+                    auto targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
+                    
+                    if (draggedIt != allObjects.end() && targetIt != allObjects.end())
                     {
-                        auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
-                        auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
-                        auto targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
+                        allObjects.erase(draggedIt);
+                        targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
+                        allObjects.insert(targetIt, pendingAction.target);
                         
-                        if (draggedIt != allObjects.end() && targetIt != allObjects.end())
-                        {
-                            allObjects.erase(draggedIt);
-                            targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
-                            allObjects.insert(targetIt, pendingAction.target);
-                            ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
-                                             " before " + WStringToString(pendingAction.reference->GetName()), LogType::Info);
-                        }
                     }
                 }
             }
             else
             {
-                // 다른 부모인 경우 부모 변경 후 순서 설정
+                // 다른 부모인 경우 부모 변경 후 순서 조정
+                currentScene->MoveGameObjectBetweenArrays(pendingAction.target, targetParent);
                 pendingAction.target->SetParent(targetParent);
                 
                 if (targetParent)
@@ -961,23 +991,24 @@ void HierarchyWindow::ProcessDeferredActions()
                     targetParent->MoveChildBefore(pendingAction.target, pendingAction.reference);
                 }
                 
-                ConsoleWindow::Log("Moved: " + WStringToString(pendingAction.target->GetName()) + 
+                ConsoleWindow::Log("Moved and reordered: " + WStringToString(pendingAction.target->GetName()) + 
                                  " before " + WStringToString(pendingAction.reference->GetName()), LogType::Info);
             }
         }
         break;
         
     case DeferredAction::ReorderAfter:
-        // 다음 위치로 이동
-        if (pendingAction.target && pendingAction.reference)
+        // 아래쪽 위치로 이동
+        if (pendingAction.target && pendingAction.reference && currentScene)
         {
             GameObject* targetParent = pendingAction.reference->GetParent();
             
-            // 같은 부모를 가진 경우 순서만 변경
+            // 같은 부모인 경우에만 순서 변경
             if (pendingAction.target->GetParent() == targetParent)
             {
                 if (targetParent)
                 {
+                    // 부모의 children 배열에서 순서 변경 (이것이 Hierarchy 표시 순서)
                     if (targetParent->MoveChildAfter(pendingAction.target, pendingAction.reference))
                     {
                         ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
@@ -986,29 +1017,27 @@ void HierarchyWindow::ProcessDeferredActions()
                 }
                 else
                 {
-                    // 루트 레벨에서 순서 변경
-                    if (currentScene)
+                    // 루트 레벨: worldObjects 배열 순서 변경
+                    auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
+                    auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
+                    auto targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
+                    
+                    if (draggedIt != allObjects.end() && targetIt != allObjects.end())
                     {
-                        auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
-                        auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
-                        auto targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
-                        
-                        if (draggedIt != allObjects.end() && targetIt != allObjects.end())
-                        {
-                            allObjects.erase(draggedIt);
-                            targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
-                            if (targetIt != allObjects.end())
-                                ++targetIt;
-                            allObjects.insert(targetIt, pendingAction.target);
-                            ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
-                                             " after " + WStringToString(pendingAction.reference->GetName()), LogType::Info);
-                        }
+                        allObjects.erase(draggedIt);
+                        targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
+                        if (targetIt != allObjects.end())
+                            ++targetIt;
+                        allObjects.insert(targetIt, pendingAction.target);
+                        ConsoleWindow::Log("Reordered (root): " + WStringToString(pendingAction.target->GetName()) + 
+                                         " after " + WStringToString(pendingAction.reference->GetName()), LogType::Info);
                     }
                 }
             }
             else
             {
-                // 다른 부모인 경우 부모 변경 후 순서 설정
+                // 다른 부모인 경우 부모 변경 후 순서 조정
+                currentScene->MoveGameObjectBetweenArrays(pendingAction.target, targetParent);
                 pendingAction.target->SetParent(targetParent);
                 
                 if (targetParent)
@@ -1016,7 +1045,7 @@ void HierarchyWindow::ProcessDeferredActions()
                     targetParent->MoveChildAfter(pendingAction.target, pendingAction.reference);
                 }
                 
-                ConsoleWindow::Log("Moved: " + WStringToString(pendingAction.target->GetName()) + 
+                ConsoleWindow::Log("Moved and reordered: " + WStringToString(pendingAction.target->GetName()) + 
                                  " after " + WStringToString(pendingAction.reference->GetName()), LogType::Info);
             }
         }

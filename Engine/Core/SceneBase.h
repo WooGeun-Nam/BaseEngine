@@ -11,6 +11,14 @@ class Application;
 class SceneBase
 {
 public:
+    // Canvas별로 UI 관리
+    struct CanvasGroup
+    {
+        Canvas* canvas;
+        GameObject* canvasObject;
+        std::vector<GameObject*> uiObjects;
+    };
+
     virtual ~SceneBase() {}
 
     virtual void OnEnter() {}
@@ -24,20 +32,15 @@ public:
     virtual void DebugRender();
 
     // 모든 GameObject 접근 (Hierarchy 창을 위해)
-    std::vector<GameObject*> GetAllGameObjects() const 
+    const std::vector<GameObject*>& GetAllGameObjects() const 
     { 
-        std::vector<GameObject*> allObjects = worldObjects;
-        
-        // Canvas GameObject들도 추가
-        for (const auto& group : canvasGroups)
-        {
-            if (group.canvasObject)
-            {
-                allObjects.push_back(group.canvasObject);
-            }
-        }
-        
-        return allObjects;
+        return worldObjects;  // worldObjects 직접 반환 (정렬 순서 유지)
+    }
+    
+    // Canvas 오브젝트들도 가져오기
+    const std::vector<CanvasGroup>& GetCanvasGroups() const
+    {
+        return canvasGroups;
     }
 
     // Application 설정/가져오기
@@ -87,6 +90,9 @@ public:
     // UI GameObject 등록 (Canvas 필수)
     void AddUIObject(GameObject* object, GameObject* canvasObj);
     
+    // Canvas의 모든 자식을 평면 리스트로 재구축 (로드 후 호출)
+    void RebuildCanvasUIObjectsList(GameObject* canvasObj);
+    
     // GameObject를 배열 간 이동 (worldObjects <-> canvasGroups.uiObjects)
     void MoveGameObjectBetweenArrays(GameObject* obj, GameObject* newParent);
 
@@ -94,21 +100,15 @@ protected:
     Application* application = nullptr;
     std::wstring sceneName = L"Untitled";
 
-    // 월드 오브젝트 GameObject 리스트
-    std::vector<GameObject*> worldObjects;  // World GameObject들
+    // 월드 오브젝트 GameObject 리스트 (루트만 - 업데이트/렌더링용)
+    std::vector<GameObject*> worldObjects;
     
-    // Canvas별로 UI 관리
-    struct CanvasGroup
-    {
-        Canvas* canvas;
-        GameObject* canvasObject;
-        std::vector<GameObject*> uiObjects;
-    };
+    // Canvas 그룹 벡터
     std::vector<CanvasGroup> canvasGroups;
 
     // PhysicsSystem
     PhysicsSystem physicsSystem;
     
-    // UI 재귀 렌더링 헬퍼
-    void RenderUIRecursive(GameObject* obj);
+    // 자식 객체를 재귀적으로 수집하는 헬퍼 함수 (평면화용)
+    void CollectChildrenRecursive(GameObject* parent, std::vector<GameObject*>& outList) const;
 };
