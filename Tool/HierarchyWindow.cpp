@@ -1,4 +1,4 @@
-#include "HierarchyWindow.h"
+ï»¿#include "HierarchyWindow.h"
 #include "InspectorWindow.h"
 #include "ConsoleWindow.h"
 #include "Core/EditorState.h"
@@ -49,7 +49,7 @@ void HierarchyWindow::Render()
             return;
         }
 
-        // ºó ¿µ¿ª ¿ìÅ¬¸¯ ÄÁÅØ½ºÆ® ¸Ş´º
+        // ë¹ˆ ì˜ì—­ ìš°í´ë¦­ ì»¨í…ìŠ¤íŠ¸ ë©”ë‰´
         if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
         {
             RenderCreateMenu();
@@ -62,17 +62,17 @@ void HierarchyWindow::Render()
             const auto& objects = currentScene->GetAllGameObjects();
             const auto& canvasGroups = currentScene->GetCanvasGroups();
 
-            // worldObjectsÀÇ ¼ø¼­¸¦ º¸ÀåÇÏ¸é¼­ ·çÆ® °´Ã¼¸¸ Ç¥½Ã
-            // (ÀÚ½ÄÀº ºÎ¸ğÀÇ childrenÀ» ÅëÇØ Àç±ÍÀûÀ¸·Î Ç¥½Ã)
+            // worldObjectsì˜ ìˆœì„œë¥¼ ë³´ì¥í•˜ë©´ì„œ ë£¨íŠ¸ ê°ì²´ë§Œ í‘œì‹œ
+            // (ìì‹ì€ ë¶€ëª¨ì˜ childrenì„ í†µí•´ ì¬ê·€ì ìœ¼ë¡œ í‘œì‹œ)
             for (auto* obj : objects)
             {
-                if (obj->GetParent() == nullptr)  // ? ·çÆ® °´Ã¼¸¸
+                if (obj->GetParent() == nullptr)  // ë£¨íŠ¸ ê°ì²´ë§Œ
                 {
                     RenderGameObjectTree(obj);
                 }
             }
             
-            // Canvas °´Ã¼µéµµ Ç¥½Ã
+            // Canvas ê°ì²´ë“¤ë„ í‘œì‹œ
             for (const auto& group : canvasGroups)
             {
                 if (group.canvasObject)
@@ -81,7 +81,7 @@ void HierarchyWindow::Render()
                 }
             }
             
-            // ºó °ø°£ µå·¡±× ¾Ø µå·Ó Å¸°Ù (·çÆ® ·¹º§·Î ÀÌµ¿)
+            // ë¹ˆ ê³µê°„ ë“œë˜ê·¸ ì•¤ ë“œë¡­ íƒ€ê²Ÿ (ë£¨íŠ¸ ë ˆë²¨ë¡œ ì´ë™)
             if (ImGui::GetDragDropPayload() != nullptr)
             {
                 ImVec2 availRegion = ImGui::GetContentRegionAvail();
@@ -95,12 +95,12 @@ void HierarchyWindow::Render()
                         {
                             GameObject* draggedObj = *(GameObject**)payload->Data;
                             
-                            // ·çÆ® ·¹º§·Î ÀÌµ¿ (ºÎ¸ğ ÇØÁ¦) - Deferred·Î Ã³¸®
+                            // ë£¨íŠ¸ ë ˆë²¨ë¡œ ì´ë™ (ë¶€ëª¨ í•´ì œ) - Deferredë¡œ ì²˜ë¦¬
                             if (draggedObj->GetParent() != nullptr)
                             {
                                 pendingAction.action = DeferredAction::SetParent;
                                 pendingAction.target = draggedObj;
-                                pendingAction.parent = nullptr; // nullptr = ·çÆ® ·¹º§
+                                pendingAction.parent = nullptr; // nullptr = ë£¨íŠ¸ ë ˆë²¨
                             }
                         }
                         ImGui::EndDragDropTarget();
@@ -127,36 +127,36 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
-    // ¼±ÅÃµÈ ¿Àºêject Ç¥½Ã
+    // ì„ íƒëœ ì˜¤ë¸Œject í‘œì‹œ
     if (obj == selectedObject)
     {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    // ÀÚ½ÄÀÌ ¾øÀ¸¸é Leaf ÇÃ·¡±×
+    // ìì‹ì´ ì—†ìœ¼ë©´ Leaf í”Œë˜ê·¸
     const auto& children = obj->GetChildren();
     if (children.empty())
     {
         flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
     }
 
-    // GameObject ÀÌ¸§ Ç¥½Ã
+    // GameObject ì´ë¦„ í‘œì‹œ
     std::string name = "GameObject";
     if (!obj->GetName().empty())
     {
-        // wstring to string º¯È¯
+        // wstring to string ë³€í™˜
         std::wstring wname = obj->GetName();
         name = WStringToString(wname);
     }
 
     bool nodeOpen = ImGui::TreeNodeEx(obj, flags, "%s", name.c_str());
 
-    // Å¬¸¯ ½Ã ¼±ÅÃ
+    // í´ë¦­ ì‹œ ì„ íƒ
     if (ImGui::IsItemClicked())
     {
         selectedObject = obj;
         
-        // InspectorWindow¿¡ ¼±ÅÃ ¾Ë¸²
+        // InspectorWindowì— ì„ íƒ ì•Œë¦¼
         auto* inspectorWnd = dynamic_cast<InspectorWindow*>(
             EditorManager::Instance().GetEditorWindow("Inspector")
         );
@@ -166,23 +166,23 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         }
     }
 
-    // ===== µå·¡±× ¾Ø µå·Ó ½ÃÀÛ =====
+    // ===== ë“œë˜ê·¸ ì•¤ ë“œë¡­ ì‹œì‘ =====
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
     {
-        // GameObject Æ÷ÀÎÅÍ¸¦ ÆäÀÌ·Îµå·Î ¼³Á¤
+        // GameObject í¬ì¸í„°ë¥¼ í˜ì´ë¡œë“œë¡œ ì„¤ì •
         ImGui::SetDragDropPayload("HIERARCHY_GAMEOBJECT", &obj, sizeof(GameObject*));
         ImGui::Text("Move: %s", name.c_str());
         ImGui::EndDragDropSource();
     }
     
-    // ===== µå·ÓÁ¸ Ã³¸® (¿ì¼±¼øÀ§: À§/¾Æ·¡ > Áß¾Ó) =====
+    // ===== ë“œë¡­ì¡´ ì²˜ë¦¬ (ìš°ì„ ìˆœìœ„: ìœ„/ì•„ë˜ > ì¤‘ì•™) =====
     ImVec2 itemMin = ImGui::GetItemRectMin();
     ImVec2 itemMax = ImGui::GetItemRectMax();
     float itemHeight = itemMax.y - itemMin.y;
     
     bool dropHandled = false;
     
-    // 1. »ó´Ü 30% ¿µ¿ª Ã¼Å© (ÀÌÀü ÇüÁ¦·Î »ğÀÔ)
+    // 1. ìƒë‹¨ 30% ì˜ì—­ ì²´í¬ (ì´ì „ í˜•ì œë¡œ ì‚½ì…)
     if (!dropHandled && ImGui::IsMouseHoveringRect(ImVec2(itemMin.x, itemMin.y), ImVec2(itemMax.x, itemMin.y + itemHeight * 0.3f)))
     {
         if (ImGui::BeginDragDropTarget())
@@ -193,7 +193,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
                 
                 if (draggedObj != obj && !IsDescendantOf(obj, draggedObj))
                 {
-                    // Deferred actionÀ¸·Î ¿¹¾à
+                    // Deferred actionìœ¼ë¡œ ì˜ˆì•½
                     pendingAction.action = DeferredAction::ReorderBefore;
                     pendingAction.target = draggedObj;
                     pendingAction.reference = obj;
@@ -203,7 +203,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
             ImGui::EndDragDropTarget();
         }
         
-        // µå·ÓÁ¸ ½Ã°¢È­
+        // ë“œë¡­ì¡´ ì‹œê°í™”
         if (ImGui::GetDragDropPayload())
         {
             ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -212,7 +212,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         }
     }
     
-    // 2. ÇÏ´Ü 30% ¿µ¿ª Ã¼Å© (´ÙÀ½ ÇüÁ¦·Î »ğÀÔ)
+    // 2. í•˜ë‹¨ 30% ì˜ì—­ ì²´í¬ (ë‹¤ìŒ í˜•ì œë¡œ ì‚½ì…)
     if (!dropHandled && ImGui::IsMouseHoveringRect(ImVec2(itemMin.x, itemMax.y - itemHeight * 0.3f), ImVec2(itemMax.x, itemMax.y)))
     {
         if (ImGui::BeginDragDropTarget())
@@ -223,7 +223,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
                 
                 if (draggedObj != obj && !IsDescendantOf(obj, draggedObj))
                 {
-                    // Deferred actionÀ¸·Î ¿¹¾à
+                    // Deferred actionìœ¼ë¡œ ì˜ˆì•½
                     pendingAction.action = DeferredAction::ReorderAfter;
                     pendingAction.target = draggedObj;
                     pendingAction.reference = obj;
@@ -233,7 +233,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
             ImGui::EndDragDropTarget();
         }
         
-        // µå·ÓÁ¸ ½Ã°¢È­
+        // ë“œë¡­ì¡´ ì‹œê°í™”
         if (ImGui::GetDragDropPayload())
         {
             ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -242,17 +242,17 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         }
     }
     
-    // 3. Áß¾Ó 40% ¿µ¿ª Ã¼Å© (ÀÚ½ÄÀ¸·Î ¼³Á¤)
+    // 3. ì¤‘ì•™ 40% ì˜ì—­ ì²´í¬ (ìì‹ìœ¼ë¡œ ì„¤ì •)
     if (!dropHandled && ImGui::BeginDragDropTarget())
     {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GAMEOBJECT"))
         {
             GameObject* draggedObj = *(GameObject**)payload->Data;
             
-            // ÀÚ±â ÀÚ½ÅÀÌ³ª ÀÚ½ÅÀÇ ÀÚ½Ä¿¡°Ô´Â ºÎ¸ğ·Î ¼³Á¤ÇÒ ¼ö ¾øÀ½
+            // ìê¸° ìì‹ ì´ë‚˜ ìì‹ ì˜ ìì‹ì—ê²ŒëŠ” ë¶€ëª¨ë¡œ ì„¤ì •í•  ìˆ˜ ì—†ìŒ
             if (draggedObj != obj && !IsDescendantOf(obj, draggedObj))
             {
-                // Deferred actionÀ¸·Î ¿¹¾à
+                // Deferred actionìœ¼ë¡œ ì˜ˆì•½
                 pendingAction.action = DeferredAction::SetParent;
                 pendingAction.target = draggedObj;
                 pendingAction.parent = obj;
@@ -266,13 +266,13 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         ImGui::EndDragDropTarget();
     }
 
-    // GameObject ¿ìÅ¬¸¯ ÄÁÅØ½ºÆ® ¸Ş´º
+    // GameObject ìš°í´ë¦­ ì»¨í…ìŠ¤íŠ¸ ë©”ë‰´
     bool contextMenuOpen = false;
     if (ImGui::BeginPopupContextItem())
     {
         contextMenuOpen = true;
         
-        // Create Child ¼­ºê¸Ş´º
+        // Create Child ì„œë¸Œë©”ë‰´
         if (ImGui::BeginMenu("Create Child"))
         {
             if (ImGui::MenuItem("Empty GameObject"))
@@ -358,7 +358,7 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         
         ImGui::Separator();
         
-        // ºÎ¸ğ¿¡¼­ ºĞ¸® (ÀÚ½ÄÀÎ °æ¿ì¿¡¸¸ Ç¥½Ã)
+        // ë¶€ëª¨ì—ì„œ ë¶„ë¦¬ (ìì‹ì¸ ê²½ìš°ì—ë§Œ í‘œì‹œ)
         if (obj->GetParent() != nullptr)
         {
             if (ImGui::MenuItem("Detach from Parent"))
@@ -381,13 +381,13 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         ImGui::EndPopup();
     }
 
-    // ÀÚ½ÄÀÌ ÀÖ°í ³ëµå°¡ ¿­·ÈÀ» ¶§ ÀÚ½Ä ·»´õ¸µ
-    // ÄÁÅØ½ºÆ® ¸Ş´º°¡ ¿­·ÁÀÖ¾îµµ TreePopÀº È£ÃâÇØ¾ß ÇÔ
+    // ìì‹ì´ ìˆê³  ë…¸ë“œê°€ ì—´ë ¸ì„ ë•Œ ìì‹ ë Œë”ë§
+    // ì»¨í…ìŠ¤íŠ¸ ë©”ë‰´ê°€ ì—´ë ¤ìˆì–´ë„ TreePopì€ í˜¸ì¶œí•´ì•¼ í•¨
     if (nodeOpen)
     {
         if (!children.empty() && !contextMenuOpen)
         {
-            // ÄÁÅØ½ºÆ® ¸Ş´º°¡ ¿­·ÁÀÖÁö ¾ÊÀ» ¶§¸¸ ÀÚ½Ä ·»´õ¸µ
+            // ì»¨í…ìŠ¤íŠ¸ ë©”ë‰´ê°€ ì—´ë ¤ìˆì§€ ì•Šì„ ë•Œë§Œ ìì‹ ë Œë”ë§
             for (auto* child : children)
             {
                 RenderGameObjectTree(child);
@@ -396,10 +396,10 @@ void HierarchyWindow::RenderGameObjectTree(GameObject* obj)
         
         if (!children.empty())
         {
-            // ÀÚ½ÄÀÌ ÀÖÀ¸¸é Ç×»ó TreePop È£Ãâ
+            // ìì‹ì´ ìˆìœ¼ë©´ í•­ìƒ TreePop í˜¸ì¶œ
             ImGui::TreePop();
         }
-        // Leaf ³ëµå´Â NoTreePushOnOpen ÇÃ·¡±× ¶§¹®¿¡ TreePop ÇÊ¿ä ¾øÀ½
+        // Leaf ë…¸ë“œëŠ” NoTreePushOnOpen í”Œë˜ê·¸ ë•Œë¬¸ì— TreePop í•„ìš” ì—†ìŒ
     }
 }
 
@@ -472,12 +472,12 @@ void HierarchyWindow::DeleteGameObject(GameObject* obj)
     if (!currentScene)
         return;
     
-    // ¼±ÅÃµÈ ¿ÀºêÁ§Æ®¿´´Ù¸é ¼±ÅÃ ÇØÁ¦
+    // ì„ íƒëœ ì˜¤ë¸Œì íŠ¸ì˜€ë‹¤ë©´ ì„ íƒ í•´ì œ
     if (selectedObject == obj)
     {
         selectedObject = nullptr;
         
-        // Inspectorµµ ÃÊ±âÈ­
+        // Inspectorë„ ì´ˆê¸°í™”
         auto* inspectorWnd = dynamic_cast<InspectorWindow*>(
             EditorManager::Instance().GetEditorWindow("Inspector")
         );
@@ -487,13 +487,37 @@ void HierarchyWindow::DeleteGameObject(GameObject* obj)
         }
     }
     
-    // ¾À¿¡¼­ Á¦°Å
+    // ìì‹ë“¤ë„ ì¬ê·€ì ìœ¼ë¡œ worldObjectsì—ì„œ ì œê±°
+    RemoveChildrenFromScene(obj, currentScene);
+    
+    // ì”¬ì—ì„œ ì œê±° (ë³¸ì¸)
     currentScene->RemoveGameObject(obj);
     
-    // ¸Ş¸ğ¸® ÇØÁ¦
+    // ë©”ëª¨ë¦¬ í•´ì œ (ìì‹ë“¤ë„ ì¬ê·€ì ìœ¼ë¡œ ì‚­ì œë¨)
     delete obj;
     
     ConsoleWindow::Log("GameObject deleted", LogType::Info);
+}
+
+// ìì‹ë“¤ì„ ì¬ê·€ì ìœ¼ë¡œ ì”¬ì—ì„œ ì œê±° (ë©”ëª¨ë¦¬ í•´ì œ ì „)
+void HierarchyWindow::RemoveChildrenFromScene(GameObject* obj, SceneBase* scene)
+{
+    if (!obj || !scene)
+        return;
+    
+    // ëª¨ë“  ìì‹ì„ ì¬ê·€ì ìœ¼ë¡œ ì œê±°
+    const auto& children = obj->GetChildren();
+    for (auto* child : children)
+    {
+        if (child)
+        {
+            // ìì‹ì˜ ìì‹ë„ ì¬ê·€ ì²˜ë¦¬
+            RemoveChildrenFromScene(child, scene);
+            
+            // ì”¬ì—ì„œ ì œê±° (ë©”ëª¨ë¦¬ëŠ” ì•„ì§ í•´ì œí•˜ì§€ ì•ŠìŒ!)
+            scene->RemoveGameObject(child);
+        }
+    }
 }
 
 void HierarchyWindow::CreateEmptyGameObject()
@@ -508,7 +532,7 @@ void HierarchyWindow::CreateEmptyGameObject()
         return;
     }
     
-    // »õ GameObject »ı¼º
+    // ìƒˆ GameObject ìƒì„±
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"GameObject");
@@ -530,12 +554,12 @@ void HierarchyWindow::CreateCameraGameObject()
         return;
     }
     
-    // »õ GameObject »ı¼º
+    // ìƒˆ GameObject ìƒì„±
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Main Camera");
     
-    // Camera2D ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Camera2D ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* camera = obj->AddComponent<Camera2D>();
     camera->InitializeDefault();
     
@@ -556,12 +580,12 @@ void HierarchyWindow::CreateSpriteGameObject()
         return;
     }
     
-    // »õ GameObject »ı¼º
+    // ìƒˆ GameObject ìƒì„±
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Sprite");
     
-    // SpriteRenderer Ãß°¡
+    // SpriteRenderer ì¶”ê°€
     auto* spr = obj->AddComponent<SpriteRenderer>();
     
     currentScene->AddGameObject(obj);
@@ -585,7 +609,7 @@ void HierarchyWindow::CreateCanvasGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Canvas");
     
-    // Canvas ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Canvas ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* canvas = obj->AddComponent<Canvas>();
     
     currentScene->AddGameObject(obj);
@@ -605,20 +629,20 @@ void HierarchyWindow::CreateButtonGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Button");
     
-    // Button ÄÄÆ÷³ÍÆ® Ãß°¡ (ButtonÀº Image¸¦ »ó¼ÓÇÏ¹Ç·Î ÀÌ°Í¸¸ Ãß°¡)
+    // Button ì»´í¬ë„ŒíŠ¸ ì¶”ê°€ (Buttonì€ Imageë¥¼ ìƒì†í•˜ë¯€ë¡œ ì´ê²ƒë§Œ ì¶”ê°€)
     auto* button = obj->AddComponent<Button>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì •
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -640,21 +664,21 @@ void HierarchyWindow::CreateImageGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Image");
     
-    // RectTransform + Image ÄÄÆ÷³ÍÆ®¸¸ Ãß°¡
+    // RectTransform + Image ì»´í¬ë„ŒíŠ¸ë§Œ ì¶”ê°€
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡ (AddGameObject°¡ worldObjects¿¡ Ãß°¡)
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€ (AddGameObjectê°€ worldObjectsì— ì¶”ê°€)
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤ (MoveGameObjectBetweenArrays È£Ãâ)
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì • (MoveGameObjectBetweenArrays í˜¸ì¶œ)
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -676,20 +700,20 @@ void HierarchyWindow::CreateTextGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Text");
     
-    // UIBase ÄÄÆ÷³ÍÆ® Ãß°¡
+    // UIBase ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* ui = obj->AddComponent<UIBase>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì •
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -711,21 +735,21 @@ void HierarchyWindow::CreatePanelGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
     
-    // RectTransform + Image ÄÄÆ÷³ÍÆ® (PanelÀº Image·Î ±¸Çö)
+    // RectTransform + Image ì»´í¬ë„ŒíŠ¸ (Panelì€ Imageë¡œ êµ¬í˜„)
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì •
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -747,20 +771,20 @@ void HierarchyWindow::CreateSliderGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Slider");
     
-    // Slider ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Slider ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* slider = obj->AddComponent<Slider>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì •
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -782,20 +806,20 @@ void HierarchyWindow::CreateScrollViewGameObject()
         return;
     }
     
-    // Canvas Ã£±â ¶Ç´Â »ı¼º
+    // Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
     GameObject* canvasObj = FindOrCreateCanvas();
     
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"ScrollView");
     
-    // ScrollView ÄÄÆ÷³ÍÆ® Ãß°¡
+    // ScrollView ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* scrollView = obj->AddComponent<ScrollView>();
     
-    // ¸ÕÀú ¾À¿¡ Ãß°¡
+    // ë¨¼ì € ì”¬ì— ì¶”ê°€
     currentScene->AddGameObject(obj);
     
-    // ±× ´ÙÀ½ CanvasÀÇ ÀÚ½ÄÀ¸·Î ¼³Á¤
+    // ê·¸ ë‹¤ìŒ Canvasì˜ ìì‹ìœ¼ë¡œ ì„¤ì •
     if (canvasObj)
     {
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
@@ -805,7 +829,7 @@ void HierarchyWindow::CreateScrollViewGameObject()
     ConsoleWindow::Log("Created new ScrollView GameObject", LogType::Info);
 }
 
-// Canvas Ã£±â ¶Ç´Â »ı¼º
+// Canvas ì°¾ê¸° ë˜ëŠ” ìƒì„±
 GameObject* HierarchyWindow::FindOrCreateCanvas()
 {
     if (!sceneManager)
@@ -815,7 +839,7 @@ GameObject* HierarchyWindow::FindOrCreateCanvas()
     if (!currentScene)
         return nullptr;
     
-    // ÇöÀç ¾À¿¡¼­ Canvas Ã£±â (worldObjects¿¡¼­)
+    // í˜„ì¬ ì”¬ì—ì„œ Canvas ì°¾ê¸°
     const auto& objects = currentScene->GetAllGameObjects();
     for (auto* obj : objects)
     {
@@ -825,22 +849,12 @@ GameObject* HierarchyWindow::FindOrCreateCanvas()
         }
     }
     
-    // canvasGroups¿¡¼­µµ Ã£±â
-    const auto& canvasGroups = currentScene->GetCanvasGroups();
-    for (const auto& group : canvasGroups)
-    {
-        if (group.canvasObject)
-        {
-            return group.canvasObject;
-        }
-    }
-    
-    // Canvas°¡ ¾øÀ¸¸é »õ·Î »ı¼º
+    // Canvasê°€ ì—†ìœ¼ë©´ ìƒˆë¡œ ìƒì„±
     auto* canvasObj = new GameObject();
     canvasObj->SetApplication(currentScene->GetApplication());
     canvasObj->SetName(L"Canvas");
     
-    // Canvas ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Canvas ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* canvas = canvasObj->AddComponent<Canvas>();
     
     currentScene->AddGameObject(canvasObj);
@@ -850,7 +864,7 @@ GameObject* HierarchyWindow::FindOrCreateCanvas()
     return canvasObj;
 }
 
-// potentialÀÌ ancestorÀÇ ÀÚ¼ÕÀÎÁö È®ÀÎ
+// potentialì´ ancestorì˜ ìì†ì¸ì§€ í™•ì¸
 bool HierarchyWindow::IsDescendantOf(GameObject* potential, GameObject* ancestor)
 {
     if (!potential || !ancestor)
@@ -914,7 +928,7 @@ void HierarchyWindow::ProcessDeferredActions()
         break;
         
     case DeferredAction::DetachFromParent:
-        // ºÎ¸ğ¿¡¼­ ºĞ¸®
+        // ë¶€ëª¨ì—ì„œ ë¶„ë¦¬
         if (pendingAction.target && pendingAction.target->GetParent())
         {
             std::string targetName = WStringToString(pendingAction.target->GetName());
@@ -924,13 +938,13 @@ void HierarchyWindow::ProcessDeferredActions()
         break;
         
     case DeferredAction::SetParent:
-        // ÀÚ½ÄÀ¸·Î ¼³Á¤ (¶Ç´Â ·çÆ®·Î ÀÌµ¿)
+        // ìì‹ìœ¼ë¡œ ì„¤ì • (ë˜ëŠ” ë£¨íŠ¸ë¡œ ì´ë™)
         if (pendingAction.target && currentScene)
         {
-            // SceneBaseÀÇ MoveGameObjectBetweenArrays È£ÃâÇÏ¿© ¹è¿­ °£ ÀÌµ¿
+            // SceneBaseì˜ MoveGameObjectBetweenArrays í˜¸ì¶œí•˜ì—¬ ë°°ì—´ ê°„ ì´ë™
             currentScene->MoveGameObjectBetweenArrays(pendingAction.target, pendingAction.parent);
             
-            // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+            // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
             pendingAction.target->SetParent(pendingAction.parent);
             
             if (pendingAction.parent)
@@ -946,17 +960,17 @@ void HierarchyWindow::ProcessDeferredActions()
         break;
         
     case DeferredAction::ReorderBefore:
-        // À§ÂÊ À§Ä¡·Î ÀÌµ¿
+        // ìœ„ìª½ ìœ„ì¹˜ë¡œ ì´ë™
         if (pendingAction.target && pendingAction.reference && currentScene)
         {
             GameObject* targetParent = pendingAction.reference->GetParent();
             
-            // °°Àº ºÎ¸ğÀÎ °æ¿ì¿¡¸¸ ¼ø¼­ º¯°æ
+            // ê°™ì€ ë¶€ëª¨ì¸ ê²½ìš°ì—ë§Œ ìˆœì„œ ë³€ê²½
             if (pendingAction.target->GetParent() == targetParent)
             {
                 if (targetParent)
                 {
-                    // ºÎ¸ğÀÇ children ¹è¿­¿¡¼­ ¼ø¼­ º¯°æ (ÀÌ°ÍÀÌ Hierarchy Ç¥½Ã ¼ø¼­)
+                    // ë¶€ëª¨ì˜ children ë°°ì—´ì—ì„œ ìˆœì„œ ë³€ê²½ (ì´ê²ƒì´ Hierarchy í‘œì‹œ ìˆœì„œ)
                     if (targetParent->MoveChildBefore(pendingAction.target, pendingAction.reference))
                     {
                         ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
@@ -965,7 +979,7 @@ void HierarchyWindow::ProcessDeferredActions()
                 }
                 else
                 {
-                    // ·çÆ® ·¹º§: worldObjects ¹è¿­ ¼ø¼­ º¯°æ
+                    // ë£¨íŠ¸ ë ˆë²¨: worldObjects ë°°ì—´ ìˆœì„œ ë³€ê²½
                     auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
                     
                     auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
@@ -982,7 +996,7 @@ void HierarchyWindow::ProcessDeferredActions()
             }
             else
             {
-                // ´Ù¸¥ ºÎ¸ğÀÎ °æ¿ì ºÎ¸ğ º¯°æ ÈÄ ¼ø¼­ Á¶Á¤
+                // ë‹¤ë¥¸ ë¶€ëª¨ì¸ ê²½ìš° ë¶€ëª¨ ë³€ê²½ í›„ ìˆœì„œ ì¡°ì •
                 currentScene->MoveGameObjectBetweenArrays(pendingAction.target, targetParent);
                 pendingAction.target->SetParent(targetParent);
                 
@@ -998,17 +1012,17 @@ void HierarchyWindow::ProcessDeferredActions()
         break;
         
     case DeferredAction::ReorderAfter:
-        // ¾Æ·¡ÂÊ À§Ä¡·Î ÀÌµ¿
+        // ì•„ë˜ìª½ ìœ„ì¹˜ë¡œ ì´ë™
         if (pendingAction.target && pendingAction.reference && currentScene)
         {
             GameObject* targetParent = pendingAction.reference->GetParent();
             
-            // °°Àº ºÎ¸ğÀÎ °æ¿ì¿¡¸¸ ¼ø¼­ º¯°æ
+            // ê°™ì€ ë¶€ëª¨ì¸ ê²½ìš°ì—ë§Œ ìˆœì„œ ë³€ê²½
             if (pendingAction.target->GetParent() == targetParent)
             {
                 if (targetParent)
                 {
-                    // ºÎ¸ğÀÇ children ¹è¿­¿¡¼­ ¼ø¼­ º¯°æ (ÀÌ°ÍÀÌ Hierarchy Ç¥½Ã ¼ø¼­)
+                    // ë¶€ëª¨ì˜ children ë°°ì—´ì—ì„œ ìˆœì„œ ë³€ê²½ (ì´ê²ƒì´ Hierarchy í‘œì‹œ ìˆœì„œ)
                     if (targetParent->MoveChildAfter(pendingAction.target, pendingAction.reference))
                     {
                         ConsoleWindow::Log("Reordered: " + WStringToString(pendingAction.target->GetName()) + 
@@ -1017,7 +1031,7 @@ void HierarchyWindow::ProcessDeferredActions()
                 }
                 else
                 {
-                    // ·çÆ® ·¹º§: worldObjects ¹è¿­ ¼ø¼­ º¯°æ
+                    // ë£¨íŠ¸ ë ˆë²¨: worldObjects ë°°ì—´ ìˆœì„œ ë³€ê²½
                     auto& allObjects = const_cast<std::vector<GameObject*>&>(currentScene->GetAllGameObjects());
                     auto draggedIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.target);
                     auto targetIt = std::find(allObjects.begin(), allObjects.end(), pendingAction.reference);
@@ -1036,7 +1050,7 @@ void HierarchyWindow::ProcessDeferredActions()
             }
             else
             {
-                // ´Ù¸¥ ºÎ¸ğÀÎ °æ¿ì ºÎ¸ğ º¯°æ ÈÄ ¼ø¼­ Á¶Á¤
+                // ë‹¤ë¥¸ ë¶€ëª¨ì¸ ê²½ìš° ë¶€ëª¨ ë³€ê²½ í›„ ìˆœì„œ ì¡°ì •
                 currentScene->MoveGameObjectBetweenArrays(pendingAction.target, targetParent);
                 pendingAction.target->SetParent(targetParent);
                 
@@ -1063,7 +1077,7 @@ void HierarchyWindow::ProcessDeferredActions()
     pendingAction.name.clear();
 }
 
-// ===== ÀÚ½Ä GameObject »ı¼º ÇÔ¼öµé =====
+// ===== ìì‹ GameObject ìƒì„± í•¨ìˆ˜ë“¤ =====
 
 void HierarchyWindow::CreateChildGameObject(GameObject* parent, const std::wstring& name)
 {
@@ -1078,7 +1092,7 @@ void HierarchyWindow::CreateChildGameObject(GameObject* parent, const std::wstri
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(name);
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1100,10 +1114,10 @@ void HierarchyWindow::CreateChildSpriteGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Sprite");
     
-    // SpriteRenderer Ãß°¡
+    // SpriteRenderer ì¶”ê°€
     obj->AddComponent<SpriteRenderer>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1124,11 +1138,11 @@ void HierarchyWindow::CreateChildCameraGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Camera");
     
-    // Camera2D ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Camera2D ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     auto* camera = obj->AddComponent<Camera2D>();
     camera->InitializeDefault();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1149,10 +1163,10 @@ void HierarchyWindow::CreateChildCanvasGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Canvas");
     
-    // Canvas ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Canvas ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     obj->AddComponent<Canvas>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1173,10 +1187,10 @@ void HierarchyWindow::CreateChildButtonGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Button");
     
-    // Button ÄÄÆ÷³ÍÆ® Ãß°¡ (ButtonÀº Image¸¦ »ó¼ÓÇÏ¹Ç·Î ÀÌ°Í¸¸ Ãß°¡)
+    // Button ì»´í¬ë„ŒíŠ¸ ì¶”ê°€ (Buttonì€ Imageë¥¼ ìƒì†í•˜ë¯€ë¡œ ì´ê²ƒë§Œ ì¶”ê°€)
     auto* button = obj->AddComponent<Button>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1197,11 +1211,11 @@ void HierarchyWindow::CreateChildImageGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Image");
     
-    // RectTransform + Image ÄÄÆ÷³ÍÆ®¸¸ Ãß°¡
+    // RectTransform + Image ì»´í¬ë„ŒíŠ¸ë§Œ ì¶”ê°€
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1222,10 +1236,10 @@ void HierarchyWindow::CreateChildTextGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Text");
     
-    // UIBase ÄÄÆ÷³ÍÆ® Ãß°¡
+    // UIBase ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     obj->AddComponent<UIBase>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1246,11 +1260,11 @@ void HierarchyWindow::CreateChildPanelGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
     
-    // RectTransform + Image ÄÄÆ÷³ÍÆ® (PanelÀº Image·Î ±¸Çö)
+    // RectTransform + Image ì»´í¬ë„ŒíŠ¸ (Panelì€ Imageë¡œ êµ¬í˜„)
     obj->AddComponent<RectTransform>();
     obj->AddComponent<Image>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1271,10 +1285,10 @@ void HierarchyWindow::CreateChildSliderGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Slider");
     
-    // Slider ÄÄÆ÷³ÍÆ® Ãß°¡
+    // Slider ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     obj->AddComponent<Slider>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);
@@ -1295,10 +1309,10 @@ void HierarchyWindow::CreateChildScrollViewGameObject(GameObject* parent)
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"ScrollView");
     
-    // ScrollView ÄÄÆ÷³ÍÆ® Ãß°¡
+    // ScrollView ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     obj->AddComponent<ScrollView>();
     
-    // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     obj->SetParent(parent);
     
     currentScene->AddGameObject(obj);

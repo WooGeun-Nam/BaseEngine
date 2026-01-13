@@ -56,6 +56,9 @@ private:
     // GameObject 삭제
     void DeleteGameObject(GameObject* obj);
     
+    // 자식들을 재귀적으로 씬에서 제거 (메모리 해제 전)
+    void RemoveChildrenFromScene(GameObject* obj, SceneBase* scene);
+    
     // 컨텍스트 메뉴 렌더링
     void RenderCreateMenu();
     

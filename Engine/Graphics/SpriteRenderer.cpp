@@ -99,7 +99,7 @@ void SpriteRenderer::Render()
         ? pivotOverride
         : CalculateDefaultPivotCenter(hasSourceRect, sourceRect, textureAsset, hasRawTextureSize, rawTextureWidth, rawTextureHeight);
 
-    // 최종 피벗: (중앙 또는 오버라이드) + 오프셋(외부) + 오프셋(스프라이트)
+    // 최종 피벗: (중앙 또는 오버라이드) + 외부오프셋(외부) + 내부오프셋(스프라이트시트)
     XMFLOAT2 combinedOffset
     {
         pivotOffset.x + spritePivotOffset.x,
@@ -115,15 +115,15 @@ void SpriteRenderer::Render()
     // Layer depth 계산 (Game 레이어)
     float depth = RenderManager::GetLayerDepth(RenderLayer::Game, layer);
 
-    // 렌더링
+    // 렌더링 (Transform에서 월드 좌표 자동 계산)
     spriteBatch->Draw(
         shaderResourceView,
-        transform.GetPosition(),
+        transform.GetWorldPosition(),   // 월드 위치 (N차 부모 모두 반영)
         src,
         XMLoadFloat4(&color),
-        transform.GetRotation(),
+        transform.GetWorldRotation(),   // 월드 회전 (N차 부모 모두 반영)
         finalOrigin,
-        transform.GetScale(),
+        transform.GetWorldScale(),      // 월드 스케일 (N차 부모 모두 반영)
         effects,
         depth
     );

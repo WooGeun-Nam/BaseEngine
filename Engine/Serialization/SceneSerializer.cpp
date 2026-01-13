@@ -141,10 +141,10 @@ bool SceneSerializer::LoadScene(const std::wstring& filePath, SceneBase* scene, 
                 GameObject* obj = DeserializeGameObject(objData, app, scene);
                 if (obj)
                 {
-                    // 루트 오브젝트를 씬에 추가 (자식들도 평면화됨)
+                    // 루트 객체를 씬에 추가 (자식들도 평면화됨)
                     scene->AddGameObject(obj);
                     
-                    // Canvas인 경우, 모든 자식을 평면 리스트에 추가
+                    // Canvas인 경우, 모든 자식을 uiObjects에 재구축
                     if (obj->GetComponent<Canvas>() != nullptr)
                     {
                         scene->RebuildCanvasUIObjectsList(obj);
@@ -461,7 +461,33 @@ json SceneSerializer::SerializeComponent(Component* component)
     else if (auto* button = dynamic_cast<Button*>(component))
     {
         j["type"] = "Button";
-        // Button은 Image 컴포넌트도 함께 저장됨
+        
+        // Button은 Image를 상속하므로 Image 정보도 저장
+        if (auto texture = button->GetTexture())
+        {
+            std::wstring fullPath = texture->Path();
+            size_t lastSlash = fullPath.find_last_of(L"/\\");
+            std::wstring fileName = (lastSlash != std::wstring::npos) 
+                ? fullPath.substr(lastSlash + 1) 
+                : fullPath;
+            
+            size_t lastDot = fileName.find_last_of(L".");
+            if (lastDot != std::wstring::npos)
+            {
+                fileName = fileName.substr(0, lastDot);
+            }
+            
+            j["texture"] = WStringToString(fileName);
+        }
+        
+        // Color 저장
+        auto color = button->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
     }
     // Text (UI)
     else if (auto* text = dynamic_cast<Text*>(component))
@@ -741,6 +767,39 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
     else if (type == "Button")
     {
         auto* button = obj->AddComponent<Button>();
+        
+        // Button은 Image를 상속하므로 텍스처 로드
+        if (j.contains("texture"))
+        {
+            try
+            {
+                std::string textureName = j["texture"];
+                if (!textureName.empty())
+                {
+                    std::wstring textureNameW = StringToWString(textureName);
+                    auto texture = Resources::Get<Texture>(textureNameW);
+                    if (texture)
+                    {
+                        button->SetTexture(texture);
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        
+        // Color 로드
+        if (j.contains("color"))
+        {
+            button->SetColor(
+                j["color"]["r"],
+                j["color"]["g"],
+                j["color"]["b"],
+                j["color"]["a"]
+            );
+        }
+        
         return button;
     }
     else if (type == "Text")

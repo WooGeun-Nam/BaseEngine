@@ -24,6 +24,22 @@ XMFLOAT2 Transform::GetPosition() const
     return position;
 }
 
+// 월드 좌표 계산 (부모 Transform 재귀 적용)
+XMFLOAT2 Transform::GetWorldPosition() const
+{
+    XMFLOAT2 worldPos = position;
+    
+    // 부모가 있으면 재귀적으로 부모의 월드 위치를 더함
+    if (gameObject && gameObject->GetParent())
+    {
+        XMFLOAT2 parentWorldPos = gameObject->GetParent()->transform.GetWorldPosition();
+        worldPos.x += parentWorldPos.x;
+        worldPos.y += parentWorldPos.y;
+    }
+    
+    return worldPos;
+}
+
 void Transform::SetScale(float x, float y)
 {
     scale = { x, y };
@@ -32,6 +48,22 @@ void Transform::SetScale(float x, float y)
 XMFLOAT2 Transform::GetScale() const
 {
     return scale;
+}
+
+// 월드 스케일 계산 (부모 Transform 재귀 적용)
+XMFLOAT2 Transform::GetWorldScale() const
+{
+    XMFLOAT2 worldScale = scale;
+    
+    // 부모가 있으면 재귀적으로 부모의 월드 스케일과 곱함
+    if (gameObject && gameObject->GetParent())
+    {
+        XMFLOAT2 parentWorldScale = gameObject->GetParent()->transform.GetWorldScale();
+        worldScale.x *= parentWorldScale.x;
+        worldScale.y *= parentWorldScale.y;
+    }
+    
+    return worldScale;
 }
 
 void Transform::SetRotation(float radians)
@@ -44,55 +76,31 @@ float Transform::GetRotation() const
     return rotation;
 }
 
-XMMATRIX Transform::GetWorldMatrix() const
+// 월드 회전 계산 (부모 Transform 재귀 적용)
+float Transform::GetWorldRotation() const
 {
-    XMFLOAT2 worldPos = position;
-    XMFLOAT2 worldScale = scale;
     float worldRot = rotation;
-
-    // 부모가 있으면 부모의 변환 누적 (2D 단순 연산)
+    
+    // 부모가 있으면 재귀적으로 부모의 월드 회전을 더함
     if (gameObject && gameObject->GetParent())
     {
-        Transform& parentTransform = gameObject->GetParent()->transform;
-        
-        // 재귀적으로 부모의 World Matrix 가져오기
-        XMMATRIX parentMatrix = parentTransform.GetWorldMatrix();
-        
-        // 부모 행렬에서 변환 추출
-        XMVECTOR parentPos, parentScale, parentRot;
-        XMMatrixDecompose(&parentScale, &parentRot, &parentPos, parentMatrix);
-        
-        // 부모의 2D 위치 추출
-        XMFLOAT2 parentWorldPos;
-        XMStoreFloat2(&parentWorldPos, parentPos);
-        
-        // 부모의 2D 스케일 추출
-        XMFLOAT2 parentWorldScale;
-        XMStoreFloat2(&parentWorldScale, parentScale);
-        
-        // 부모의 Z축 회전 추출 (2D는 Z축 회전만 사용)
-        XMFLOAT4 parentRotQuat;
-        XMStoreFloat4(&parentRotQuat, parentRot);
-        float parentWorldRot = 2.0f * atan2f(parentRotQuat.z, parentRotQuat.w);
-        
-        // 2D 변환 누적
-        // 1. 스케일 곱하기
-        worldScale.x *= parentWorldScale.x;
-        worldScale.y *= parentWorldScale.y;
-        
-        // 2. 회전 더하기
-        worldRot += parentWorldRot;
-        
-        // 3. 위치 더하기 (부모의 로컬 스케일과 회전 적용)
-        // 간단한 2D 위치 누적: 부모 world 위치 + 로컬 위치
-        worldPos.x += parentWorldPos.x;
-        worldPos.y += parentWorldPos.y;
+        worldRot += gameObject->GetParent()->transform.GetWorldRotation();
     }
+    
+    return worldRot;
+}
+
+XMMATRIX Transform::GetWorldMatrix() const
+{
+    // 월드 Transform 계산 (재귀적으로 모든 부모 포함)
+    XMFLOAT2 worldPos = GetWorldPosition();
+    XMFLOAT2 worldScale = GetWorldScale();
+    float worldRot = GetWorldRotation();
 
     // World Matrix 생성 (S * R * T)
-    XMMATRIX s = XMMatrixScaling(worldScale.x, worldScale.y, 1.0f);
-    XMMATRIX r = XMMatrixRotationZ(worldRot);
     XMMATRIX t = XMMatrixTranslation(worldPos.x, worldPos.y, 0.0f);
+    XMMATRIX r = XMMatrixRotationZ(worldRot);
+    XMMATRIX s = XMMatrixScaling(worldScale.x, worldScale.y, 1.0f);
 
     return s * r * t;
 }

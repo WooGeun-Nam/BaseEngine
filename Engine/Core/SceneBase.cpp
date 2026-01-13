@@ -20,11 +20,33 @@ void SceneBase::AddGameObject(GameObject* object)
     }
     else
     {
-        // 일반 GameObject는 worldObjects에 추가 (자신 + 모든 자손)
-        worldObjects.push_back(object);
+        // 부모가 Canvas인지 확인
+        GameObject* parent = object->GetParent();
+        Canvas* parentCanvas = parent ? parent->GetComponent<Canvas>() : nullptr;
         
-        // 모든 자손도 평면 리스트에 추가
-        CollectChildrenRecursive(object, worldObjects);
+        if (parentCanvas)
+        {
+            // Canvas의 자식 UI 객체 → canvasGroups의 uiObjects에 추가
+            for (auto& group : canvasGroups)
+            {
+                if (group.canvasObject == parent)
+                {
+                    group.uiObjects.push_back(object);
+                    
+                    // 모든 자손도 uiObjects에 추가 (평면화)
+                    CollectChildrenRecursive(object, group.uiObjects);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // 일반 GameObject는 worldObjects에 추가 (자신 + 모든 자손)
+            worldObjects.push_back(object);
+            
+            // 모든 자손도 평면 리스트에 추가
+            CollectChildrenRecursive(object, worldObjects);
+        }
     }
 }
 

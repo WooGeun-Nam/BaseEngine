@@ -372,7 +372,6 @@ void Application::run()
             auto* currentScene = sceneManager.GetCurrentScene();
             if (currentScene)
             {
-                // World Objects의 Canvas 업데이트
                 const auto& allObjects = currentScene->GetAllGameObjects();
                 for (GameObject* obj : allObjects)
                 {
@@ -385,18 +384,6 @@ void Application::run()
                             int renderHeight = RenderManager::Instance().GetScreenHeight();
                             canvas->UpdateScreenSize(renderWidth, renderHeight);
                         }
-                    }
-                }
-                
-                // Canvas Groups의 Canvas 업데이트
-                const auto& canvasGroups = currentScene->GetCanvasGroups();
-                for (const auto& group : canvasGroups)
-                {
-                    if (group.canvas)
-                    {
-                        int renderWidth = RenderManager::Instance().GetScreenWidth();
-                        int renderHeight = RenderManager::Instance().GetScreenHeight();
-                        group.canvas->UpdateScreenSize(renderWidth, renderHeight);
                     }
                 }
             }
@@ -492,7 +479,6 @@ void Application::run()
             // Canvas 화면 크기 업데이트 (RenderTexture 크기 기준)
             if (currentScene)
             {
-                // World Objects의 Canvas 업데이트
                 const auto& allObjects = currentScene->GetAllGameObjects();
                 for (GameObject* obj : allObjects)
                 {
@@ -505,18 +491,6 @@ void Application::run()
                             int renderHeight = RenderManager::Instance().GetScreenHeight();
                             canvas->UpdateScreenSize(renderWidth, renderHeight);
                         }
-                    }
-                }
-                
-                // Canvas Groups의 Canvas 업데이트
-                const auto& canvasGroups = currentScene->GetCanvasGroups();
-                for (const auto& group : canvasGroups)
-                {
-                    if (group.canvas)
-                    {
-                        int renderWidth = RenderManager::Instance().GetScreenWidth();
-                        int renderHeight = RenderManager::Instance().GetScreenHeight();
-                        group.canvas->UpdateScreenSize(renderWidth, renderHeight);
                     }
                 }
             }
