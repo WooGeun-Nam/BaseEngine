@@ -18,7 +18,8 @@ public:
     void AddScene(const std::wstring& name, std::unique_ptr<SceneBase> scene);
 
     // SceneData에서 씬 로드 (Resources 기반)
-    bool LoadSceneFromData(const std::wstring& sceneAssetName, Application* app);
+    // 반환값: 로드된 씬의 인덱스 (실패 시 -1)
+    int LoadSceneFromData(const std::wstring& sceneAssetName, Application* app);
     
     // 씬 활성화
     void SetActiveScene(const std::wstring& name);

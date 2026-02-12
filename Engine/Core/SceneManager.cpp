@@ -26,10 +26,10 @@ void SceneManager::AddScene(const std::wstring& name, std::unique_ptr<SceneBase>
     sceneList.push_back(std::move(scene));
 }
 
-bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Application* app)
+int SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Application* app)
 {
     if (!app)
-        return false;
+        return -1;
 
     // 파일 경로 구성
     std::wstring filePath = L"Assets/Scenes/" + sceneAssetName + L".scene";
@@ -37,7 +37,7 @@ bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Applica
     // 파일에서 직접 SceneData 생성 (캐시 무시)
     auto sceneData = std::make_shared<SceneData>();
     if (!sceneData->Load(filePath))
-        return false;
+        return -1;
 
     // 새 씬 생성
     auto scene = std::make_unique<SceneBase>();
@@ -47,7 +47,7 @@ bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Applica
     // SceneSerializer를 사용하여 로드
     const auto& data = sceneData->GetData();
     if (!SceneSerializer::LoadSceneFromJson(data, scene.get(), app))
-        return false;
+        return -1;
 
     std::wstring sceneName = sceneData->GetSceneName();
     
@@ -70,15 +70,15 @@ bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Applica
                     currentScene = sceneList[i].get();
                 }
                 
-                return true;
+                return static_cast<int>(i); // 교체한 인덱스 반환
             }
         }
     }
     
     // 새로운 씬이면 추가
+    int newIndex = static_cast<int>(sceneList.size());
     AddScene(sceneName, std::move(scene));
-
-    return true;
+    return newIndex; // 추가한 인덱스 반환
 }
 
 // SetActiveScene (이름 기반)
@@ -247,43 +247,75 @@ void SceneManager::ProcessPendingSceneChange()
         std::wstring sceneName = sceneNameList[currentIndex];
         auto* currentScenePtr = sceneList[currentIndex].get();
         
+        // DEBUG: 로드하려는 씬 이름 출력
+        char debugMsg[256];
+        sprintf_s(debugMsg, "[SceneManager] Loading scene: %ws (index: %d)\n", 
+            sceneName.c_str(), currentIndex);
+        OutputDebugStringA(debugMsg);
+        
         if (currentScenePtr && currentScenePtr->GetApplication())
         {
             Application* app = currentScenePtr->GetApplication();
             
-            // SceneData에서 씬을 다시 로드
-            auto sceneData = Resources::Get<SceneData>(sceneName);
-            if (sceneData)
+            // 파일에서 직접 SceneData 로드 (캐시 무시)
+            std::wstring filePath = L"Assets/Scenes/" + sceneName + L".scene";
+            auto sceneData = std::make_shared<SceneData>();
+            
+            if (sceneData->Load(filePath))
             {
+                // DEBUG: SceneData 이름 확인
+                sprintf_s(debugMsg, "[SceneManager] SceneData loaded from file: %ws\n", 
+                    sceneData->GetSceneName().c_str());
+                OutputDebugStringA(debugMsg);
+                
                 // 새 씬 생성
                 auto newScene = std::make_unique<SceneBase>();
                 newScene->SetApplication(app);
                 newScene->SetSceneName(sceneData->GetSceneName());
                 
-                // SceneData의 JSON으로부터 GameObject 로드
+                // SceneSerializer를 사용하여 전체 씬 로드 (worldObjects + canvasGroups)
                 const auto& data = sceneData->GetData();
-                if (data.contains("gameObjects"))
-                {
-                    for (const auto& objData : data["gameObjects"])
-                    {
-                        GameObject* obj = SceneSerializer::DeserializeGameObject(objData, app);
-                        if (obj)
-                        {
-                            newScene->AddGameObject(obj);
-                        }
-                    }
-                }
+                
+                // DEBUG: 로드하기 전 JSON 데이터 확인
+                int worldObjCount = data.contains("worldObjects") ? data["worldObjects"].size() : 0;
+                int canvasGroupCount = data.contains("canvasGroups") ? data["canvasGroups"].size() : 0;
+                sprintf_s(debugMsg, "[SceneManager] JSON has %d worldObjects, %d canvasGroups\n", 
+                    worldObjCount, canvasGroupCount);
+                OutputDebugStringA(debugMsg);
+                
+                bool loadResult = SceneSerializer::LoadSceneFromJson(data, newScene.get(), app);
+                
+                // DEBUG: 로드 결과 확인
+                sprintf_s(debugMsg, "[SceneManager] LoadSceneFromJson result: %d\n", loadResult ? 1 : 0);
+                OutputDebugStringA(debugMsg);
+                
+                // DEBUG: 로드 후 씬 오브젝트 개수 확인
+                sprintf_s(debugMsg, "[SceneManager] After load - worldObjects: %d, canvasGroups: %d\n",
+                    newScene->GetAllGameObjects().size(),
+                    newScene->GetCanvasGroups().size());
+                OutputDebugStringA(debugMsg);
                 
                 // 기존 씬을 새 씬으로 교체
                 sceneList[currentIndex] = std::move(newScene);
                 currentScene = sceneList[currentIndex].get();
+                
+                // DEBUG: 교체 후 씬 오브젝트 개수 확인
+                sprintf_s(debugMsg, "[SceneManager] After replace - worldObjects: %d, canvasGroups: %d\n",
+                    currentScene->GetAllGameObjects().size(),
+                    currentScene->GetCanvasGroups().size());
+                OutputDebugStringA(debugMsg);
                 
                 // sceneLookup 업데이트
                 sceneLookup[sceneName] = currentScene;
             }
             else
             {
-                // SceneData가 없으면 기존 씬 사용
+                // DEBUG: 파일 로드 실패
+                sprintf_s(debugMsg, "[SceneManager] Failed to load scene file: %ws\n", 
+                    filePath.c_str());
+                OutputDebugStringA(debugMsg);
+                
+                // 파일 로드 실패 시 기존 씬 사용
                 currentScene = sceneList[currentIndex].get();
             }
         }

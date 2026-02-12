@@ -474,12 +474,11 @@ void EditorManager::LoadSceneByName(const std::wstring& sceneAssetName)
         }
         
         // SceneManager의 LoadSceneFromData를 호출
-        if (sceneManager->LoadSceneFromData(sceneAssetName, app))
+        int loadedSceneIndex = sceneManager->LoadSceneFromData(sceneAssetName, app);
+        if (loadedSceneIndex >= 0)
         {
-            // 씬 로드 성공 - 새로 로드된 씬으로 전환
-            // LoadSceneFromData는 씬을 sceneList에 추가만 하므로, 활성화 필요
-            int newSceneIndex = sceneManager->GetSceneCount() - 1; // 마지막에 추가된 씬
-            sceneManager->SetActiveSceneImmediate(newSceneIndex);
+            // 씬 로드 성공 - LoadSceneFromData가 반환한 인덱스로 활성화
+            sceneManager->SetActiveSceneImmediate(loadedSceneIndex);
             
             // 선택 초기화
             ClearAllSelections();
