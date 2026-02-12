@@ -33,11 +33,13 @@ public:
     };
 
 public:
-    Text() = default;
-    ~Text() = default;
+Text() = default;
+~Text() = default;
 
-    // Component::Render() 오버라이드
-    void RenderUI() override;
+void Awake() override;
+
+// Component::Render() 오버라이드
+void RenderUI() override;
 
     // 폰트 설정
     void SetFont(std::shared_ptr<Font> font) { this->font = font; }

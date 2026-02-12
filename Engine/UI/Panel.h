@@ -19,11 +19,13 @@ class Texture;
 class Panel : public UIBase
 {
 public:
-    Panel() = default;
-    ~Panel() = default;
+Panel() = default;
+~Panel() = default;
 
-    // Component::Render() 오버라이드
-    void RenderUI() override;
+void Awake() override;
+
+// Component::Render() 오버라이드
+void RenderUI() override;
 
     // 색상 틴트 설정 (텍스처 없을 때)
     void SetColor(const DirectX::XMFLOAT4& color) { this->color = color; }

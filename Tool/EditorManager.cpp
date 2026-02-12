@@ -237,12 +237,25 @@ void EditorManager::SaveCurrentScene()
     {
         if (SceneSerializer::SaveScene(currentScene, filePath))
         {
+            const auto& worldObjects = currentScene->GetAllGameObjects();
+            const auto& canvasGroups = currentScene->GetCanvasGroups();
+            
             // Convert wstring to UTF-8 string using WideCharToMultiByte
             int size_needed = WideCharToMultiByte(CP_UTF8, 0, sceneName.c_str(), (int)sceneName.length(), NULL, 0, NULL, NULL);
             std::string sceneNameStr(size_needed, 0);
             WideCharToMultiByte(CP_UTF8, 0, sceneName.c_str(), (int)sceneName.length(), &sceneNameStr[0], size_needed, NULL, NULL);
             
-            ConsoleWindow::Log("Scene saved: " + sceneNameStr, LogType::Info);
+            std::string sceneInfo = "Scene saved: " + sceneNameStr + 
+                                   " | worldObjects: " + std::to_string(worldObjects.size()) + 
+                                   ", canvasGroups: " + std::to_string(canvasGroups.size());
+            
+            // 각 Canvas의 uiObjects 개수도 표시
+            for (size_t i = 0; i < canvasGroups.size(); ++i)
+            {
+                sceneInfo += ", Canvas[" + std::to_string(i) + "].uiObjects: " + std::to_string(canvasGroups[i].uiObjects.size());
+            }
+            
+            ConsoleWindow::Log(sceneInfo, LogType::Info);
         }
         else
         {
@@ -471,12 +484,39 @@ void EditorManager::LoadSceneByName(const std::wstring& sceneAssetName)
             // 선택 초기화
             ClearAllSelections();
             
-            // Convert wstring to UTF-8 for logging
-            int size_needed = WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), NULL, 0, NULL, NULL);
-            std::string logMessage(size_needed, 0);
-            WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), &logMessage[0], size_needed, NULL, NULL);
-            
-            ConsoleWindow::Log("Scene loaded: " + logMessage, LogType::Info);
+            // 씬 정보 로그 출력
+            auto* loadedScene = sceneManager->GetCurrentScene();
+            if (loadedScene)
+            {
+                const auto& worldObjects = loadedScene->GetAllGameObjects();
+                const auto& canvasGroups = loadedScene->GetCanvasGroups();
+                
+                // Convert wstring to UTF-8 for logging
+                int size_needed = WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), NULL, 0, NULL, NULL);
+                std::string logMessage(size_needed, 0);
+                WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), &logMessage[0], size_needed, NULL, NULL);
+                
+                std::string sceneInfo = "Scene loaded: " + logMessage + 
+                                       " | worldObjects: " + std::to_string(worldObjects.size()) + 
+                                       ", canvasGroups: " + std::to_string(canvasGroups.size());
+                
+                // 각 Canvas의 uiObjects 개수도 표시
+                for (size_t i = 0; i < canvasGroups.size(); ++i)
+                {
+                    sceneInfo += ", Canvas[" + std::to_string(i) + "].uiObjects: " + std::to_string(canvasGroups[i].uiObjects.size());
+                }
+                
+                ConsoleWindow::Log(sceneInfo, LogType::Info);
+            }
+            else
+            {
+                // Convert wstring to UTF-8 for logging
+                int size_needed = WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), NULL, 0, NULL, NULL);
+                std::string logMessage(size_needed, 0);
+                WideCharToMultiByte(CP_UTF8, 0, sceneAssetName.c_str(), (int)sceneAssetName.length(), &logMessage[0], size_needed, NULL, NULL);
+                
+                ConsoleWindow::Log("Scene loaded: " + logMessage, LogType::Info);
+            }
         }
         else
         {

@@ -134,6 +134,25 @@ DirectX::XMFLOAT2 UIBase::GetMousePosition()
     return DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY));
 }
 
+void UIBase::EnsureCanvasReference()
+{
+    if (canvas)
+        return;  // 이미 있으면 바로 반환
+    
+    // 부모 Canvas 찾기
+    GameObject* parent = gameObject->GetParent();
+    while (parent)
+    {
+        Canvas* canvasComp = parent->GetComponent<Canvas>();
+        if (canvasComp)
+        {
+            canvas = canvasComp;
+            break;
+        }
+        parent = parent->GetParent();
+    }
+}
+
 int UIBase::CalculateHierarchyDepth() const
 {
     int depth = 0;

@@ -83,15 +83,28 @@ bool SceneSerializer::SaveScene(SceneBase* scene, const std::wstring& filePath)
     {
         json sceneData;
         sceneData["sceneName"] = WStringToString(scene->GetCurrentSceneName());
-        sceneData["gameObjects"] = json::array();
-
+        
+        // worldObjects 저장 (루트만)
+        sceneData["worldObjects"] = json::array();
         const auto& objects = scene->GetAllGameObjects();
         for (GameObject* obj : objects)
         {
-            // 부모가 없는 루트 오브젝트만 직렬화 (자식은 재귀적으로 포함됨)
             if (obj && obj->GetParent() == nullptr)
             {
-                sceneData["gameObjects"].push_back(SerializeGameObject(obj));
+                sceneData["worldObjects"].push_back(SerializeGameObject(obj));
+            }
+        }
+        
+        // canvasGroups 저장
+        sceneData["canvasGroups"] = json::array();
+        const auto& canvasGroups = scene->GetCanvasGroups();
+        for (const auto& group : canvasGroups)
+        {
+            if (group.canvasObject)
+            {
+                json groupData;
+                groupData["canvas"] = SerializeGameObject(group.canvasObject);
+                sceneData["canvasGroups"].push_back(groupData);
             }
         }
 
@@ -100,7 +113,7 @@ bool SceneSerializer::SaveScene(SceneBase* scene, const std::wstring& filePath)
         if (!file.is_open())
             return false;
 
-        file << sceneData.dump(2); // 들여쓰기 2칸
+        file << sceneData.dump(2);
         file.close();
 
         return true;
@@ -127,27 +140,53 @@ bool SceneSerializer::LoadScene(const std::wstring& filePath, SceneBase* scene, 
         file >> sceneData;
         file.close();
 
+        // JSON에서 로드 (헬퍼 함수 사용)
+        return LoadSceneFromJson(sceneData, scene, app);
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+bool SceneSerializer::LoadSceneFromJson(const json& sceneData, SceneBase* scene, Application* app)
+{
+    if (!scene || !app)
+        return false;
+
+    try
+    {
         // 씬 이름 설정
         if (sceneData.contains("sceneName"))
         {
-            // SceneBase는 이름 설정 함수가 없을 수도 있으므로 일단 스킵
+            scene->SetSceneName(StringToWString(sceneData["sceneName"]));
         }
 
-        // GameObject 로드
-        if (sceneData.contains("gameObjects"))
+        // worldObjects 로드
+        if (sceneData.contains("worldObjects"))
         {
-            for (const auto& objData : sceneData["gameObjects"])
+            for (const auto& objData : sceneData["worldObjects"])
             {
                 GameObject* obj = DeserializeGameObject(objData, app, scene);
                 if (obj)
                 {
-                    // 루트 객체를 씬에 추가 (자식들도 평면화됨)
                     scene->AddGameObject(obj);
-                    
-                    // Canvas인 경우, 모든 자식을 uiObjects에 재구축
-                    if (obj->GetComponent<Canvas>() != nullptr)
+                }
+            }
+        }
+        
+        // canvasGroups 로드
+        if (sceneData.contains("canvasGroups"))
+        {
+            for (const auto& groupData : sceneData["canvasGroups"])
+            {
+                if (groupData.contains("canvas"))
+                {
+                    GameObject* canvasObj = DeserializeGameObject(groupData["canvas"], app, scene);
+                    if (canvasObj)
                     {
-                        scene->RebuildCanvasUIObjectsList(obj);
+                        scene->AddGameObject(canvasObj);
+                        scene->RebuildCanvasUIObjectsList(canvasObj);
                     }
                 }
             }
@@ -416,6 +455,16 @@ json SceneSerializer::SerializeComponent(Component* component)
     {
         j["type"] = "RectTransform";
         
+        // Anchor 저장
+        j["anchor"] = static_cast<int>(rectTransform->anchor);
+        
+        // Anchored Position 저장
+        j["anchoredPosition"] = {
+            {"x", rectTransform->anchoredPosition.x},
+            {"y", rectTransform->anchoredPosition.y}
+        };
+        
+        // Size 저장
         auto size = rectTransform->GetSize();
         j["size"] = { {"x", size.x}, {"y", size.y} };
     }
@@ -425,6 +474,7 @@ json SceneSerializer::SerializeComponent(Component* component)
         j["type"] = "Canvas";
         j["screenWidth"] = canvas->GetScreenWidth();
         j["screenHeight"] = canvas->GetScreenHeight();
+        j["autoResize"] = canvas->IsAutoResize();
     }
     // Image (UI)
     else if (auto* image = dynamic_cast<Image*>(component))
@@ -707,6 +757,21 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
     {
         auto* rectTransform = obj->AddComponent<RectTransform>();
         
+        // Anchor 로드
+        if (j.contains("anchor"))
+        {
+            int anchorValue = j["anchor"];
+            rectTransform->anchor = static_cast<RectTransform::Anchor>(anchorValue);
+        }
+        
+        // Anchored Position 로드
+        if (j.contains("anchoredPosition"))
+        {
+            rectTransform->anchoredPosition.x = j["anchoredPosition"]["x"];
+            rectTransform->anchoredPosition.y = j["anchoredPosition"]["y"];
+        }
+        
+        // Size 로드
         if (j.contains("size"))
         {
             rectTransform->SetSize(j["size"]["x"], j["size"]["y"]);
@@ -718,12 +783,29 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
     {
         auto* canvas = obj->AddComponent<Canvas>();
         
+        // Auto Resize 로드 (기본값: true)
+        bool autoResize = true;
+        if (j.contains("autoResize"))
+        {
+            autoResize = j["autoResize"];
+        }
+        canvas->SetAutoResize(autoResize);
+        
+        // 저장된 크기 로드
         if (j.contains("screenWidth") && j.contains("screenHeight"))
         {
             int width = j["screenWidth"];
             int height = j["screenHeight"];
             canvas->SetScreenSize(width, height);
         }
+        
+        // autoResize=false인 경우만 초기화됨으로 표시
+        // autoResize=true면 첫 렌더링 시 자동으로 RenderTexture 크기로 조정됨
+        if (!autoResize)
+        {
+            canvas->MarkAsInitialized();
+        }
+        // autoResize=true인 경우 isInitialized는 false로 유지되어 첫 렌더링 시 업데이트됨
         
         return canvas;
     }
@@ -740,6 +822,13 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
                 {
                     std::wstring textureNameW = StringToWString(textureName);
                     auto texture = Resources::Get<Texture>(textureNameW);
+                    if (!texture)
+                    {
+                        // 캐시에 없으면 로드
+                        std::wstring texturePath = L"Assets/Textures/" + textureNameW + L".png";
+                        texture = Resources::Load<Texture>(textureNameW, texturePath);
+                    }
+                    
                     if (texture)
                     {
                         image->SetTexture(texture);
@@ -778,6 +867,13 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
                 {
                     std::wstring textureNameW = StringToWString(textureName);
                     auto texture = Resources::Get<Texture>(textureNameW);
+                    if (!texture)
+                    {
+                        // 캐시에 없으면 로드
+                        std::wstring texturePath = L"Assets/Textures/" + textureNameW + L".png";
+                        texture = Resources::Load<Texture>(textureNameW, texturePath);
+                    }
+                    
                     if (texture)
                     {
                         button->SetTexture(texture);

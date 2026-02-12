@@ -367,29 +367,11 @@ void Application::run()
             
             // UI 렌더링
             RenderManager::Instance().BeginUI();
-            
-            // Canvas 화면 크기 업데이트 (RenderTexture 크기 기준)
-            auto* currentScene = sceneManager.GetCurrentScene();
-            if (currentScene)
-            {
-                const auto& allObjects = currentScene->GetAllGameObjects();
-                for (GameObject* obj : allObjects)
-                {
-                    if (obj)
-                    {
-                        Canvas* canvas = obj->GetComponent<Canvas>();
-                        if (canvas)
-                        {
-                            int renderWidth = RenderManager::Instance().GetScreenWidth();
-                            int renderHeight = RenderManager::Instance().GetScreenHeight();
-                            canvas->UpdateScreenSize(renderWidth, renderHeight);
-                        }
-                    }
-                }
-            }
-            
             sceneManager.RenderUI();
             RenderManager::Instance().EndUI();
+            
+            // 씬뷰 카메라로 복원 (디버그 렌더링용)
+            RenderManager::Instance().SetCamera(sceneViewWnd->GetCamera());
             
             // 디버그 렌더링 (씬뷰에서는 항상 표시)
             RenderManager::Instance().BeginDebug();
@@ -475,26 +457,6 @@ void Application::run()
             
             // UI 렌더링
             RenderManager::Instance().BeginUI();
-            
-            // Canvas 화면 크기 업데이트 (RenderTexture 크기 기준)
-            if (currentScene)
-            {
-                const auto& allObjects = currentScene->GetAllGameObjects();
-                for (GameObject* obj : allObjects)
-                {
-                    if (obj)
-                    {
-                        Canvas* canvas = obj->GetComponent<Canvas>();
-                        if (canvas)
-                        {
-                            int renderWidth = RenderManager::Instance().GetScreenWidth();
-                            int renderHeight = RenderManager::Instance().GetScreenHeight();
-                            canvas->UpdateScreenSize(renderWidth, renderHeight);
-                        }
-                    }
-                }
-            }
-            
             sceneManager.RenderUI();
             RenderManager::Instance().EndUI();
             

@@ -32,6 +32,7 @@ private:
     void HandleObjectSelection();
     void HandleCameraControl();
     void RenderCameraBounds();  // 카메라 영역 시각화
+    void RenderCanvasBounds();  // Canvas 영역 시각화 (UI용)
     
     GameObject* GetObjectAtScreenPos(float worldX, float worldY);
 

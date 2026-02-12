@@ -6,10 +6,21 @@
 #include "Graphics/RenderManager.h"
 #include <SpriteBatch.h>
 
+void Panel::Awake()
+{
+    UIBase::Awake();
+}
+
 void Panel::RenderUI()
 {
     // 보이지 않거나 필수 요소가 없으면 렌더링 안 함
-    if (!IsEnabled() || !rectTransform || !canvas)  // ? IsEnabled() 사용
+    if (!IsEnabled() || !rectTransform)
+        return;
+    
+    // Canvas 참조 확인 (null이면 다시 찾기)
+    EnsureCanvasReference();
+    
+    if (!canvas)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();

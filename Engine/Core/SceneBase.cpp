@@ -99,6 +99,12 @@ void SceneBase::RebuildCanvasUIObjectsList(GameObject* canvasObj)
             
             // Canvas의 모든 자식을 평면 리스트로 수집
             CollectChildrenRecursive(canvasObj, group.uiObjects);
+            
+            // DEBUG: 재구축 결과
+            std::wstring wname = canvasObj->GetName().empty() ? L"Canvas" : canvasObj->GetName();
+            std::string name(wname.begin(), wname.end());
+            // ConsoleWindow::Log("[RebuildCanvasUIObjectsList] " + name + ": " + std::to_string(group.uiObjects.size()) + " UI objects", LogType::Info);
+            
             break;
         }
     }
@@ -329,11 +335,21 @@ void SceneBase::RenderUI()
     if (canvasGroups.empty())
         return;
     
+    // DEBUG: 한 번만 출력
+    static bool firstLog = true;
+    
     // 각 Canvas별로 렌더링 (평면 순회)
     for (const auto& group : canvasGroups)
     {
         if (!group.canvas || !group.canvas->IsEnabled())
             continue;
+        
+        // DEBUG
+        if (firstLog)
+        {
+            // ConsoleWindow::Log("[RenderUI] Rendering " + std::to_string(group.uiObjects.size()) + " UI objects", LogType::Info);
+            firstLog = false;
+        }
         
         // Canvas GameObject 자체 렌더링
         if (group.canvasObject)

@@ -3,6 +3,7 @@
 #include "EditorManager.h"
 #include "Graphics/RenderManager.h"
 #include "Core/GameObject.h"
+#include "UI/Canvas.h"
 #include <ImGui/imgui.h>
 
 SceneViewWindow::SceneViewWindow()
@@ -246,6 +247,9 @@ void SceneViewWindow::RenderSceneView()
         // 카메라 영역 시각화
         RenderCameraBounds();
         
+        // Canvas 영역 시각화 (UI용)
+        RenderCanvasBounds();
+        
         // 클리핑 영역 해제
         drawList->PopClipRect();
     }
@@ -455,7 +459,7 @@ void SceneViewWindow::RenderCameraBounds()
         
         // Camera2D 컴포넌트 찾기
         Camera2D* cam = obj->GetComponent<Camera2D>();
-        if (!cam)
+        if (!cam || !cam->IsEnabled())  // Enabled 체크 추가
             continue;
         
         // 카메라의 뷰포트 크기 가져오기
@@ -546,5 +550,120 @@ void SceneViewWindow::RenderCameraBounds()
         
         // 첫 번째 카메라만 표시
         break;
+    }
+}
+
+void SceneViewWindow::RenderCanvasBounds()
+{
+    if (!sceneManager)
+        return;
+    
+    auto* currentScene = sceneManager->GetCurrentScene();
+    if (!currentScene)
+        return;
+    
+    const auto& canvasGroups = currentScene->GetCanvasGroups();
+    
+    // Canvas가 없으면 반환
+    if (canvasGroups.empty())
+        return;
+    
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    auto camPos = camera.GetPosition();
+    
+    // 모든 Canvas 객체를 순회하며 경계 표시
+    for (const auto& group : canvasGroups)
+    {
+        if (!group.canvas || !group.canvasObject)
+            continue;
+        
+        // Canvas가 비활성화되어 있으면 경계 표시 안함
+        if (!group.canvas->IsEnabled())
+            continue;
+        
+        // Canvas의 화면 크기 가져오기
+        float canvasWidth = static_cast<float>(group.canvas->GetScreenWidth());
+        float canvasHeight = static_cast<float>(group.canvas->GetScreenHeight());
+        
+        // Canvas는 Screen Space이므로 화면 중앙(0,0)을 기준으로 배치
+        // 월드 좌표로 계산 (-width/2, -height/2)가 좌상단
+        float worldLeft = -canvasWidth * 0.5f;
+        float worldTop = -canvasHeight * 0.5f;
+        float worldRight = canvasWidth * 0.5f;
+        float worldBottom = canvasHeight * 0.5f;
+        
+        // 월드 좌표를 스크린 좌표로 변환 (줌 고려)
+        float screenLeft = canvasPosX + (worldLeft - camPos.x) * zoomLevel;
+        float screenTop = canvasPosY + (worldTop - camPos.y) * zoomLevel;
+        float screenRight = canvasPosX + (worldRight - camPos.x) * zoomLevel;
+        float screenBottom = canvasPosY + (worldBottom - camPos.y) * zoomLevel;
+        
+        // Canvas 경계 사각형 그리기 (노란색 테두리)
+        ImU32 canvasColor = IM_COL32(255, 255, 0, 255);  // Yellow
+        drawList->AddRect(
+            ImVec2(screenLeft, screenTop),
+            ImVec2(screenRight, screenBottom),
+            canvasColor,
+            0.0f,
+            0,
+            2.0f
+        );
+        
+        // Canvas 라벨 및 이름 표시
+        ImVec2 labelPos(screenLeft + 5, screenTop + 5);
+        std::string labelText = "Canvas: ";
+        
+        if (!group.canvasObject->GetName().empty())
+        {
+            // wstring to string 변환
+            std::wstring wname = group.canvasObject->GetName();
+            int size_needed = WideCharToMultiByte(CP_UTF8, 0, wname.c_str(), (int)wname.size(), nullptr, 0, nullptr, nullptr);
+            std::string name(size_needed, 0);
+            WideCharToMultiByte(CP_UTF8, 0, wname.c_str(), (int)wname.size(), &name[0], size_needed, nullptr, nullptr);
+            labelText += name;
+        }
+        else
+        {
+            labelText += "UI Canvas";
+        }
+        
+        // Canvas 크기도 표시
+        char sizeText[64];
+        sprintf_s(sizeText, " [%dx%d]", (int)canvasWidth, (int)canvasHeight);
+        labelText += sizeText;
+        
+        // 배경 사각형 (가독성을 위해)
+        ImVec2 textSize = ImGui::CalcTextSize(labelText.c_str());
+        drawList->AddRectFilled(
+            labelPos,
+            ImVec2(labelPos.x + textSize.x + 6, labelPos.y + textSize.y + 4),
+            IM_COL32(0, 0, 0, 180)
+        );
+        
+        // 텍스트
+        drawList->AddText(
+            ImVec2(labelPos.x + 3, labelPos.y + 2),
+            IM_COL32(255, 255, 0, 255),  // Yellow text
+            labelText.c_str()
+        );
+        
+        // Canvas 중심점 표시
+        float centerScreenX = canvasPosX + (0 - camPos.x) * zoomLevel;
+        float centerScreenY = canvasPosY + (0 - camPos.y) * zoomLevel;
+        
+        // 십자선 (작은 크기)
+        float crossSize = 8.0f;
+        drawList->AddLine(
+            ImVec2(centerScreenX - crossSize, centerScreenY),
+            ImVec2(centerScreenX + crossSize, centerScreenY),
+            canvasColor,
+            1.5f
+        );
+        drawList->AddLine(
+            ImVec2(centerScreenX, centerScreenY - crossSize),
+            ImVec2(centerScreenX, centerScreenY + crossSize),
+            canvasColor,
+            1.5f
+        );
     }
 }

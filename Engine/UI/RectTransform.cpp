@@ -13,73 +13,157 @@ XMFLOAT2 RectTransform::GetScreenPosition(int screenWidth, int screenHeight) con
 {
     XMFLOAT2 screenPos = { 0, 0 };
 
-    // World 앵커
+    // World 앵커 - Canvas 기준 월드 좌표
     if (anchor == Anchor::World)
     {
-        auto* camera = RenderManager::Instance().GetCamera();
-        if (!camera)
-            return screenPos;
-
-        // 1. 카메라의 DefaultPosition (화면 중앙이 월드 0,0이 되도록)
-        float cameraDefaultX = -(screenWidth * 0.5f);
-        float cameraDefaultY = -(screenHeight * 0.5f);
-
-        // 2. 카메라의 현재 위치
-        XMFLOAT2 camPos = camera->GetPosition();
-
-        // 3. 카메라가 DefaultPosition에서 이동한 거리
-        float cameraMoveX = camPos.x - cameraDefaultX;
-        float cameraMoveY = camPos.y - cameraDefaultY;
-
-        // 4. 월드 좌표 (anchoredPosition)
-        float worldX = anchoredPosition.x;
-        float worldY = anchoredPosition.y;
-
-        // 5. 스크린 좌표 = 화면 중앙 기준 월드 좌표 - 카메라 이동 거리
-        screenPos.x = (screenWidth * 0.5f) + worldX - cameraMoveX;
-        screenPos.y = (screenHeight * 0.5f) + worldY - cameraMoveY;
-
+        // World 앵커는 항상 Canvas 중앙 기준
+        // Canvas 찾기
+        GameObject* canvasObj = gameObject;
+        Canvas* canvas = nullptr;
+        
+        while (canvasObj)
+        {
+            canvas = canvasObj->GetComponent<Canvas>();
+            if (canvas)
+                break;
+            canvasObj = canvasObj->GetParent();
+        }
+        
+        if (!canvas)
+            return screenPos; // Canvas를 찾지 못하면 (0,0) 반환
+        
+        // Canvas의 월드 위치 (Transform) = Canvas 중앙점
+        XMFLOAT2 canvasPos = canvas->GetGameObject()->transform.GetPosition();
+        
+        // UI의 월드 좌표 = Canvas 중앙 + 오프셋
+        screenPos.x = canvasPos.x + anchoredPosition.x;
+        screenPos.y = canvasPos.y + anchoredPosition.y;
+        
         return screenPos;
     }
 
-    // Screen Space 앵커
-    switch (anchor)
+    // Screen Space 앵커 - Canvas 기준 앵커 포인트
+    // Canvas 찾기
+    GameObject* canvasObj = gameObject;
+    Canvas* canvas = nullptr;
+    
+    while (canvasObj)
     {
-    case Anchor::TopLeft:
-        screenPos = { anchoredPosition.x, anchoredPosition.y };
-        break;
+        canvas = canvasObj->GetComponent<Canvas>();
+        if (canvas)
+            break;
+        canvasObj = canvasObj->GetParent();
+    }
+    
+    if (canvas)
+    {
+        // Canvas 크기 사용
+        screenWidth = canvas->GetScreenWidth();
+        screenHeight = canvas->GetScreenHeight();
+        
+        // Canvas의 월드 위치
+        XMFLOAT2 canvasPos = canvas->GetGameObject()->transform.GetPosition();
+        
+        // Canvas 좌상단 위치
+        float canvasLeft = canvasPos.x - (screenWidth * 0.5f);
+        float canvasTop = canvasPos.y - (screenHeight * 0.5f);
+        
+        // 앵커 기준점 계산
+        XMFLOAT2 anchorPoint = { 0, 0 };
+        
+        switch (anchor)
+        {
+        case Anchor::TopLeft:
+            anchorPoint.x = canvasLeft;
+            anchorPoint.y = canvasTop;
+            break;
 
-    case Anchor::TopCenter:
-        screenPos = { screenWidth * 0.5f + anchoredPosition.x, anchoredPosition.y };
-        break;
+        case Anchor::TopCenter:
+            anchorPoint.x = canvasLeft + screenWidth * 0.5f;
+            anchorPoint.y = canvasTop;
+            break;
 
-    case Anchor::TopRight:
-        screenPos = { screenWidth + anchoredPosition.x, anchoredPosition.y };
-        break;
+        case Anchor::TopRight:
+            anchorPoint.x = canvasLeft + screenWidth;
+            anchorPoint.y = canvasTop;
+            break;
 
-    case Anchor::MiddleLeft:
-        screenPos = { anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
-        break;
+        case Anchor::MiddleLeft:
+            anchorPoint.x = canvasLeft;
+            anchorPoint.y = canvasTop + screenHeight * 0.5f;
+            break;
 
-    case Anchor::Center:
-        screenPos = { screenWidth * 0.5f + anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
-        break;
+        case Anchor::Center:
+            anchorPoint.x = canvasLeft + screenWidth * 0.5f;
+            anchorPoint.y = canvasTop + screenHeight * 0.5f;
+            break;
 
-    case Anchor::MiddleRight:
-        screenPos = { screenWidth + anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
-        break;
+        case Anchor::MiddleRight:
+            anchorPoint.x = canvasLeft + screenWidth;
+            anchorPoint.y = canvasTop + screenHeight * 0.5f;
+            break;
 
-    case Anchor::BottomLeft:
-        screenPos = { anchoredPosition.x, screenHeight + anchoredPosition.y };
-        break;
+        case Anchor::BottomLeft:
+            anchorPoint.x = canvasLeft;
+            anchorPoint.y = canvasTop + screenHeight;
+            break;
 
-    case Anchor::BottomCenter:
-        screenPos = { screenWidth * 0.5f + anchoredPosition.x, screenHeight + anchoredPosition.y };
-        break;
+        case Anchor::BottomCenter:
+            anchorPoint.x = canvasLeft + screenWidth * 0.5f;
+            anchorPoint.y = canvasTop + screenHeight;
+            break;
 
-    case Anchor::BottomRight:
-        screenPos = { screenWidth + anchoredPosition.x, screenHeight + anchoredPosition.y };
-        break;
+        case Anchor::BottomRight:
+            anchorPoint.x = canvasLeft + screenWidth;
+            anchorPoint.y = canvasTop + screenHeight;
+            break;
+        }
+        
+        // 최종 위치 = 앵커 포인트 + 오프셋
+        screenPos.x = anchorPoint.x + anchoredPosition.x;
+        screenPos.y = anchorPoint.y + anchoredPosition.y;
+    }
+    else
+    {
+        // Canvas를 찾지 못한 경우 기본 Screen Space 계산
+        switch (anchor)
+        {
+        case Anchor::TopLeft:
+            screenPos = { anchoredPosition.x, anchoredPosition.y };
+            break;
+
+        case Anchor::TopCenter:
+            screenPos = { screenWidth * 0.5f + anchoredPosition.x, anchoredPosition.y };
+            break;
+
+        case Anchor::TopRight:
+            screenPos = { screenWidth + anchoredPosition.x, anchoredPosition.y };
+            break;
+
+        case Anchor::MiddleLeft:
+            screenPos = { anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
+            break;
+
+        case Anchor::Center:
+            screenPos = { screenWidth * 0.5f + anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
+            break;
+
+        case Anchor::MiddleRight:
+            screenPos = { screenWidth + anchoredPosition.x, screenHeight * 0.5f + anchoredPosition.y };
+            break;
+
+        case Anchor::BottomLeft:
+            screenPos = { anchoredPosition.x, screenHeight + anchoredPosition.y };
+            break;
+
+        case Anchor::BottomCenter:
+            screenPos = { screenWidth * 0.5f + anchoredPosition.x, screenHeight + anchoredPosition.y };
+            break;
+
+        case Anchor::BottomRight:
+            screenPos = { screenWidth + anchoredPosition.x, screenHeight + anchoredPosition.y };
+            break;
+        }
     }
 
     return screenPos;

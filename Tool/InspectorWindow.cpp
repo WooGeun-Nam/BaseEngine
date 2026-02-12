@@ -567,6 +567,30 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         // RectTransform (UI) 특정 처리
         if (auto* rectTransform = dynamic_cast<RectTransform*>(comp))
         {
+            // Anchor 설정
+            ImGui::Text("Anchor:");
+            ImGui::SameLine();
+            
+            const char* anchorNames[] = {
+                "TopLeft", "TopCenter", "TopRight",
+                "MiddleLeft", "Center", "MiddleRight",
+                "BottomLeft", "BottomCenter", "BottomRight",
+                "World"
+            };
+            
+            int currentAnchor = static_cast<int>(rectTransform->anchor);
+            if (ImGui::Combo("##Anchor", &currentAnchor, anchorNames, IM_ARRAYSIZE(anchorNames)))
+            {
+                rectTransform->anchor = static_cast<RectTransform::Anchor>(currentAnchor);
+            }
+            
+            // Anchored Position
+            if (ImGui::DragFloat2("Anchored Position", &rectTransform->anchoredPosition.x, 1.0f, -10000.0f, 10000.0f))
+            {
+                // 직접 수정됨
+            }
+            
+            // Size
             auto size = rectTransform->GetSize();
             if (ImGui::DragFloat2("Size", &size.x, 1.0f, 0.0f, 10000.0f))
             {
@@ -577,17 +601,44 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         // Canvas (UI) 특정 처리
         if (auto* canvas = dynamic_cast<Canvas*>(comp))
         {
-            int screenWidth = canvas->GetScreenWidth();
-            int screenHeight = canvas->GetScreenHeight();
-            
-            if (ImGui::DragInt("Screen Width", &screenWidth, 1.0f, 100, 10000))
+            // Auto Resize 옵션
+            bool autoResize = canvas->IsAutoResize();
+            if (ImGui::Checkbox("Auto Resize", &autoResize))
             {
-                canvas->SetScreenSize(screenWidth, screenHeight);
+                canvas->SetAutoResize(autoResize);
             }
             
-            if (ImGui::DragInt("Screen Height", &screenHeight, 1.0f, 100, 10000))
+            if (ImGui::IsItemHovered())
             {
-                canvas->SetScreenSize(screenWidth, screenHeight);
+                ImGui::SetTooltip("Automatically match render target size.\nDisable for custom fixed resolution.");
+            }
+            
+            // Auto Resize가 꺼져있을 때만 수동 조정 가능
+            if (!autoResize)
+            {
+                int screenWidth = canvas->GetScreenWidth();
+                int screenHeight = canvas->GetScreenHeight();
+                
+                if (ImGui::DragInt("Screen Width", &screenWidth, 1.0f, 100, 10000))
+                {
+                    canvas->SetScreenSize(screenWidth, screenHeight);
+                }
+                
+                if (ImGui::DragInt("Screen Height", &screenHeight, 1.0f, 100, 10000))
+                {
+                    canvas->SetScreenSize(screenWidth, screenHeight);
+                }
+            }
+            else
+            {
+                // Auto Resize가 켜져있으면 읽기 전용으로 표시
+                int screenWidth = canvas->GetScreenWidth();
+                int screenHeight = canvas->GetScreenHeight();
+                
+                ImGui::BeginDisabled();
+                ImGui::DragInt("Screen Width", &screenWidth, 1.0f, 100, 10000);
+                ImGui::DragInt("Screen Height", &screenHeight, 1.0f, 100, 10000);
+                ImGui::EndDisabled();
             }
             
             ImGui::Spacing();

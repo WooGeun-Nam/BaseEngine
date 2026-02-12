@@ -36,9 +36,23 @@ public:
 
     int GetScreenWidth() const { return screenWidth; }
     int GetScreenHeight() const { return screenHeight; }
+    
+    // 자동 크기 조정 옵션
+    void SetAutoResize(bool enable) { autoResize = enable; }
+    bool IsAutoResize() const { return autoResize; }
+    
+    // 초기화 여부 확인
+    bool IsInitialized() const { return isInitialized; }
+    void MarkAsInitialized() { isInitialized = true; }
 
 private:
     // 화면 크기 기본값
     int screenWidth = 1280;
     int screenHeight = 720;
+    bool isInitialized = false;  // 초기화 여부
+    bool autoResize = true;  // 자동 크기 조정 (기본: 활성화)
+    
+    // 게임 카메라 위치 (SceneView에서 사용)
+    XMFLOAT2 gameCameraPosition = XMFLOAT2(0.0f, 0.0f);
+    bool useGameCameraPosition = false;
 };

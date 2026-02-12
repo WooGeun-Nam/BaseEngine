@@ -61,6 +61,9 @@ protected:
     bool IsPointerInside();  // 마우스가 UI 내부에 있는지
     DirectX::XMFLOAT2 GetMousePosition();  // 현재 마우스 위치
     
+    // Canvas 참조 확인 (null이면 다시 찾기)
+    void EnsureCanvasReference();
+    
     // UI Layer depth 계산 (자동으로 계층 순서 반영)
     float GetUIDepth() const;
     

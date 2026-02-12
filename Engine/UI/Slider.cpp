@@ -35,7 +35,13 @@ void Slider::OnPointerUp()
 
 void Slider::RenderUI()
 {
-    if (!IsEnabled() || !rectTransform || !canvas)
+    if (!IsEnabled() || !rectTransform)
+        return;
+    
+    // Canvas 참조 확인 (null이면 다시 찾기)
+    EnsureCanvasReference();
+    
+    if (!canvas)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();

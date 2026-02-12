@@ -20,6 +20,9 @@ public:
     // 파일에서 씬 로드
     static bool LoadScene(const std::wstring& filePath, SceneBase* scene, Application* app);
     
+    // JSON 데이터에서 직접 씬 로드 (SceneManager용 헬퍼)
+    static bool LoadSceneFromJson(const json& sceneData, SceneBase* scene, Application* app);
+    
     // GameObject를 JSON으로 직렬화
     static json SerializeGameObject(GameObject* obj);
     

@@ -67,5 +67,5 @@ void Button::OnClick()
 void Button::RenderUI()
 {
     // Image의 렌더링 호출
-    Image::Render();
+    Image::RenderUI();
 }

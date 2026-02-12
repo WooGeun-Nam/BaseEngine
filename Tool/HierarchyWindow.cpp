@@ -6,6 +6,9 @@
 #include "UI/UIBase.h"
 #include "UI/Canvas.h"
 #include "UI/Button.h"
+#include "UI/Image.h"
+#include "UI/Text.h"
+#include "UI/Panel.h"
 #include "UI/Slider.h"
 #include "UI/ScrollView.h"
 #include <ImGui/imgui.h>
@@ -472,18 +475,44 @@ void HierarchyWindow::DeleteGameObject(GameObject* obj)
     if (!currentScene)
         return;
     
-    // 선택된 오브젝트였다면 선택 해제
-    if (selectedObject == obj)
+    auto* inspectorWnd = dynamic_cast<InspectorWindow*>(
+        EditorManager::Instance().GetEditorWindow("Inspector")
+    );
+    
+    // 선택된 오브젝트가 삭제될 객체 또는 그 자식인지 확인
+    if (selectedObject)
     {
-        selectedObject = nullptr;
+        bool shouldClearSelection = false;
         
-        // Inspector도 초기화
-        auto* inspectorWnd = dynamic_cast<InspectorWindow*>(
-            EditorManager::Instance().GetEditorWindow("Inspector")
-        );
-        if (inspectorWnd)
+        // 삭제할 객체가 선택된 객체인가?
+        if (selectedObject == obj)
         {
-            inspectorWnd->SetSelectedObject(nullptr);
+            shouldClearSelection = true;
+        }
+        else
+        {
+            // 선택된 객체가 삭제할 객체의 자식인가? (재귀적으로 확인)
+            GameObject* parent = selectedObject->GetParent();
+            while (parent)
+            {
+                if (parent == obj)
+                {
+                    shouldClearSelection = true;
+                    break;
+                }
+                parent = parent->GetParent();
+            }
+        }
+        
+        // 선택 해제
+        if (shouldClearSelection)
+        {
+            selectedObject = nullptr;
+            
+            if (inspectorWnd)
+            {
+                inspectorWnd->SetSelectedObject(nullptr);
+            }
         }
     }
     
@@ -645,8 +674,8 @@ void HierarchyWindow::CreateButtonGameObject()
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
     ConsoleWindow::Log("Created new Button GameObject", LogType::Info);
@@ -678,11 +707,11 @@ void HierarchyWindow::CreateImageGameObject()
     // 먼저 씬에 추가 (AddGameObject가 worldObjects에 추가)
     currentScene->AddGameObject(obj);
     
-    // 그 다음 Canvas의 자식으로 설정 (MoveGameObjectBetweenArrays 호출)
+    // 그 다음 Canvas의 자식으로 설정 (SetParent 먼저, 그 다음 MoveGameObjectBetweenArrays)
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
-        obj->SetParent(canvasObj);
+        obj->SetParent(canvasObj);  // 먼저 부모 설정
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);  // 그 다음 배열 이동
     }
     
     ConsoleWindow::Log("Created new Image GameObject", LogType::Info);
@@ -707,8 +736,8 @@ void HierarchyWindow::CreateTextGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Text");
     
-    // UIBase 컴포넌트 추가
-    auto* ui = obj->AddComponent<UIBase>();
+    // Text 컴포넌트 추가
+    auto* text = obj->AddComponent<Text>();
     
     // 먼저 씬에 추가
     currentScene->AddGameObject(obj);
@@ -716,8 +745,8 @@ void HierarchyWindow::CreateTextGameObject()
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
     ConsoleWindow::Log("Created new Text GameObject", LogType::Info);
@@ -752,8 +781,8 @@ void HierarchyWindow::CreatePanelGameObject()
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
     ConsoleWindow::Log("Created child Panel GameObject", LogType::Info);
@@ -787,8 +816,8 @@ void HierarchyWindow::CreateSliderGameObject()
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
     ConsoleWindow::Log("Created new Slider GameObject", LogType::Info);
@@ -822,8 +851,8 @@ void HierarchyWindow::CreateScrollViewGameObject()
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
-        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
         obj->SetParent(canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
     ConsoleWindow::Log("Created new ScrollView GameObject", LogType::Info);
@@ -839,14 +868,12 @@ GameObject* HierarchyWindow::FindOrCreateCanvas()
     if (!currentScene)
         return nullptr;
     
-    // 현재 씬에서 Canvas 찾기
-    const auto& objects = currentScene->GetAllGameObjects();
-    for (auto* obj : objects)
+    // 현재 씬에서 Canvas 찾기 (canvasGroups에서 검색)
+    const auto& canvasGroups = currentScene->GetCanvasGroups();
+    if (!canvasGroups.empty())
     {
-        if (obj->GetComponent<Canvas>() != nullptr)
-        {
-            return obj;
-        }
+        // 첫 번째 Canvas 반환
+        return canvasGroups[0].canvasObject;
     }
     
     // Canvas가 없으면 새로 생성

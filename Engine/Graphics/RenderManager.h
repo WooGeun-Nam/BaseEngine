@@ -31,7 +31,7 @@ public:
     void EndFrame();  // UI는 EndFrame()에서 자동 렌더링
 
     // UI 렌더링 (Canvas의 uiObjects만 순회)
-    void BeginUI();
+    void BeginUI(bool useCamera = false);
     void EndUI();
 
     // 디버그 렌더링 사이클 (DebugRenderer와 연동)

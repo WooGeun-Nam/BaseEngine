@@ -27,10 +27,7 @@ public:
     // 즉시 씬 활성화 (에디터 전용)
     void SetActiveSceneImmediate(int index);
     
-    // 현재 씬 리로드 (Stop 시 초기 상태로 복원)
-    void ReloadCurrentScene();
-    
-    // 씬 스냅샷 저장/복원 (에디터 상태 보존)
+    // 씬 스냅샷 저장/복원 (Play/Stop 시 에디터 상태 보존)
     nlohmann::json SaveSceneSnapshot();
     void RestoreSceneSnapshot(const nlohmann::json& snapshot);
 

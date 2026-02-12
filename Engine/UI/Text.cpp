@@ -5,9 +5,23 @@
 #include "Graphics/RenderManager.h"
 #include <SpriteBatch.h>
 
+void Text::Awake()
+{
+    UIBase::Awake();
+}
+
 void Text::RenderUI()
 {
-    if (!font || text.empty() || !IsEnabled())  // ? IsEnabled() 사용
+    if (!font || text.empty())
+        return;
+    
+    if (!IsEnabled() || !rectTransform)
+        return;
+    
+    // Canvas 참조 확인 (null이면 다시 찾기)
+    EnsureCanvasReference();
+    
+    if (!canvas)
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();

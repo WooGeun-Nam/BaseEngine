@@ -62,13 +62,22 @@ void RenderManager::EndFrame()
 }
 
 // Canvas가 관리하는 UI GameObject만 순회
-void RenderManager::BeginUI()
+void RenderManager::BeginUI(bool useCamera)
 {
     if (!spriteBatch)
         return;
 
-    // UI 렌더링은 카메라 위치 적용 X
-    spriteBatch->Begin(SpriteSortMode_BackToFront);
+    // UI도 카메라 view 행렬 적용 (월드 좌표 → 화면 좌표 변환)
+    if (camera)
+    {
+        XMMATRIX view = camera->GetViewMatrix();
+        spriteBatch->Begin(SpriteSortMode_BackToFront, nullptr, nullptr,
+                          nullptr, nullptr, nullptr, view);
+    }
+    else
+    {
+        spriteBatch->Begin(SpriteSortMode_BackToFront);
+    }
 }
 
 void RenderManager::EndUI()

@@ -31,9 +31,12 @@ bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Applica
     if (!app)
         return false;
 
-    // Resources에서 SceneData 가져오기
-    auto sceneData = Resources::Get<SceneData>(sceneAssetName);
-    if (!sceneData)
+    // 파일 경로 구성
+    std::wstring filePath = L"Assets/Scenes/" + sceneAssetName + L".scene";
+    
+    // 파일에서 직접 SceneData 생성 (캐시 무시)
+    auto sceneData = std::make_shared<SceneData>();
+    if (!sceneData->Load(filePath))
         return false;
 
     // 새 씬 생성
@@ -41,22 +44,38 @@ bool SceneManager::LoadSceneFromData(const std::wstring& sceneAssetName, Applica
     scene->SetApplication(app);
     scene->SetSceneName(sceneData->GetSceneName());
 
-    // SceneData의 JSON으로부터 GameObject 로드
+    // SceneSerializer를 사용하여 로드
     const auto& data = sceneData->GetData();
-    if (data.contains("gameObjects"))
+    if (!SceneSerializer::LoadSceneFromJson(data, scene.get(), app))
+        return false;
+
+    std::wstring sceneName = sceneData->GetSceneName();
+    
+    // 같은 이름의 씬이 이미 있는지 확인
+    auto it = sceneLookup.find(sceneName);
+    if (it != sceneLookup.end())
     {
-        for (const auto& objData : data["gameObjects"])
+        // 기존 씬을 찾아서 교체
+        for (size_t i = 0; i < sceneList.size(); ++i)
         {
-            GameObject* obj = SceneSerializer::DeserializeGameObject(objData, app);
-            if (obj)
+            if (sceneList[i].get() == it->second)
             {
-                scene->AddGameObject(obj);
+                // 기존 씬 교체
+                sceneList[i] = std::move(scene);
+                sceneLookup[sceneName] = sceneList[i].get();
+                
+                // 현재 활성화된 씬이면 포인터 갱신
+                if (static_cast<int>(i) == currentIndex)
+                {
+                    currentScene = sceneList[i].get();
+                }
+                
+                return true;
             }
         }
     }
-
-    // 씬 추가
-    std::wstring sceneName = sceneData->GetSceneName();
+    
+    // 새로운 씬이면 추가
     AddScene(sceneName, std::move(scene));
 
     return true;
@@ -111,144 +130,18 @@ void SceneManager::SetActiveSceneImmediate(int index)
     if (currentScene == sceneList[index].get())
         return;
 
-    // 현재 Scene Exit 호출 및 완전 정리
+    // 현재 Scene Exit 호출
     if (currentScene)
     {
         currentScene->OnExit();
-        currentScene = nullptr;  // 즉시 nullptr로 설정하여 중간 상태 방지
     }
 
-    // 새로운 씬을 SceneData에서 다시 로드
+    // 새로운 씬 활성화 (이미 로드된 씬 사용)
     currentIndex = index;
-    
-    // 씬 이름 가져오기
-    if (currentIndex >= 0 && currentIndex < static_cast<int>(sceneNameList.size()))
-    {
-        std::wstring sceneName = sceneNameList[currentIndex];
-        auto* currentScenePtr = sceneList[currentIndex].get();
-        
-        if (currentScenePtr && currentScenePtr->GetApplication())
-        {
-            Application* app = currentScenePtr->GetApplication();
-            
-            // SceneData에서 씬을 다시 로드
-            auto sceneData = Resources::Get<SceneData>(sceneName);
-            if (sceneData)
-            {
-                // 새 씬 생성
-                auto newScene = std::make_unique<SceneBase>();
-                newScene->SetApplication(app);
-                newScene->SetSceneName(sceneData->GetSceneName());
-                
-                // SceneData의 JSON으로부터 GameObject 로드
-                const auto& data = sceneData->GetData();
-                if (data.contains("gameObjects"))
-                {
-                    for (const auto& objData : data["gameObjects"])
-                    {
-                        GameObject* obj = SceneSerializer::DeserializeGameObject(objData, app);
-                        if (obj)
-                        {
-                            newScene->AddGameObject(obj);
-                        }
-                    }
-                }
-                
-                // 기존 씬을 새 씬으로 교체
-                sceneList[currentIndex] = std::move(newScene);
-                currentScene = sceneList[currentIndex].get();
-                
-                // sceneLookup 업데이트
-                sceneLookup[sceneName] = currentScene;
-            }
-            else
-            {
-                // SceneData가 없으면 기존 씬 사용
-                currentScene = sceneList[currentIndex].get();
-            }
-        }
-        else
-        {
-            currentScene = sceneList[currentIndex].get();
-        }
-    }
-    else
-    {
-        currentScene = sceneList[currentIndex].get();
-    }
+    currentScene = sceneList[index].get();
     
     if (currentScene)
     {
-        currentScene->OnEnter();
-    }
-}
-
-void SceneManager::ReloadCurrentScene()
-{
-    // 현재 씬이 없으면 리로드할 것이 없음
-    if (currentIndex < 0 || currentIndex >= static_cast<int>(sceneList.size()))
-        return;
-    
-    // 씬 이름 리스트가 비어있거나 인덱스가 범위를 벗어나면 리턴
-    if (sceneNameList.empty() || currentIndex >= static_cast<int>(sceneNameList.size()))
-        return;
-    
-    auto* currentScenePtr = currentScene;
-    
-    if (!currentScenePtr || !currentScenePtr->GetApplication())
-        return;
-    
-    Application* app = currentScenePtr->GetApplication();
-    
-    // 씬 이름 가져오기 (안전하게)
-    std::wstring sceneName;
-    try
-    {
-        sceneName = sceneNameList[currentIndex];
-        if (sceneName.empty())
-            return;
-    }
-    catch (...)
-    {
-        return;
-    }
-    
-    // 현재 씬 종료 및 정리
-    currentScenePtr->OnExit();
-    
-    // 씬을 새로 로드 (SceneData에서)
-    auto sceneData = Resources::Get<SceneData>(sceneName);
-    if (sceneData)
-    {
-        // 새 씬 생성
-        auto newScene = std::make_unique<SceneBase>();
-        newScene->SetApplication(app);
-        newScene->SetSceneName(sceneData->GetSceneName());
-        
-        // SceneData의 JSON으로부터 GameObject 로드
-        const auto& data = sceneData->GetData();
-        if (data.contains("gameObjects"))
-        {
-            for (const auto& objData : data["gameObjects"])
-            {
-                GameObject* obj = SceneSerializer::DeserializeGameObject(objData, app);
-                if (obj)
-                {
-                    newScene->AddGameObject(obj);
-                }
-            }
-        }
-        
-        // 기존 씬을 새 씬으로 교체
-        sceneList[currentIndex] = std::move(newScene);
-        currentScene = sceneList[currentIndex].get();
-        
-        // 새 씬 초기화
-        currentScene->OnEnter();
-    }
-    else
-    {
-        // SceneData가 없으면 기존 OnEnter만 다시 호출
         currentScene->OnEnter();
     }
 }
@@ -261,15 +154,28 @@ nlohmann::json SceneManager::SaveSceneSnapshot()
     nlohmann::json snapshot;
     snapshot["sceneIndex"] = currentIndex;
     snapshot["sceneName"] = SceneSerializer::WStringToString(currentScene->GetCurrentSceneName());
-    snapshot["gameObjects"] = nlohmann::json::array();
     
+    // worldObjects 저장
+    snapshot["worldObjects"] = nlohmann::json::array();
     const auto& objects = currentScene->GetAllGameObjects();
     for (GameObject* obj : objects)
     {
-        // 루트 오브젝트만 저장 (자식은 재귀적으로 저장됨)
         if (obj && obj->GetParent() == nullptr)
         {
-            snapshot["gameObjects"].push_back(SceneSerializer::SerializeGameObject(obj));
+            snapshot["worldObjects"].push_back(SceneSerializer::SerializeGameObject(obj));
+        }
+    }
+    
+    // canvasGroups 저장
+    snapshot["canvasGroups"] = nlohmann::json::array();
+    const auto& canvasGroups = currentScene->GetCanvasGroups();
+    for (const auto& group : canvasGroups)
+    {
+        if (group.canvasObject)
+        {
+            nlohmann::json groupData;
+            groupData["canvas"] = SceneSerializer::SerializeGameObject(group.canvasObject);
+            snapshot["canvasGroups"].push_back(groupData);
         }
     }
     
@@ -278,7 +184,7 @@ nlohmann::json SceneManager::SaveSceneSnapshot()
 
 void SceneManager::RestoreSceneSnapshot(const nlohmann::json& snapshot)
 {
-    if (snapshot.is_null() || !snapshot.contains("gameObjects"))
+    if (snapshot.is_null())
         return;
     
     if (!currentScene || !currentScene->GetApplication())
@@ -293,22 +199,8 @@ void SceneManager::RestoreSceneSnapshot(const nlohmann::json& snapshot)
     auto newScene = std::make_unique<SceneBase>();
     newScene->SetApplication(app);
     
-    // 씬 이름 복원
-    if (snapshot.contains("sceneName"))
-    {
-        std::string sceneName = snapshot["sceneName"];
-        newScene->SetSceneName(SceneSerializer::StringToWString(sceneName));
-    }
-    
-    // GameObject 복원
-    for (const auto& objData : snapshot["gameObjects"])
-    {
-        GameObject* obj = SceneSerializer::DeserializeGameObject(objData, app);
-        if (obj)
-        {
-            newScene->AddGameObject(obj);
-        }
-    }
+    // SceneSerializer를 사용하여 복원 (중복 로직 제거)
+    SceneSerializer::LoadSceneFromJson(snapshot, newScene.get(), app);
     
     // 씬 교체
     sceneList[currentIndex] = std::move(newScene);

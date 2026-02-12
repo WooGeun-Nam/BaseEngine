@@ -2,6 +2,7 @@
 #include "UI/Canvas.h"
 #include "Core/GameObject.h"
 #include "Graphics/RenderManager.h"
+#include "Graphics/Camera2D.h"
 
 void Image::Awake()
 {
@@ -10,7 +11,13 @@ void Image::Awake()
 
 void Image::RenderUI()
 {
-    if (!texture || !rectTransform || !canvas || !IsEnabled())  // ? IsEnabled() 사용
+    if (!texture || !rectTransform)
+        return;
+    
+    // Canvas 참조 확인 (null이면 다시 찾기)
+    EnsureCanvasReference();
+    
+    if (!canvas || !IsEnabled())
         return;
 
     auto* spriteBatch = RenderManager::Instance().GetSpriteBatch();
