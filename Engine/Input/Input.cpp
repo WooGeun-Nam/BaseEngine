@@ -47,64 +47,16 @@ void Input::OnMouseWheel(int delta)
 
 void Input::Update()
 {
-    // 이전 상태로 복사
     previousKeyState = currentKeyState;
-
     previousMouseButtonState = currentMouseButtonState;
-
-    // 프레임 끝에서 휠 델타 초기화
     mouseWheelDelta = 0;
-}
-
-bool Input::IsKeyDown(unsigned int key) const
-{
-    return key < KEY_COUNT && currentKeyState[key];
-}
-
-bool Input::WasKeyPressed(unsigned int key) const
-{
-    return key < KEY_COUNT &&
-        currentKeyState[key] &&
-        !previousKeyState[key];
-}
-
-bool Input::WasKeyReleased(unsigned int key) const
-{
-    return key < KEY_COUNT &&
-        !currentKeyState[key] &&
-        previousKeyState[key];
-}
-
-bool Input::IsMouseButtonDown(int buttonIndex) const
-{
-    return buttonIndex >= 0 &&
-        buttonIndex < MOUSE_BUTTON_COUNT &&
-        currentMouseButtonState[buttonIndex];
-}
-
-bool Input::WasMouseButtonPressed(int buttonIndex) const
-{
-    return buttonIndex >= 0 &&
-        buttonIndex < MOUSE_BUTTON_COUNT &&
-        currentMouseButtonState[buttonIndex] &&
-        !previousMouseButtonState[buttonIndex];
-}
-
-bool Input::WasMouseButtonReleased(int buttonIndex) const
-{
-    return buttonIndex >= 0 &&
-        buttonIndex < MOUSE_BUTTON_COUNT &&
-        !currentMouseButtonState[buttonIndex] &&
-        previousMouseButtonState[buttonIndex];
 }
 
 void Input::Clear()
 {
     currentKeyState.fill(false);
     previousKeyState.fill(false);
-
     currentMouseButtonState.fill(false);
     previousMouseButtonState.fill(false);
-
     mouseWheelDelta = 0;
 }

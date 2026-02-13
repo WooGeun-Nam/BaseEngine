@@ -99,29 +99,12 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         
         switch (msg)
         {
-            // 키보드
+            // 키보드 - 항상 Input에 전달 (게임 입력 처리 위해)
         case WM_KEYDOWN:
-            // F1 키는 항상 전달 (ImGui 도구 창 토글용)
-            if (wParam == VK_F1)
-            {
-                window->input->OnKeyDown(wParam);
-            }
-            // 다른 키는 ImGui가 사용하지 않을 때만 전달
-            else if (!wantCaptureKeyboard)
-            {
-                window->input->OnKeyDown(wParam);
-            }
+            window->input->OnKeyDown(wParam);
             return 0;
         case WM_KEYUP:
-            // F1 키는 항상 전달
-            if (wParam == VK_F1)
-            {
-                window->input->OnKeyUp(wParam);
-            }
-            else if (!wantCaptureKeyboard)
-            {
-                window->input->OnKeyUp(wParam);
-            }
+            window->input->OnKeyUp(wParam);
             return 0;
 
             // 마우스 이동
@@ -134,32 +117,26 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
             return 0;
         }
 
-        // 마우스 버튼
+        // 마우스 버튼 - 항상 Input에 전달 (UI 이벤트 처리 위해)
         case WM_LBUTTONDOWN:
-            if (!wantCaptureMouse)
-                window->input->OnMouseDown(0); // Left
+            window->input->OnMouseDown(0);
             return 0;
         case WM_LBUTTONUP:
-            if (!wantCaptureMouse)
-                window->input->OnMouseUp(0);
+            window->input->OnMouseUp(0);
             return 0;
 
         case WM_RBUTTONDOWN:
-            if (!wantCaptureMouse)
-                window->input->OnMouseDown(1); // Right
+            window->input->OnMouseDown(1);
             return 0;
         case WM_RBUTTONUP:
-            if (!wantCaptureMouse)
-                window->input->OnMouseUp(1);
+            window->input->OnMouseUp(1);
             return 0;
 
         case WM_MBUTTONDOWN:
-            if (!wantCaptureMouse)
-                window->input->OnMouseDown(2); // Middle
+            window->input->OnMouseDown(2);
             return 0;
         case WM_MBUTTONUP:
-            if (!wantCaptureMouse)
-                window->input->OnMouseUp(2);
+            window->input->OnMouseUp(2);
             return 0;
 
             // 마우스 휠

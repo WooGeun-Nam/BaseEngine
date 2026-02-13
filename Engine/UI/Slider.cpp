@@ -80,7 +80,10 @@ void Slider::RenderUI()
     );
 
     // 2. 채워진 바 렌더링
-    float fillWidth = size.x * value;
+    float normalizedValue = (maxValue - minValue) > 0.0f 
+        ? (value - minValue) / (maxValue - minValue) 
+        : 0.0f;
+    float fillWidth = size.x * normalizedValue;
     RECT fillRect;
     fillRect.left = (LONG)topLeft.x;
     fillRect.top = (LONG)topLeft.y;
@@ -126,7 +129,7 @@ void Slider::RenderUI()
 void Slider::SetValue(float newValue)
 {
     newValue = (std::max)(minValue, (std::min)(maxValue, newValue));
-    value = (newValue - minValue) / (maxValue - minValue);
+    value = newValue;
 
     if (onValueChanged)
     {
@@ -152,8 +155,8 @@ void Slider::UpdateValueFromMouse()
 
     // 실제 값 계산
     float newValue = minValue + relativeX * (maxValue - minValue);
-    
-    if (std::abs(newValue - (minValue + value * (maxValue - minValue))) > 0.001f)
+
+    if (std::abs(newValue - value) > 0.001f)
     {
         SetValue(newValue);
     }

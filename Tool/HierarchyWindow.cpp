@@ -424,7 +424,7 @@ void HierarchyWindow::RenderCreateMenu()
     }
     
     ImGui::Separator();
-    
+
     if (ImGui::BeginMenu("UI"))
     {
         if (ImGui::MenuItem("Canvas"))
@@ -451,12 +451,12 @@ void HierarchyWindow::RenderCreateMenu()
         {
             CreatePanelGameObject();
         }
-        
+
         if (ImGui::MenuItem("Slider"))
         {
             CreateSliderGameObject();
         }
-        
+
         if (ImGui::MenuItem("ScrollView"))
         {
             CreateScrollViewGameObject();
@@ -638,7 +638,7 @@ void HierarchyWindow::CreateCanvasGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Canvas");
     
-    // Canvas 컴포넌트 추가
+    // Canvas 컴포넌트 추가 (중복 방지는 기본값)
     auto* canvas = obj->AddComponent<Canvas>();
     
     currentScene->AddGameObject(obj);
@@ -665,20 +665,50 @@ void HierarchyWindow::CreateButtonGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Button");
     
-    // Button 컴포넌트 추가 (Button은 Image를 상속하므로 이것만 추가)
+    // RectTransform + Button 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(160.0f, 30.0f);  // 기본 버튼 크기
     auto* button = obj->AddComponent<Button>();
+    
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        button->SetTexture(defaultTexture);
+    }
+    
+    // Button용 자식 Text GameObject 생성
+    auto* textObj = new GameObject();
+    textObj->SetApplication(currentScene->GetApplication());
+    textObj->SetName(L"ButtonText");
+    auto* textRect = textObj->AddComponent<RectTransform>();
+    textRect->anchor = RectTransform::Anchor::Center;
+    textRect->SetSize(160.0f, 30.0f);
+    auto* text = textObj->AddComponent<Text>();
+    text->SetText(L"Button");
+    text->SetAlignment(Text::Alignment::Center);
+    text->SetFontSize(16.0f);  // 기본 폰트 크기
     
     // 먼저 씬에 추가
     currentScene->AddGameObject(obj);
+    currentScene->AddGameObject(textObj);
+    
+    // Text를 Button의 자식으로 설정
+    textObj->SetParent(obj);
     
     // 그 다음 Canvas의 자식으로 설정
     if (canvasObj)
     {
         obj->SetParent(canvasObj);
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
+        currentScene->MoveGameObjectBetweenArrays(textObj, canvasObj);
     }
     
-    ConsoleWindow::Log("Created new Button GameObject", LogType::Info);
+    ConsoleWindow::Log("Created new Button GameObject with Text", LogType::Info);
 }
 
 void HierarchyWindow::CreateImageGameObject()
@@ -702,7 +732,18 @@ void HierarchyWindow::CreateImageGameObject()
     
     // RectTransform + Image 컴포넌트만 추가
     obj->AddComponent<RectTransform>();
-    obj->AddComponent<Image>();
+    auto* image = obj->AddComponent<Image>();
+    
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        image->SetTexture(defaultTexture);
+    }
     
     // 먼저 씬에 추가 (AddGameObject가 worldObjects에 추가)
     currentScene->AddGameObject(obj);
@@ -721,23 +762,28 @@ void HierarchyWindow::CreateTextGameObject()
 {
     if (!sceneManager)
         return;
-    
+
     auto* currentScene = sceneManager->GetCurrentScene();
     if (!currentScene)
     {
         ConsoleWindow::Log("No active scene to create GameObject", LogType::Warning);
         return;
     }
-    
-    // Canvas 찾기 또는 생성
+
     GameObject* canvasObj = FindOrCreateCanvas();
-    
+
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Text");
-    
-    // Text 컴포넌트 추가
+
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(100.0f, 30.0f);
     auto* text = obj->AddComponent<Text>();
+    if (text)
+    {
+        text->SetText(L"New Text");
+        text->SetFontSize(16.0f);
+    }
     
     // 먼저 씬에 추가
     currentScene->AddGameObject(obj);
@@ -771,9 +817,21 @@ void HierarchyWindow::CreatePanelGameObject()
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
     
-    // RectTransform + Image 컴포넌트 (Panel은 Image로 구현)
-    obj->AddComponent<RectTransform>();
-    obj->AddComponent<Image>();
+    // RectTransform + Panel 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(200.0f, 200.0f);  // 기본 패널 크기
+    auto* panel = obj->AddComponent<Panel>();
+    
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        panel->SetTexture(defaultTexture);
+    }
     
     // 먼저 씬에 추가
     currentScene->AddGameObject(obj);
@@ -785,29 +843,29 @@ void HierarchyWindow::CreatePanelGameObject()
         currentScene->MoveGameObjectBetweenArrays(obj, canvasObj);
     }
     
-    ConsoleWindow::Log("Created child Panel GameObject", LogType::Info);
+    ConsoleWindow::Log("Created new Panel GameObject", LogType::Info);
 }
 
 void HierarchyWindow::CreateSliderGameObject()
 {
     if (!sceneManager)
         return;
-    
+
     auto* currentScene = sceneManager->GetCurrentScene();
     if (!currentScene)
     {
         ConsoleWindow::Log("No active scene to create GameObject", LogType::Warning);
         return;
     }
-    
-    // Canvas 찾기 또는 생성
+
     GameObject* canvasObj = FindOrCreateCanvas();
-    
+
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Slider");
-    
-    // Slider 컴포넌트 추가
+
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(200.0f, 20.0f);
     auto* slider = obj->AddComponent<Slider>();
     
     // 먼저 씬에 추가
@@ -827,22 +885,22 @@ void HierarchyWindow::CreateScrollViewGameObject()
 {
     if (!sceneManager)
         return;
-    
+
     auto* currentScene = sceneManager->GetCurrentScene();
     if (!currentScene)
     {
         ConsoleWindow::Log("No active scene to create GameObject", LogType::Warning);
         return;
     }
-    
-    // Canvas 찾기 또는 생성
+
     GameObject* canvasObj = FindOrCreateCanvas();
-    
+
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"ScrollView");
-    
-    // ScrollView 컴포넌트 추가
+
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(300.0f, 200.0f);
     auto* scrollView = obj->AddComponent<ScrollView>();
     
     // 먼저 씬에 추가
@@ -949,7 +1007,15 @@ void HierarchyWindow::ProcessDeferredActions()
     case DeferredAction::CreateChildPanel:
         CreateChildPanelGameObject(pendingAction.parent);
         break;
-        
+
+    case DeferredAction::CreateChildSlider:
+        CreateChildSliderGameObject(pendingAction.parent);
+        break;
+
+    case DeferredAction::CreateChildScrollView:
+        CreateChildScrollViewGameObject(pendingAction.parent);
+        break;
+
     case DeferredAction::DeleteObject:
         DeleteGameObject(pendingAction.target);
         break;
@@ -1213,9 +1279,22 @@ void HierarchyWindow::CreateChildButtonGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Button");
-    
-    // Button 컴포넌트 추가 (Button은 Image를 상속하므로 이것만 추가)
+
+    // RectTransform + Button 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(160.0f, 30.0f);
     auto* button = obj->AddComponent<Button>();
+
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        button->SetTexture(defaultTexture);
+    }
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1237,10 +1316,22 @@ void HierarchyWindow::CreateChildImageGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Image");
-    
+
     // RectTransform + Image 컴포넌트만 추가
-    obj->AddComponent<RectTransform>();
-    obj->AddComponent<Image>();
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(100.0f, 100.0f);
+    auto* image = obj->AddComponent<Image>();
+
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        image->SetTexture(defaultTexture);
+    }
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1262,9 +1353,16 @@ void HierarchyWindow::CreateChildTextGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Text");
-    
-    // UIBase 컴포넌트 추가
-    obj->AddComponent<UIBase>();
+
+    // RectTransform + Text 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(100.0f, 30.0f);
+    auto* text = obj->AddComponent<Text>();
+    if (text)
+    {
+        text->SetText(L"New Text");
+        text->SetFontSize(16.0f);
+    }
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1286,10 +1384,22 @@ void HierarchyWindow::CreateChildPanelGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Panel");
-    
-    // RectTransform + Image 컴포넌트 (Panel은 Image로 구현)
-    obj->AddComponent<RectTransform>();
-    obj->AddComponent<Image>();
+
+    // RectTransform + Panel 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(200.0f, 200.0f);
+    auto* panel = obj->AddComponent<Panel>();
+
+    // 기본 UI 텍스처 설정
+    auto defaultTexture = Resources::Get<Texture>(L"UI_Base");
+    if (!defaultTexture)
+    {
+        defaultTexture = Resources::Load<Texture>(L"UI_Base", L"Assets/Textures/UI_Base.png");
+    }
+    if (defaultTexture)
+    {
+        panel->SetTexture(defaultTexture);
+    }
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1311,9 +1421,11 @@ void HierarchyWindow::CreateChildSliderGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"Slider");
-    
-    // Slider 컴포넌트 추가
-    obj->AddComponent<Slider>();
+
+    // RectTransform + Slider 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(200.0f, 20.0f);
+    auto* slider = obj->AddComponent<Slider>();
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);
@@ -1335,9 +1447,11 @@ void HierarchyWindow::CreateChildScrollViewGameObject(GameObject* parent)
     auto* obj = new GameObject();
     obj->SetApplication(currentScene->GetApplication());
     obj->SetName(L"ScrollView");
-    
-    // ScrollView 컴포넌트 추가
-    obj->AddComponent<ScrollView>();
+
+    // RectTransform + ScrollView 컴포넌트 추가
+    auto* rectTransform = obj->AddComponent<RectTransform>();
+    rectTransform->SetSize(300.0f, 200.0f);
+    auto* scrollView = obj->AddComponent<ScrollView>();
     
     // 부모-자식 관계 설정
     obj->SetParent(parent);

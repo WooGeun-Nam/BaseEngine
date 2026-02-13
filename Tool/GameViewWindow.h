@@ -47,6 +47,12 @@ public:
     // Compilation status
     bool IsCompiling() const { return isCompiling; }
 
+    // Game View screen position (for mouse coordinate conversion)
+    float GetViewScreenX() const { return viewScreenX; }
+    float GetViewScreenY() const { return viewScreenY; }
+    int GetViewWidth() const { return viewWidth; }
+    int GetViewHeight() const { return viewHeight; }
+
 private:
     void RenderToolbar();
     void RenderGameView();
@@ -79,4 +85,8 @@ private:
     // Compilation state
     bool isCompiling = false;
     std::string compilationStatus;
+
+    // Game View screen position
+    float viewScreenX = 0.0f;
+    float viewScreenY = 0.0f;
 };

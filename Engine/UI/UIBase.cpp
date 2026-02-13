@@ -6,14 +6,8 @@
 
 void UIBase::Awake()
 {
-    // RectTransform 컴포넌트 (자동으로 추가)
     rectTransform = gameObject->GetComponent<RectTransform>();
-    if (!rectTransform)
-    {
-        rectTransform = gameObject->AddComponent<RectTransform>();
-    }
 
-    // 부모 Canvas 찾기
     GameObject* parent = gameObject->GetParent();
     while (parent)
     {
@@ -27,7 +21,6 @@ void UIBase::Awake()
     }
 }
 
-// UIBase에서 공통 이벤트 처리
 void UIBase::Update(float deltaTime)
 {
     if (!IsEnabled())
@@ -37,11 +30,20 @@ void UIBase::Update(float deltaTime)
     if (!app)
         return;
 
+    if (!canvas)
+    {
+        EnsureCanvasReference();
+        if (!canvas)
+            return;
+    }
+
+    if (!rectTransform)
+        return;
+
     bool isPointerInside = IsPointerInside();
     bool isLeftDown = app->GetInput().IsMouseButtonDown(0);
     DirectX::XMFLOAT2 currentMousePos = GetMousePosition();
 
-    // 1. Pointer Enter/Exit
     if (isPointerInside && !wasPointerInside)
     {
         OnPointerEnter();
@@ -51,7 +53,6 @@ void UIBase::Update(float deltaTime)
         OnPointerExit();
     }
 
-    // 2. Pointer Down
     if (isPointerInside && isLeftDown && !isPointerDown)
     {
         isPointerDown = true;
@@ -60,12 +61,11 @@ void UIBase::Update(float deltaTime)
         OnPointerDown();
     }
 
-    // 3. Drag Start / Dragging
     if (isPointerDown && isLeftDown)
     {
         float deltaX = currentMousePos.x - dragStartPos.x;
         float deltaY = currentMousePos.y - dragStartPos.y;
-        float dragThreshold = 5.0f;  // 5픽셀 이상 이동 시 드래그
+        float dragThreshold = 5.0f;
 
         if (!isDragging && (abs(deltaX) > dragThreshold || abs(deltaY) > dragThreshold))
         {
@@ -82,7 +82,6 @@ void UIBase::Update(float deltaTime)
         }
     }
 
-    // 4. Pointer Up / Click / Drag End
     if (isPointerDown && !isLeftDown)
     {
         if (isDragging)
@@ -92,7 +91,6 @@ void UIBase::Update(float deltaTime)
         }
         else if (isPointerInside)
         {
-            // 드래그 없이 Up → Click
             OnClick();
         }
 
@@ -131,7 +129,33 @@ DirectX::XMFLOAT2 UIBase::GetMousePosition()
     int mouseX = app->GetInput().GetMouseX();
     int mouseY = app->GetInput().GetMouseY();
 
-    return DirectX::XMFLOAT2(static_cast<float>(mouseX), static_cast<float>(mouseY));
+    float gameViewX = app->GetGameViewOffsetX();
+    float gameViewY = app->GetGameViewOffsetY();
+    int gameViewW = app->GetGameViewWidth();
+    int gameViewH = app->GetGameViewHeight();
+
+    // Get Canvas size for scaling
+    int canvasW = 1280;
+    int canvasH = 720;
+    if (canvas)
+    {
+        canvasW = canvas->GetScreenWidth();
+        canvasH = canvas->GetScreenHeight();
+    }
+
+    // Calculate relative position within Game View (0 to gameViewW/H)
+    float relativeX = static_cast<float>(mouseX) - gameViewX;
+    float relativeY = static_cast<float>(mouseY) - gameViewY;
+
+    // Scale to Canvas coordinates (0 to canvasW/H)
+    float scaledX = relativeX * (static_cast<float>(canvasW) / static_cast<float>(gameViewW));
+    float scaledY = relativeY * (static_cast<float>(canvasH) / static_cast<float>(gameViewH));
+
+    // Convert to center-origin coordinates (center = 0,0)
+    float centeredX = scaledX - (canvasW * 0.5f);
+    float centeredY = scaledY - (canvasH * 0.5f);
+
+    return DirectX::XMFLOAT2(centeredX, centeredY);
 }
 
 void UIBase::EnsureCanvasReference()

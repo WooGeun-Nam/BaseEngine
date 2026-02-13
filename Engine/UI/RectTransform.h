@@ -25,13 +25,13 @@ public:
     void SetSize(float width, float height) { sizeDelta = XMFLOAT2(width, height); }
     XMFLOAT2 GetSize() const { return sizeDelta; }
 
-    // 화면 좌표 계산 (픽셀 단위)
     XMFLOAT2 GetScreenPosition(int screenWidth, int screenHeight) const;
-
-    // 왼쪽 위 좌표 계산
     XMFLOAT2 GetTopLeftPosition(int screenWidth, int screenHeight) const;
 
-    // 마우스 포인터가 UI 영역 내에 있는지 확인
+    // UI space (for mouse hit testing - Canvas origin at 0,0)
+    XMFLOAT2 GetUISpacePosition(int screenWidth, int screenHeight) const;
+    XMFLOAT2 GetUISpaceTopLeft(int screenWidth, int screenHeight) const;
+
     bool Contains(const XMFLOAT2& screenPoint, int screenWidth, int screenHeight) const;
 
 public:

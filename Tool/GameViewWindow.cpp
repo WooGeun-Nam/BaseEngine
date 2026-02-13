@@ -245,10 +245,12 @@ void GameViewWindow::RenderGameView()
         }
     }
 
-    // ImGui 캔버스 시작 위치 (변수 제거, 직접 사용)
-    ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+    // ImGui 캔버스 시작 위치 (스크린 좌표를 클라이언트 좌표로 변환)
+    ImVec2 screenPos = ImGui::GetCursorScreenPos();
+    ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
+    viewScreenX = screenPos.x - windowPos.x;
+    viewScreenY = screenPos.y - windowPos.y;
 
-    // RenderTexture 표시
     if (renderTexture && renderTexture->GetShaderResourceView())
     {
         ImGui::Image(
@@ -258,20 +260,18 @@ void GameViewWindow::RenderGameView()
     }
     else
     {
-        // 초기화되지 않은 경우
         ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-        drawList->AddRectFilled(canvasPos, 
-            ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), 
+        drawList->AddRectFilled(screenPos, 
+            ImVec2(screenPos.x + canvasSize.x, screenPos.y + canvasSize.y), 
             IM_COL32(40, 40, 40, 255));
 
-        // 센터에 안내 텍스트
         const char* text = "Game View (Press Play to Start)";
         ImVec2 textSize = ImGui::CalcTextSize(text);
         ImVec2 textPos(
-            canvasPos.x + (canvasSize.x - textSize.x) * 0.5f,
-            canvasPos.y + (canvasSize.y - textSize.y) * 0.5f
+            screenPos.x + (canvasSize.x - textSize.x) * 0.5f,
+            screenPos.y + (canvasSize.y - textSize.y) * 0.5f
         );
         drawList->AddText(textPos, IM_COL32(150, 150, 150, 255), text);
     }

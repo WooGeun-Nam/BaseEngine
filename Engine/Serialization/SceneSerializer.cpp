@@ -15,9 +15,13 @@
 #include "UI/Image.h"
 #include "UI/Button.h"
 #include "UI/Text.h"
+#include "UI/Panel.h"
+#include "UI/Slider.h"
+#include "UI/ScrollView.h"
 #include "Audio/AudioSource.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
+#include "Resource/Font.h"
 #include "Scripting/ScriptLoader.h"
 #include <fstream>
 #include <filesystem>
@@ -476,7 +480,61 @@ json SceneSerializer::SerializeComponent(Component* component)
         j["screenHeight"] = canvas->GetScreenHeight();
         j["autoResize"] = canvas->IsAutoResize();
     }
-    // Image (UI)
+    // Button (UI) - Must check before Image since Button inherits from Image
+    else if (auto* button = dynamic_cast<Button*>(component))
+    {
+        j["type"] = "Button";
+        
+        // Button은 Image를 상속하므로 Image 정보도 저장
+        if (auto texture = button->GetTexture())
+        {
+            std::wstring fullPath = texture->Path();
+            size_t lastSlash = fullPath.find_last_of(L"/\\");
+            std::wstring fileName = (lastSlash != std::wstring::npos) 
+                ? fullPath.substr(lastSlash + 1) 
+                : fullPath;
+            
+            size_t lastDot = fileName.find_last_of(L".");
+            if (lastDot != std::wstring::npos)
+            {
+                fileName = fileName.substr(0, lastDot);
+            }
+            
+            j["texture"] = WStringToString(fileName);
+        }
+        
+        // Image Color
+        auto color = button->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
+        
+        // Button States
+        j["normalColor"] = {
+            {"r", button->normalColor.x},
+            {"g", button->normalColor.y},
+            {"b", button->normalColor.z},
+            {"a", button->normalColor.w}
+        };
+        
+        j["hoverColor"] = {
+            {"r", button->hoverColor.x},
+            {"g", button->hoverColor.y},
+            {"b", button->hoverColor.z},
+            {"a", button->hoverColor.w}
+        };
+        
+        j["pressedColor"] = {
+            {"r", button->pressedColor.x},
+            {"g", button->pressedColor.y},
+            {"b", button->pressedColor.z},
+            {"a", button->pressedColor.w}
+        };
+    }
+    // Image (UI) - After Button check
     else if (auto* image = dynamic_cast<Image*>(component))
     {
         j["type"] = "Image";
@@ -507,13 +565,56 @@ json SceneSerializer::SerializeComponent(Component* component)
             {"a", color.w}
         };
     }
-    // Button (UI)
-    else if (auto* button = dynamic_cast<Button*>(component))
+    // Text (UI)
+    else if (auto* text = dynamic_cast<Text*>(component))
     {
-        j["type"] = "Button";
+        j["type"] = "Text";
+        j["text"] = WStringToString(text->GetText());
         
-        // Button은 Image를 상속하므로 Image 정보도 저장
-        if (auto texture = button->GetTexture())
+        // Font 직렬화 (Path에서 파일명 추출)
+        if (auto font = text->GetFont())
+        {
+            std::wstring fullPath = font->Path();
+            
+            if (!fullPath.empty())
+            {
+                size_t lastSlash = fullPath.find_last_of(L"/\\");
+                std::wstring fileName = (lastSlash != std::wstring::npos) 
+                    ? fullPath.substr(lastSlash + 1) 
+                    : fullPath;
+                
+                size_t lastDot = fileName.find_last_of(L".");
+                if (lastDot != std::wstring::npos)
+                {
+                    fileName = fileName.substr(0, lastDot);
+                }
+                
+                j["font"] = WStringToString(fileName);
+            }
+        }
+        
+        // Font Size
+        j["fontSize"] = text->GetFontSize();
+        
+        // Alignment
+        j["alignment"] = static_cast<int>(text->GetAlignment());
+        
+        // Color
+        auto color = text->GetColor();
+        j["color"] = {
+            {"r", color.x},
+            {"g", color.y},
+            {"b", color.z},
+            {"a", color.w}
+        };
+    }
+    // Panel (UI)
+    else if (auto* panel = dynamic_cast<Panel*>(component))
+    {
+        j["type"] = "Panel";
+        
+        // Texture serialization (optional)
+        if (auto texture = panel->GetTexture())
         {
             std::wstring fullPath = texture->Path();
             size_t lastSlash = fullPath.find_last_of(L"/\\");
@@ -530,8 +631,8 @@ json SceneSerializer::SerializeComponent(Component* component)
             j["texture"] = WStringToString(fileName);
         }
         
-        // Color 저장
-        auto color = button->GetColor();
+        // Color serialization
+        auto color = panel->GetColor();
         j["color"] = {
             {"r", color.x},
             {"g", color.y},
@@ -539,19 +640,23 @@ json SceneSerializer::SerializeComponent(Component* component)
             {"a", color.w}
         };
     }
-    // Text (UI)
-    else if (auto* text = dynamic_cast<Text*>(component))
+    // Slider (UI)
+    else if (auto* slider = dynamic_cast<Slider*>(component))
     {
-        j["type"] = "Text";
-        j["text"] = WStringToString(text->GetText());
-        
-        auto color = text->GetColor();
-        j["color"] = {
-            {"r", color.x},
-            {"g", color.y},
-            {"b", color.z},
-            {"a", color.w}
-        };
+        j["type"] = "Slider";
+        j["value"] = slider->GetValue();
+        j["minValue"] = slider->GetMinValue();
+        j["maxValue"] = slider->GetMaxValue();
+    }
+    // ScrollView (UI)
+    else if (auto* scrollView = dynamic_cast<ScrollView*>(component))
+    {
+        j["type"] = "ScrollView";
+        auto scrollPos = scrollView->GetScrollPosition();
+        j["scrollX"] = scrollPos.x;
+        j["scrollY"] = scrollPos.y;
+        j["verticalScrollEnabled"] = scrollView->IsVerticalScrollEnabled();
+        j["horizontalScrollEnabled"] = scrollView->IsHorizontalScrollEnabled();
     }
     // AudioSource
     else if (auto* audioSource = dynamic_cast<AudioSource*>(component))
@@ -809,52 +914,15 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
         
         return canvas;
     }
-    else if (type == "Image")
-    {
-        auto* image = obj->AddComponent<Image>();
-        
-        if (j.contains("texture"))
-        {
-            try
-            {
-                std::string textureName = j["texture"];
-                if (!textureName.empty())
-                {
-                    std::wstring textureNameW = StringToWString(textureName);
-                    auto texture = Resources::Get<Texture>(textureNameW);
-                    if (!texture)
-                    {
-                        // 캐시에 없으면 로드
-                        std::wstring texturePath = L"Assets/Textures/" + textureNameW + L".png";
-                        texture = Resources::Load<Texture>(textureNameW, texturePath);
-                    }
-                    
-                    if (texture)
-                    {
-                        image->SetTexture(texture);
-                    }
-                }
-            }
-            catch (...)
-            {
-            }
-        }
-        
-        // Color 복원
-        if (j.contains("color"))
-        {
-            image->SetColor(
-                j["color"]["r"],
-                j["color"]["g"],
-                j["color"]["b"],
-                j["color"]["a"]
-            );
-        }
-        
-        return image;
-    }
     else if (type == "Button")
     {
+        // Button은 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
         auto* button = obj->AddComponent<Button>();
         
         // Button은 Image를 상속하므로 텍스처 로드
@@ -885,7 +953,7 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
             }
         }
         
-        // Color 로드
+        // Image Color 로드
         if (j.contains("color"))
         {
             button->SetColor(
@@ -896,15 +964,150 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
             );
         }
         
+        // Button States 로드
+        if (j.contains("normalColor"))
+        {
+            button->normalColor = XMFLOAT4(
+                j["normalColor"]["r"],
+                j["normalColor"]["g"],
+                j["normalColor"]["b"],
+                j["normalColor"]["a"]
+            );
+        }
+        
+        if (j.contains("hoverColor"))
+        {
+            button->hoverColor = XMFLOAT4(
+                j["hoverColor"]["r"],
+                j["hoverColor"]["g"],
+                j["hoverColor"]["b"],
+                j["hoverColor"]["a"]
+            );
+        }
+        
+        if (j.contains("pressedColor"))
+        {
+            button->pressedColor = XMFLOAT4(
+                j["pressedColor"]["r"],
+                j["pressedColor"]["g"],
+                j["pressedColor"]["b"],
+                j["pressedColor"]["a"]
+            );
+        }
+        
         return button;
+    }
+    else if (type == "Image")
+    {
+        // Image는 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
+        auto* image = obj->AddComponent<Image>();
+        
+        if (j.contains("texture"))
+        {
+            try
+            {
+                std::string textureName = j["texture"];
+                if (!textureName.empty())
+                {
+                    std::wstring textureNameW = StringToWString(textureName);
+                    auto texture = Resources::Get<Texture>(textureNameW);
+                    if (!texture)
+                    {
+                        // 캐시에 없으면 로드
+                        std::wstring texturePath = L"Assets/Textures/" + textureNameW + L".png";
+                        texture = Resources::Load<Texture>(textureNameW, texturePath);
+                    }
+                    
+                    if (texture)
+                    {
+                        image->SetTexture(texture);
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        
+        // Color 로드
+        if (j.contains("color"))
+        {
+            image->SetColor(
+                j["color"]["r"],
+                j["color"]["g"],
+                j["color"]["b"],
+                j["color"]["a"]
+            );
+        }
+        
+        return image;
     }
     else if (type == "Text")
     {
+        // Text는 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
         auto* text = obj->AddComponent<Text>();
         
         if (j.contains("text"))
         {
             text->SetText(StringToWString(j["text"]));
+        }
+        
+        // Font 로드
+        if (j.contains("font"))
+        {
+            try
+            {
+                std::string fontName = j["font"];
+                if (!fontName.empty())
+                {
+                    std::wstring fontNameW = StringToWString(fontName);
+                    auto font = Resources::Get<Font>(fontNameW);
+                    if (!font)
+                    {
+                        // 캐시에 없으면 파일에서 로드
+                        std::wstring fontPath = L"Assets/Fonts/" + fontNameW + L".spritefont";
+                        font = Resources::Load<Font>(fontNameW, fontPath);
+                    }
+                    
+                    if (font)
+                    {
+                        text->SetFont(font);
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        
+        // Font Size 로드 (하위 호환성을 위해 scale도 체크)
+        if (j.contains("fontSize"))
+        {
+            text->SetFontSize(j["fontSize"]);
+        }
+        else if (j.contains("scale"))
+        {
+            // 이전 버전 호환: scale을 fontSize로 변환 (기본 16px 기준)
+            float scale = j["scale"];
+            text->SetFontSize(16.0f * scale);
+        }
+        
+        // Alignment 로드
+        if (j.contains("alignment"))
+        {
+            text->SetAlignment(static_cast<Text::Alignment>(j["alignment"].get<int>()));
         }
         
         if (j.contains("color"))
@@ -918,6 +1121,113 @@ Component* SceneSerializer::DeserializeComponent(const json& j, GameObject* obj)
         }
         
         return text;
+    }
+    else if (type == "Panel")
+    {
+        // Panel은 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
+        auto* panel = obj->AddComponent<Panel>();
+        
+        // Texture 로드 (optional)
+        if (j.contains("texture"))
+        {
+            try
+            {
+                std::string textureName = j["texture"];
+                if (!textureName.empty())
+                {
+                    std::wstring textureNameW = StringToWString(textureName);
+                    auto texture = Resources::Get<Texture>(textureNameW);
+                    if (!texture)
+                    {
+                        std::wstring texturePath = L"Assets/Textures/" + textureNameW + L".png";
+                        texture = Resources::Load<Texture>(textureNameW, texturePath);
+                    }
+                    
+                    if (texture)
+                    {
+                        panel->SetTexture(texture);
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        
+        // Color 로드
+        if (j.contains("color"))
+        {
+            panel->SetColor(
+                j["color"]["r"],
+                j["color"]["g"],
+                j["color"]["b"],
+                j["color"]["a"]
+            );
+        }
+        
+        return panel;
+    }
+    else if (type == "Slider")
+    {
+        // Slider는 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
+        auto* slider = obj->AddComponent<Slider>();
+        
+        if (j.contains("value"))
+        {
+            slider->SetValue(j["value"]);
+        }
+        
+        if (j.contains("minValue"))
+        {
+            slider->SetMinValue(j["minValue"]);
+        }
+        
+        if (j.contains("maxValue"))
+        {
+            slider->SetMaxValue(j["maxValue"]);
+        }
+        
+        return slider;
+    }
+    else if (type == "ScrollView")
+    {
+        // ScrollView는 UIBase를 상속하므로 Awake()에서 RectTransform을 자동 추가할 수 있음
+        // 미리 RectTransform을 확인하고, 없으면 먼저 추가
+        if (!obj->GetComponent<RectTransform>())
+        {
+            obj->AddComponent<RectTransform>();
+        }
+        
+        auto* scrollView = obj->AddComponent<ScrollView>();
+        
+        if (j.contains("scrollX") && j.contains("scrollY"))
+        {
+            scrollView->SetScrollPosition(j["scrollX"], j["scrollY"]);
+        }
+        
+        if (j.contains("verticalScrollEnabled"))
+        {
+            scrollView->SetVerticalScroll(j["verticalScrollEnabled"]);
+        }
+        
+        if (j.contains("horizontalScrollEnabled"))
+        {
+            scrollView->SetHorizontalScroll(j["horizontalScrollEnabled"]);
+        }
+        
+        return scrollView;
     }
     else if (type == "AudioSource")
     {

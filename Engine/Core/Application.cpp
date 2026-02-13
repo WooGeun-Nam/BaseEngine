@@ -342,6 +342,13 @@ void Application::run()
         // 입력 상태 업데이트
         input.Update();
 
+        // Update Game View offset for UI mouse coordinate conversion
+        if (gameViewWnd)
+        {
+            SetGameViewOffset(gameViewWnd->GetViewScreenX(), gameViewWnd->GetViewScreenY());
+            SetGameViewSize(gameViewWnd->GetViewWidth(), gameViewWnd->GetViewHeight());
+        }
+
         // Render - 렌더링 파이프라인
         d3dDevice.beginFrame(clearColor);
 

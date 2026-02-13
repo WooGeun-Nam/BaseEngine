@@ -12,9 +12,13 @@
 #include "UI/Image.h"
 #include "UI/Button.h"
 #include "UI/Text.h"
+#include "UI/Panel.h"
+#include "UI/Slider.h"
+#include "UI/ScrollView.h"
 #include "Resource/Resources.h"
 #include "Resource/Texture.h"
 #include "Resource/SpriteSheet.h"
+#include "Resource/Font.h"
 #include "Scripting/ScriptLoader.h"
 #include <ImGui/imgui.h>
 #include <DirectXMath.h>
@@ -247,6 +251,12 @@ void InspectorWindow::RenderComponents(GameObject* obj)
     ImGui::Separator();
 
     const auto& components = obj->GetComponents();
+    
+    // 컴포넌트 개수 표시
+    char componentCountText[64];
+    sprintf_s(componentCountText, "Total: %zu", components.size());
+    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", componentCountText);
+    ImGui::Spacing();
 
     for (size_t i = 0; i < components.size(); ++i)
     {
@@ -254,10 +264,48 @@ void InspectorWindow::RenderComponents(GameObject* obj)
 
         ImGui::PushID((int)i);
 
-        // 컴포넌트 이름
-        std::string componentName = typeid(*comp).name();
-        if (componentName.find("class ") == 0)
-            componentName = componentName.substr(6);
+        // 컴포넌트 이름 - 더 정확한 타입 체크
+        std::string componentName = "Unknown";
+        
+        // UI 컴포넌트 체크 (상속 순서대로 체크)
+        if (dynamic_cast<Button*>(comp))
+            componentName = "Button";
+        else if (dynamic_cast<Image*>(comp))
+            componentName = "Image";
+        else if (dynamic_cast<Text*>(comp))
+            componentName = "Text";
+        else if (dynamic_cast<Panel*>(comp))
+            componentName = "Panel";
+        else if (dynamic_cast<Slider*>(comp))
+            componentName = "Slider";
+        else if (dynamic_cast<ScrollView*>(comp))
+            componentName = "ScrollView";
+        else if (dynamic_cast<Canvas*>(comp))
+            componentName = "Canvas";
+        else if (dynamic_cast<RectTransform*>(comp))
+            componentName = "RectTransform";
+        else if (dynamic_cast<UIBase*>(comp))
+            componentName = "UIBase";
+        // 다른 컴포넌트들
+        else if (dynamic_cast<SpriteRenderer*>(comp))
+            componentName = "SpriteRenderer";
+        else if (dynamic_cast<Camera2D*>(comp))
+            componentName = "Camera2D";
+        else if (dynamic_cast<BoxCollider2D*>(comp))
+            componentName = "BoxCollider2D";
+        else if (dynamic_cast<CircleCollider*>(comp))
+            componentName = "CircleCollider";
+        else if (dynamic_cast<Rigidbody2D*>(comp))
+            componentName = "Rigidbody2D";
+        else if (dynamic_cast<Animator*>(comp))
+            componentName = "Animator";
+        else
+        {
+            // typeid로 폴백
+            componentName = typeid(*comp).name();
+            if (componentName.find("class ") == 0)
+                componentName = componentName.substr(6);
+        }
 
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", componentName.c_str());
 
@@ -702,6 +750,62 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         // Text (UI) 특정 처리
         if (auto* text = dynamic_cast<Text*>(comp))
         {
+            // Font 선택 (드래그앤드롭만 지원)
+            ImGui::Text("Font:");
+            ImGui::SameLine();
+            
+            auto currentFont = text->GetFont();
+            if (currentFont)
+            {
+                // Path에서 파일명 추출
+                std::wstring fontPath = currentFont->Path();
+                
+                if (!fontPath.empty())
+                {
+                    size_t lastSlash = fontPath.find_last_of(L"/\\");
+                    std::wstring fileName = (lastSlash != std::wstring::npos) 
+                        ? fontPath.substr(lastSlash + 1) 
+                        : fontPath;
+                    
+                    ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "%s", WStringToString(fileName).c_str());
+                }
+                else
+                {
+                    // Path가 비어있으면 경고 표시
+                    ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "[Font Loaded - No Path]");
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[None]");
+            }
+            
+            // Font 드래그 앤 드롭 지원
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_PATH"))
+                {
+                    const wchar_t* filePath = (const wchar_t*)payload->Data;
+                    std::wstring fullPath(filePath);
+                    std::filesystem::path path(fullPath);
+                    std::wstring stem = path.stem().wstring();
+                    
+                    auto font = Resources::Get<Font>(stem);
+                    if (!font)
+                    {
+                        font = Resources::Load<Font>(stem, fullPath);
+                    }
+                    
+                    if (font)
+                    {
+                        text->SetFont(font);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+            
+            ImGui::Spacing();
+            
             // Text 내용 편집
             std::string textContent = WStringToString(text->GetText());
             static char textBuffer[1024] = "";
@@ -713,6 +817,25 @@ void InspectorWindow::RenderComponents(GameObject* obj)
                 std::wstring wText(size_needed - 1, 0);
                 MultiByteToWideChar(CP_UTF8, 0, textBuffer, -1, &wText[0], size_needed);
                 text->SetText(wText);
+            }
+            
+            ImGui::Spacing();
+            
+            // Font Size (픽셀 단위)
+            float fontSize = text->GetFontSize();
+            if (ImGui::DragFloat("Font Size", &fontSize, 0.5f, 8.0f, 128.0f, "%.1f px"))
+            {
+                text->SetFontSize(fontSize);
+            }
+            
+            ImGui::Spacing();
+            
+            // Alignment
+            const char* alignments[] = { "Left", "Center", "Right" };
+            int currentAlign = static_cast<int>(text->GetAlignment());
+            if (ImGui::Combo("Alignment", &currentAlign, alignments, 3))
+            {
+                text->SetAlignment(static_cast<Text::Alignment>(currentAlign));
             }
             
             // Color 편집
@@ -728,8 +851,169 @@ void InspectorWindow::RenderComponents(GameObject* obj)
         // Button (UI) 특정 처리
         if (auto* button = dynamic_cast<Button*>(comp))
         {
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Button uses Image component for visuals");
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Set click handler in code");
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "Button States");
+            ImGui::Separator();
+            
+            // Normal Color
+            float normalColor[4] = { 
+                button->normalColor.x, 
+                button->normalColor.y, 
+                button->normalColor.z, 
+                button->normalColor.w 
+            };
+            if (ImGui::ColorEdit4("Normal Color", normalColor))
+            {
+                button->normalColor = XMFLOAT4(normalColor[0], normalColor[1], normalColor[2], normalColor[3]);
+            }
+            
+            // Hover Color
+            float hoverColor[4] = { 
+                button->hoverColor.x, 
+                button->hoverColor.y, 
+                button->hoverColor.z, 
+                button->hoverColor.w 
+            };
+            if (ImGui::ColorEdit4("Hover Color", hoverColor))
+            {
+                button->hoverColor = XMFLOAT4(hoverColor[0], hoverColor[1], hoverColor[2], hoverColor[3]);
+            }
+            
+            // Pressed Color
+            float pressedColor[4] = { 
+                button->pressedColor.x, 
+                button->pressedColor.y, 
+                button->pressedColor.z, 
+                button->pressedColor.w 
+            };
+            if (ImGui::ColorEdit4("Pressed Color", pressedColor))
+            {
+                button->pressedColor = XMFLOAT4(pressedColor[0], pressedColor[1], pressedColor[2], pressedColor[3]);
+            }
+            
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Tip: Set onClick handler in script code");
+        }
+        
+        // Panel (UI) 특정 처리
+        if (auto* panel = dynamic_cast<Panel*>(comp))
+        {
+            // 텍스처 필드
+            ImGui::Text("Texture:");
+            ImGui::SameLine();
+            
+            if (panel->GetTexture())
+            {
+                std::wstring texturePath = panel->GetTexture()->Path();
+                std::filesystem::path path(texturePath);
+                std::wstring fileName = path.stem().wstring();
+                std::string displayName = WStringToString(fileName);
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "%s", displayName.c_str());
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "[None]");
+            }
+            
+            // 드롭 타겟
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_PATH"))
+                {
+                    const wchar_t* filePath = (const wchar_t*)payload->Data;
+                    std::wstring fullPath(filePath);
+                    std::filesystem::path path(fullPath);
+                    std::wstring stem = path.stem().wstring();
+                    
+                    auto texture = Resources::Get<Texture>(stem);
+                    if (!texture)
+                    {
+                        texture = Resources::Load<Texture>(stem, fullPath);
+                    }
+                    
+                    if (texture)
+                    {
+                        panel->SetTexture(texture);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+            
+            // Color 편집
+            ImGui::Spacing();
+            auto color = panel->GetColor();
+            float colorArray[4] = { color.x, color.y, color.z, color.w };
+            if (ImGui::ColorEdit4("Color##Panel", colorArray))
+            {
+                panel->SetColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]);
+            }
+        }
+        
+        // Slider (UI) 특정 처리
+        if (auto* slider = dynamic_cast<Slider*>(comp))
+        {
+            float minValue = slider->GetMinValue();
+            float maxValue = slider->GetMaxValue();
+
+            if (ImGui::InputFloat("Min Value", &minValue))
+            {
+                slider->SetMinValue(minValue);
+                float currentValue = slider->GetValue();
+                if (currentValue < minValue)
+                    slider->SetValue(minValue);
+                if (currentValue > maxValue)
+                    slider->SetValue(maxValue);
+            }
+
+            if (ImGui::InputFloat("Max Value", &maxValue))
+            {
+                slider->SetMaxValue(maxValue);
+                float currentValue = slider->GetValue();
+                if (currentValue < minValue)
+                    slider->SetValue(minValue);
+                if (currentValue > maxValue)
+                    slider->SetValue(maxValue);
+            }
+
+            float value = slider->GetValue();
+            if (ImGui::InputFloat("Value", &value))
+            {
+                if (value < minValue)
+                    value = minValue;
+                if (value > maxValue)
+                    value = maxValue;
+                slider->SetValue(value);
+            }
+
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Tip: Set onValueChanged handler in script code");
+        }
+        
+        // ScrollView (UI) 특정 처리
+        if (auto* scrollView = dynamic_cast<ScrollView*>(comp))
+        {
+            // Scroll position
+            auto scrollPos = scrollView->GetScrollPosition();
+            float scrollArray[2] = { scrollPos.x, scrollPos.y };
+            if (ImGui::DragFloat2("Scroll Position", scrollArray, 0.01f, 0.0f, 1.0f))
+            {
+                scrollView->SetScrollPosition(scrollArray[0], scrollArray[1]);
+            }
+            
+            // Scroll enable flags
+            bool verticalScroll = scrollView->IsVerticalScrollEnabled();
+            if (ImGui::Checkbox("Vertical Scroll", &verticalScroll))
+            {
+                scrollView->SetVerticalScroll(verticalScroll);
+            }
+            
+            bool horizontalScroll = scrollView->IsHorizontalScrollEnabled();
+            if (ImGui::Checkbox("Horizontal Scroll", &horizontalScroll))
+            {
+                scrollView->SetHorizontalScroll(horizontalScroll);
+            }
+            
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Tip: Set content size via SetContentSize() in script");
         }
 
         ImGui::Separator();

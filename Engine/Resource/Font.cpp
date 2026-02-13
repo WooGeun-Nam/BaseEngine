@@ -30,6 +30,9 @@ bool Font::Load(const std::wstring& fontFilePath)
             return false;
         }
 
+        // \uacbd\ub85c \uc800\uc7a5 (Asset \uae30\ubcf8 \ud074\ub798\uc2a4)
+        SetPath(fontFilePath);
+
         return true;
     }
     catch (...)

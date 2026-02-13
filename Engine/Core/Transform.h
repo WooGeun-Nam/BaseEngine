@@ -2,38 +2,36 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-class GameObject; // Forward declaration
+class GameObject;
 
 class Transform
 {
 public:
-    Transform();
+    Transform() : position{0.0f, 0.0f}, scale{1.0f, 1.0f}, rotation(0.0f), gameObject(nullptr) {}
 
-    // Owner
     void SetOwner(GameObject* owner) { gameObject = owner; }
 
-    // Position
-    void SetPosition(float x, float y);
-    void Translate(float dx, float dy);
-    XMFLOAT2 GetPosition() const;        // 로컬 위치
-    XMFLOAT2 GetWorldPosition() const;   // 월드 위치 (부모 포함)
+    // Position (inline for Scripts.dll)
+    void SetPosition(float x, float y) { position = {x, y}; }
+    void Translate(float dx, float dy) { position.x += dx; position.y += dy; }
+    XMFLOAT2 GetPosition() const { return position; }
+    XMFLOAT2 GetWorldPosition() const;
 
-    // Scale
-    void SetScale(float x, float y);
-    XMFLOAT2 GetScale() const;           // 로컬 스케일
-    XMFLOAT2 GetWorldScale() const;      // 월드 스케일 (부모 포함)
+    // Scale (inline)
+    void SetScale(float x, float y) { scale = {x, y}; }
+    XMFLOAT2 GetScale() const { return scale; }
+    XMFLOAT2 GetWorldScale() const;
 
-    // Rotation (radians)
-    void SetRotation(float radians);
-    float GetRotation() const;           // 로컬 회전
-    float GetWorldRotation() const;      // 월드 회전 (부모 포함)
+    // Rotation (inline)
+    void SetRotation(float radians) { rotation = radians; }
+    float GetRotation() const { return rotation; }
+    float GetWorldRotation() const;
 
-    // World matrix (부모 Transform 포함)
     XMMATRIX GetWorldMatrix() const;
 
 private:
     GameObject* gameObject = nullptr;
     XMFLOAT2 position;
     XMFLOAT2 scale;
-    float rotation; // radians
+    float rotation;
 };

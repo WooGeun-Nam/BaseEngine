@@ -8,18 +8,14 @@ void Button::Awake()
 {
     Image::Awake();
     color = normalColor;
+    currentState = State::Normal;
 }
 
-// ? Update 제거 - UIBase에서 이벤트 처리
-
-// ? UIBase 이벤트 핸들러 오버라이드
 void Button::OnPointerEnter()
 {
-    // Hover 상태로 전환
     currentState = State::Hover;
     color = hoverColor;
-    
-    // onHover 콜백
+
     if (onHover)
     {
         onHover();
@@ -28,21 +24,18 @@ void Button::OnPointerEnter()
 
 void Button::OnPointerExit()
 {
-    // Normal 상태로 전환
     currentState = State::Normal;
     color = normalColor;
 }
 
 void Button::OnPointerDown()
 {
-    // Pressed 상태로 전환
     currentState = State::Pressed;
     color = pressedColor;
 }
 
 void Button::OnPointerUp()
 {
-    // Hover 상태로 전환 (마우스가 아직 버튼 위에 있음)
     if (IsPointerInside())
     {
         currentState = State::Hover;
@@ -57,7 +50,6 @@ void Button::OnPointerUp()
 
 void Button::OnClick()
 {
-    // onClick 콜백
     if (onClick)
     {
         onClick();

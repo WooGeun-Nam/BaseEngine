@@ -44,20 +44,27 @@ void Text::RenderUI()
     // RectTransform에서 화면 위치 가져오기
     XMFLOAT2 screenPos = rectTransform->GetScreenPosition(screenWidth, screenHeight);
     
-    // 정렬 처리
+    // 폰트 크기에 따른 스케일 계산
+    // SpriteFont는 기본적으로 특정 크기로 만들어지므로, 
+    // fontSize를 원하는 크기로 조정하기 위해 스케일 계산
+    // 기본 폰트 높이를 16으로 가정하고 스케일 계산
+    float baseLineSpacing = spriteFont->GetLineSpacing();
+    float scale = fontSize / baseLineSpacing;
+    
+    // 정렬 처리 (스케일 적용 후 크기로 계산)
     XMFLOAT2 origin(0, 0);
     if (alignment != Alignment::Left)
     {
         XMVECTOR textSize = spriteFont->MeasureString(text.c_str());
-        float textWidth = XMVectorGetX(textSize);
+        float textWidth = XMVectorGetX(textSize) * scale;
 
         if (alignment == Alignment::Center)
         {
-            origin.x = textWidth * 0.5f;
+            origin.x = XMVectorGetX(textSize) * 0.5f;
         }
         else if (alignment == Alignment::Right)
         {
-            origin.x = textWidth;
+            origin.x = XMVectorGetX(textSize);
         }
     }
 

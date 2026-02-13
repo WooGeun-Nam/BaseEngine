@@ -21,15 +21,15 @@ public:
     // 매 프레임 업데이트 (상태 전환)
     void Update();
 
-    // 입력 상태 조회
-    bool IsKeyDown(unsigned int key) const;
-    bool WasKeyPressed(unsigned int key) const;
-    bool WasKeyReleased(unsigned int key) const;
+    // 입력 상태 조회 (inline for Scripts.dll)
+    bool IsKeyDown(unsigned int key) const { return key < KEY_COUNT ? currentKeyState[key] : false; }
+    bool WasKeyPressed(unsigned int key) const { return key < KEY_COUNT ? (currentKeyState[key] && !previousKeyState[key]) : false; }
+    bool WasKeyReleased(unsigned int key) const { return key < KEY_COUNT ? (!currentKeyState[key] && previousKeyState[key]) : false; }
 
-    // 마우스 버튼 조회
-    bool IsMouseButtonDown(int buttonIndex) const;
-    bool WasMouseButtonPressed(int buttonIndex) const;
-    bool WasMouseButtonReleased(int buttonIndex) const;
+    // 마우스 버튼 조회 (inline)
+    bool IsMouseButtonDown(int buttonIndex) const { return buttonIndex >= 0 && buttonIndex < MOUSE_BUTTON_COUNT ? currentMouseButtonState[buttonIndex] : false; }
+    bool WasMouseButtonPressed(int buttonIndex) const { return buttonIndex >= 0 && buttonIndex < MOUSE_BUTTON_COUNT ? (currentMouseButtonState[buttonIndex] && !previousMouseButtonState[buttonIndex]) : false; }
+    bool WasMouseButtonReleased(int buttonIndex) const { return buttonIndex >= 0 && buttonIndex < MOUSE_BUTTON_COUNT ? (!currentMouseButtonState[buttonIndex] && previousMouseButtonState[buttonIndex]) : false; }
 
     // 마우스 위치 / 휠
     int GetMouseX() const { return mouseX; }

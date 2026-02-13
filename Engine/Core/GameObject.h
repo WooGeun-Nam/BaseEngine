@@ -39,16 +39,22 @@ public:
     bool MoveChildBefore(GameObject* child, GameObject* target);
     bool MoveChildAfter(GameObject* child, GameObject* target);
 
-    // AddComponent ≈€«√∏¥
     template<typename T>
-    T* AddComponent()
+    T* AddComponent(bool allowDuplicate = false)
     {
+        if (!allowDuplicate)
+        {
+            T* existing = GetComponent<T>();
+            if (existing)
+                return existing;
+        }
+
         T* comp = new T();
         components.push_back(comp);
         comp->SetOwner(this);
         comp->SetApplication(application);
         comp->Awake();
-        
+
         return comp;
     }
 

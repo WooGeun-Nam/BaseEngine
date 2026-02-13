@@ -172,21 +172,77 @@ XMFLOAT2 RectTransform::GetScreenPosition(int screenWidth, int screenHeight) con
 XMFLOAT2 RectTransform::GetTopLeftPosition(int screenWidth, int screenHeight) const
 {
     XMFLOAT2 centerPos = GetScreenPosition(screenWidth, screenHeight);
-    
-    // Center 기준 → TopLeft 기준으로 변환
+
     XMFLOAT2 topLeft;
     topLeft.x = centerPos.x - (sizeDelta.x * 0.5f);
     topLeft.y = centerPos.y - (sizeDelta.y * 0.5f);
-    
+
+    return topLeft;
+}
+
+// UI space position - Center of Canvas is (0,0)
+XMFLOAT2 RectTransform::GetUISpacePosition(int screenWidth, int screenHeight) const
+{
+    XMFLOAT2 screenPos = { 0, 0 };
+
+    // All anchors are relative to Canvas center (0,0)
+    // anchoredPosition is the offset from the anchor point
+
+    float halfW = screenWidth * 0.5f;
+    float halfH = screenHeight * 0.5f;
+
+    switch (anchor)
+    {
+    case Anchor::TopLeft:
+        screenPos = { -halfW + anchoredPosition.x, -halfH + anchoredPosition.y };
+        break;
+    case Anchor::TopCenter:
+        screenPos = { anchoredPosition.x, -halfH + anchoredPosition.y };
+        break;
+    case Anchor::TopRight:
+        screenPos = { halfW + anchoredPosition.x, -halfH + anchoredPosition.y };
+        break;
+    case Anchor::MiddleLeft:
+        screenPos = { -halfW + anchoredPosition.x, anchoredPosition.y };
+        break;
+    case Anchor::Center:
+    case Anchor::World:
+        screenPos = { anchoredPosition.x, anchoredPosition.y };
+        break;
+    case Anchor::MiddleRight:
+        screenPos = { halfW + anchoredPosition.x, anchoredPosition.y };
+        break;
+    case Anchor::BottomLeft:
+        screenPos = { -halfW + anchoredPosition.x, halfH + anchoredPosition.y };
+        break;
+    case Anchor::BottomCenter:
+        screenPos = { anchoredPosition.x, halfH + anchoredPosition.y };
+        break;
+    case Anchor::BottomRight:
+        screenPos = { halfW + anchoredPosition.x, halfH + anchoredPosition.y };
+        break;
+    }
+
+    return screenPos;
+}
+
+XMFLOAT2 RectTransform::GetUISpaceTopLeft(int screenWidth, int screenHeight) const
+{
+    XMFLOAT2 centerPos = GetUISpacePosition(screenWidth, screenHeight);
+
+    XMFLOAT2 topLeft;
+    topLeft.x = centerPos.x - (sizeDelta.x * 0.5f);
+    topLeft.y = centerPos.y - (sizeDelta.y * 0.5f);
+
     return topLeft;
 }
 
 bool RectTransform::Contains(const XMFLOAT2& screenPoint, int screenWidth, int screenHeight) const
 {
-    XMFLOAT2 topLeft = GetTopLeftPosition(screenWidth, screenHeight);
-    
-    return (screenPoint.x >= topLeft.x && 
+    XMFLOAT2 topLeft = GetUISpaceTopLeft(screenWidth, screenHeight);
+
+    return (screenPoint.x >= topLeft.x &&
             screenPoint.x <= topLeft.x + sizeDelta.x &&
-            screenPoint.y >= topLeft.y && 
+            screenPoint.y >= topLeft.y &&
             screenPoint.y <= topLeft.y + sizeDelta.y);
 }

@@ -57,9 +57,9 @@ void RenderUI() override;
     }
     const XMFLOAT4& GetColor() const { return color; }
 
-    // 스케일 설정
-    void SetScale(float scale) { this->scale = scale; }
-    float GetScale() const { return scale; }
+    // 폰트 크기 설정 (픽셀 단위, 기본 16)
+    void SetFontSize(float size) { this->fontSize = size; }
+    float GetFontSize() const { return fontSize; }
 
     // 텍스트 정렬
     void SetAlignment(Alignment alignment) { this->alignment = alignment; }
@@ -72,6 +72,6 @@ private:
     std::shared_ptr<Font> font;
     std::wstring text;
     XMFLOAT4 color{ 1.0f, 1.0f, 1.0f, 1.0f };  // 흰색
-    float scale = 1.0f;
+    float fontSize = 16.0f;  // 기본 폰트 크기 (픽셀)
     Alignment alignment = Alignment::Left;
 };

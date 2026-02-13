@@ -281,6 +281,7 @@ void ProjectWindow::RenderFileList()
         bool isSheet = (extension == ".sheet");
         bool isController = (extension == ".controller");
         bool isScene = (extension == ".scene");
+        bool isFont = (extension == ".spritefont");
         
         ImGui::PushID(fileName.c_str());
         ImGui::BeginGroup();
@@ -447,6 +448,24 @@ void ProjectWindow::RenderFileList()
             
             color = ImVec4(1.0f, 0.5f, 0.5f, 1.0f); // »¡°£»ö (¿Àµð¿À)
         }
+        else if (isFont)
+        {
+            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+            
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 1.0f, 1.0f));
+            ImGui::Button("##font", ImVec2(thumbnailSize, thumbnailSize));
+            ImGui::PopStyleColor();
+            
+            ImVec2 textSize = ImGui::CalcTextSize("FONT");
+            ImVec2 buttonMin = cursorPos;
+            ImVec2 textPos(
+                buttonMin.x + (thumbnailSize - textSize.x) * 0.5f,
+                buttonMin.y + (thumbnailSize - textSize.y) * 0.5f
+            );
+            ImGui::GetWindowDrawList()->AddText(textPos, IM_COL32(255, 255, 255, 255), "FONT");
+            
+            color = ImVec4(0.2f, 0.8f, 1.0f, 1.0f); // ÇÏ´Ã»ö (Font)
+        }
         else if (extension == ".h")
         {
             // C++ Header file (Script)
@@ -507,6 +526,11 @@ void ProjectWindow::RenderFileList()
             {
                 ImGui::SetDragDropPayload("AUDIO_PATH", filePath.c_str(), (filePath.size() + 1) * sizeof(wchar_t));
                 ImGui::Text("Audio: %s", fileName.c_str());
+            }
+            else if (isFont)
+            {
+                ImGui::SetDragDropPayload("FONT_PATH", filePath.c_str(), (filePath.size() + 1) * sizeof(wchar_t));
+                ImGui::Text("Font: %s", fileName.c_str());
             }
             else if (extension == ".h")
             {

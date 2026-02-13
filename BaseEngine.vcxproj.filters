@@ -165,9 +165,6 @@
     <ClCompile Include="Game\Scripts\Player.cpp">
       <Filter>소스 파일\Game\Scripts</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Scripts\MovementController.cpp">
-      <Filter>소스 파일\Game\Scripts</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Resource\Resources.cpp">
       <Filter>소스 파일\Engine\Resource</Filter>
     </ClCompile>
@@ -350,6 +347,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Scripting\PathResolver.cpp">
       <Filter>소스 파일\Engine\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Scripts\MovementController.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

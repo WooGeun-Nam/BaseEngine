@@ -1,56 +1,20 @@
 #include "Core/Transform.h"
 #include "Core/GameObject.h"
 
-Transform::Transform()
-{
-    position = { 0.0f, 0.0f };
-    scale = { 1.0f, 1.0f };
-    rotation = 0.0f;
-}
-
-void Transform::SetPosition(float x, float y)
-{
-    position = { x, y };
-}
-
-void Transform::Translate(float dx, float dy)
-{
-    position.x += dx;
-    position.y += dy;
-}
-
-XMFLOAT2 Transform::GetPosition() const
-{
-    return position;
-}
-
-// 월드 좌표 계산 (부모 Transform 재귀 적용)
 XMFLOAT2 Transform::GetWorldPosition() const
 {
     XMFLOAT2 worldPos = position;
-    
-    // 부모가 있으면 재귀적으로 부모의 월드 위치를 더함
+
     if (gameObject && gameObject->GetParent())
     {
         XMFLOAT2 parentWorldPos = gameObject->GetParent()->transform.GetWorldPosition();
         worldPos.x += parentWorldPos.x;
         worldPos.y += parentWorldPos.y;
     }
-    
+
     return worldPos;
 }
 
-void Transform::SetScale(float x, float y)
-{
-    scale = { x, y };
-}
-
-XMFLOAT2 Transform::GetScale() const
-{
-    return scale;
-}
-
-// 월드 스케일 계산 (부모 Transform 재귀 적용)
 XMFLOAT2 Transform::GetWorldScale() const
 {
     XMFLOAT2 worldScale = scale;
@@ -66,17 +30,6 @@ XMFLOAT2 Transform::GetWorldScale() const
     return worldScale;
 }
 
-void Transform::SetRotation(float radians)
-{
-    rotation = radians;
-}
-
-float Transform::GetRotation() const
-{
-    return rotation;
-}
-
-// 월드 회전 계산 (부모 Transform 재귀 적용)
 float Transform::GetWorldRotation() const
 {
     float worldRot = rotation;
