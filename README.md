@@ -299,6 +299,6 @@ BaseEngine/
 
 <div align="center">
 
-**BaseEngine** — 2D 게임 엔진 구현 프로젝트
+**BaseEngine** — 2D 게임 엔진 직접 구현 프로젝트
 
 </div>
