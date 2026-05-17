@@ -23,6 +23,8 @@ C++17과 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다.
 - [주요 기능](#주요-기능)
 - [에디터 미리보기](#에디터-미리보기)
 - [프로젝트 구조](#프로젝트-구조)
+- [시스템 요구 사항](#시스템-요구-사항)
+- [빌드 방법](#빌드-방법)
 - [사용된 라이브러리](#사용된-라이브러리)
 - [개발 방식](#개발-방식)
 
@@ -37,6 +39,8 @@ C++17과 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다.
 - **Hierarchy** — 부모-자식 관계 기반 오브젝트 계층 구조
 - **LifeCycle** — `Awake` → `OnEnable` → `FixedUpdate` → `Update` → `LateUpdate` → `Render` → `OnDestroy`
 
+---
+
 ### Physics System
 
 - **Rigidbody2D** — 2D 물리 시뮬레이션 (중력, 속도, 힘 적용)
@@ -44,6 +48,8 @@ C++17과 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다.
 - **CCD (Continuous Collision Detection)** — 고속 이동 물체의 충돌 누락 방지
 - **Quadtree** — 공간 분할 기반 충돌 감지 최적화
 - **Collision / Trigger Events** — 충돌 및 트리거 콜백 지원
+
+---
 
 ### Graphics System
 
@@ -54,6 +60,8 @@ C++17과 DirectX 11을 사용하여 제작된 2D 게임 엔진입니다.
 - **ShaderManager** — HLSL 셰이더 컴파일 및 관리
 - **DebugRenderer** — 디버그용 기즈모 렌더링 (콜라이더 시각화 등)
 
+---
+
 ### Animation System
 
 Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시스템**입니다.
@@ -63,6 +71,8 @@ Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시
 - **AnimationTransition** — 파라미터 조건 기반 상태 전환
 - **AnimatorController** — 런타임 상태 머신 제어기
 - **AnimatorParameter** — `Bool` / `Int` / `Float` / `Trigger` 파라미터 지원
+
+---
 
 ### UI System
 
@@ -90,11 +100,15 @@ Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시
 
 </details>
 
+---
+
 ### Audio System
 
 - **AudioManager** — XAudio2 기반 오디오 관리 싱글톤
 - **AudioClip** — WAV / MP3 파일 로드 및 관리
 - **AudioSource** — 재생, 일시정지, 정지, 볼륨 / 피치 제어, 루프 재생
+
+---
 
 ### Resource System
 
@@ -106,15 +120,21 @@ Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시
 - **Prefab** — 프리팹 에셋 지원
 - **SceneData** — JSON 기반 씬 에셋
 
+---
+
 ### Input System
 
 - 키보드 및 마우스 입력 처리
 - `GetKey`, `GetKeyDown`, `GetKeyUp` 방식의 실시간 입력 상태 감지
 
+---
+
 ### Serialization System
 
 - **SceneSerializer** — `nlohmann/json` 기반 씬 전체 직렬화 / 역직렬화
 - 에디터에서 저장한 씬을 JSON 파일로 저장하고, 런타임에 불러오기 가능
+
+---
 
 ### Scripting System
 
@@ -125,9 +145,11 @@ Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시
 - **ScriptProjectGenerator** — 스크립트용 `.vcxproj` 파일 자동 생성
 - **MSBuildLocator / PathResolver** — 빌드 환경 자동 탐색 유틸리티
 
+---
+
 ### Editor Tool (ImGui 기반 통합 에디터)
 
-> **[AI 활용 개발]** 에디터 Tool 시스템의 ImGui 기반 UI 구현은 AI의 도움을 받아 설계 및 개발되었습니다.
+> **[AI 협업 개발]** 에디터 Tool 시스템의 ImGui 기반 UI 구현은 AI 어시스턴트와의 협업을 통해 설계 및 개발되었습니다.
 
 Unity Editor와 유사한 **멀티 윈도우 ImGui 에디터**를 내장하고 있습니다.
 
@@ -161,22 +183,19 @@ Unity Editor와 유사한 **멀티 윈도우 ImGui 에디터**를 내장하고 �
   <img src="Images/EditorScene.png" width="800" alt="씬 편집 화면"/>
 </div>
 
-**인스펙터**
+**인스펙터 / 애니메이터**
 
 <div align="center">
-  <img src="Images/InspectorWindow.png" width="360" alt="Inspector Window"/>
+  <img src="Images/InspectorWindow.png" width="49%" alt="Inspector Window"/>
+  <img src="Images/Animator.png" width="49%" alt="Animator Window"/>
 </div>
 
 **툴 윈도우**
 
 <div align="center">
-  <img src="Images/Animator.png" width="49%" alt="Animator Window"/>
-  <img src="Images/AnimationImporter.png" width="49%" alt="Animation Importer"/>
-</div>
-
-<div align="center">
-  <img src="Images/SpriteImporter.png" width="49%" alt="Sprite Importer"/>
-  <img src="Images/SheetViewer.png" width="49%" alt="Sheet Viewer"/>
+  <img src="Images/AnimationImporter.png" width="32%" alt="Animation Importer"/>
+  <img src="Images/SpriteImporter.png" width="32%" alt="Sprite Importer"/>
+  <img src="Images/SheetViewer.png" width="32%" alt="Sheet Viewer"/>
 </div>
 
 ---
@@ -224,7 +243,6 @@ BaseEngine/
 │   ├── SheetViewerWindow      # .sheet 파일 뷰어
 │   ├── ConsoleWindow          # 런타임 콘솔
 │   └── MakeSpriteFont.exe     # 비트맵 폰트 변환 도구
-├── Images/                     # README 스크린샷
 └── Docs/                       # 내부 설계 문서
     ├── RenderingPipeline.md
     ├── PhysicsSystem.md
@@ -232,6 +250,29 @@ BaseEngine/
     ├── UI_System_Guide.md
     └── DevelopmentRoadmap.md
 ```
+
+---
+
+## 시스템 요구 사항
+
+| 항목 | 요구 사항 |
+|---|---|
+| **OS** | Windows 10 / 11 |
+| **IDE** | Visual Studio 2019 이상 |
+| **SDK** | Windows SDK 10.0 이상 |
+| **그래픽 API** | DirectX 11 |
+| **C++ 표준** | C++17 |
+
+---
+
+## 빌드 방법
+
+1. `BaseEngine.sln` 파일을 Visual Studio로 열기
+2. 솔루션 구성을 `Debug` 또는 `Release`, 플랫폼을 `x64`로 설정
+3. **빌드 → 솔루션 빌드** (`Ctrl+Shift+B`)
+4. `x64/Debug/` 또는 `x64/Release/` 디렉터리에서 실행 파일 확인
+
+> 외부 라이브러리(`.lib`)는 `lib/` 디렉터리에 이미 포함되어 있어 별도 설치가 불필요합니다.
 
 ---
 
@@ -249,13 +290,15 @@ BaseEngine/
 
 ## 개발 방식
 
-엔진 코어(`Engine/`)는 DirectX 11과 DirectXTK를 기반으로 직접 설계하였습니다.  
-에디터 시스템(`Tool/`)의 **ImGui 기반 멀티 윈도우 UI** 구현은 AI의 도움을 받아 설계 및 개발되었습니다.
+엔진 코어(`Engine/`)는 **DirectX 11 순수 구현** 기반으로 직접 설계하였습니다.  
+외부 라이브러리(XTK 등)에 의존하지 않는 직접 구현을 통해 그래픽스 및 엔진 구조에 대한 이해를 높이는 것을 목표로 합니다.
+
+에디터 시스템(`Tool/`)의 **ImGui 기반 멀티 윈도우 UI** 구현은 AI 어시스턴트(Google Gemini)와의 협업을 통해 설계 및 개발되었습니다.
 
 ---
 
 <div align="center">
 
-**BaseEngine** — 2D 게임 엔진 직접 구현 프로젝트
+**BaseEngine** — 2D 게임 엔진 구현 프로젝트
 
 </div>
