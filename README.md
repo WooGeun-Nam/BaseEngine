@@ -161,20 +161,22 @@ Unity Editor와 유사한 **멀티 윈도우 ImGui 에디터**를 내장하고 �
   <img src="Images/EditorScene.png" width="800" alt="씬 편집 화면"/>
 </div>
 
-**인스펙터 / 애니메이터**
+**인스펙터**
 
 <div align="center">
-  <img src="Images/InspectorWindow.png" height="420" alt="Inspector Window"/>
-  &nbsp;
-  <img src="Images/Animator.png" height="420" alt="Animator Window"/>
+  <img src="Images/InspectorWindow.png" width="360" alt="Inspector Window"/>
 </div>
 
 **툴 윈도우**
 
 <div align="center">
-  <img src="Images/AnimationImporter.png" width="32%" alt="Animation Importer"/>
-  <img src="Images/SpriteImporter.png" width="32%" alt="Sprite Importer"/>
-  <img src="Images/SheetViewer.png" width="32%" alt="Sheet Viewer"/>
+  <img src="Images/Animator.png" width="49%" alt="Animator Window"/>
+  <img src="Images/AnimationImporter.png" width="49%" alt="Animation Importer"/>
+</div>
+
+<div align="center">
+  <img src="Images/SpriteImporter.png" width="49%" alt="Sprite Importer"/>
+  <img src="Images/SheetViewer.png" width="49%" alt="Sheet Viewer"/>
 </div>
 
 ---
