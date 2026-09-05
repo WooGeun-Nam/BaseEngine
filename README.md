@@ -153,19 +153,19 @@ Unity AnimatorController와 유사한 **State Machine 기반 애니메이션 시
 
 Unity Editor와 유사한 **멀티 윈도우 ImGui 에디터**를 내장하고 있습니다.
 
-| 윈도우 | 설명 |
-|---|---|
-| `EditorManager` | 전체 에디터 윈도우 생명주기 관리 |
-| `HierarchyWindow` | 씬 계층 구조 표시 및 오브젝트 편집 |
-| `InspectorWindow` | 선택된 오브젝트의 컴포넌트 속성 편집 |
-| `SceneViewWindow` | 에디터 카메라 기반 씬 뷰 |
-| `GameViewWindow` | 플레이 모드 게임 뷰 (RenderTexture 기반) |
-| `ProjectWindow` | 에셋 파일 브라우저 |
-| `AnimatorWindow` | 애니메이션 상태 머신 편집기 |
-| `AnimationImporterWindow` | 애니메이션 데이터 임포터 |
-| `SpriteImporterWindow` | 스프라이트 시트 임포터 (`.sheet` 파일 생성) |
-| `SheetViewerWindow` | `.sheet` 파일 미리보기 |
-| `ConsoleWindow` | 런타임 로그 콘솔 |
+| 윈도우                    | 설명                                        |
+| ------------------------- | ------------------------------------------- |
+| `EditorManager`           | 전체 에디터 윈도우 생명주기 관리            |
+| `HierarchyWindow`         | 씬 계층 구조 표시 및 오브젝트 편집          |
+| `InspectorWindow`         | 선택된 오브젝트의 컴포넌트 속성 편집        |
+| `SceneViewWindow`         | 에디터 카메라 기반 씬 뷰                    |
+| `GameViewWindow`          | 플레이 모드 게임 뷰 (RenderTexture 기반)    |
+| `ProjectWindow`           | 에셋 파일 브라우저                          |
+| `AnimatorWindow`          | 애니메이션 상태 머신 편집기                 |
+| `AnimationImporterWindow` | 애니메이션 데이터 임포터                    |
+| `SpriteImporterWindow`    | 스프라이트 시트 임포터 (`.sheet` 파일 생성) |
+| `SheetViewerWindow`       | `.sheet` 파일 미리보기                      |
+| `ConsoleWindow`           | 런타임 로그 콘솔                            |
 
 ---
 
@@ -258,13 +258,13 @@ BaseEngine/
 
 ## 시스템 요구 사항
 
-| 항목 | 요구 사항 |
-|---|---|
-| **OS** | Windows 10 / 11 |
-| **IDE** | Visual Studio 2019 이상 |
-| **SDK** | Windows SDK 10.0 이상 |
-| **그래픽 API** | DirectX 11 |
-| **C++ 표준** | C++17 |
+| 항목           | 요구 사항               |
+| -------------- | ----------------------- |
+| **OS**         | Windows 10 / 11         |
+| **IDE**        | Visual Studio 2019 이상 |
+| **SDK**        | Windows SDK 10.0 이상   |
+| **그래픽 API** | DirectX 11              |
+| **C++ 표준**   | C++17                   |
 
 ---
 
@@ -281,22 +281,22 @@ BaseEngine/
 
 ## 사용된 라이브러리
 
-| 라이브러리 | 용도 |
-|---|---|
-| [DirectX Tool Kit](https://github.com/microsoft/DirectXTK) | SpriteBatch, SpriteFont, SimpleMath 등 DirectX 유틸리티 |
-| [DirectXTex](https://github.com/microsoft/DirectXTex) | 텍스처 로딩 및 처리 |
-| [XAudio2](https://docs.microsoft.com/en-us/windows/win32/xaudio2/xaudio2-introduction) | 오디오 처리 (Windows SDK 내장) |
-| [ImGui](https://github.com/ocornut/imgui) | 에디터 GUI 라이브러리 |
-| [nlohmann/json](https://github.com/nlohmann/json) | JSON 기반 씬 직렬화 |
+| 라이브러리                                                                             | 용도                                                    |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [DirectX Tool Kit](https://github.com/microsoft/DirectXTK)                             | SpriteBatch, SpriteFont, SimpleMath 등 DirectX 유틸리티 |
+| [DirectXTex](https://github.com/microsoft/DirectXTex)                                  | 텍스처 로딩 및 처리                                     |
+| [XAudio2](https://docs.microsoft.com/en-us/windows/win32/xaudio2/xaudio2-introduction) | 오디오 처리 (Windows SDK 내장)                          |
+| [ImGui](https://github.com/ocornut/imgui)                                              | 에디터 GUI 라이브러리                                   |
+| [nlohmann/json](https://github.com/nlohmann/json)                                      | JSON 기반 씬 직렬화                                     |
 
 ---
 
 ## 개발 방식
 
-엔진 코어(`Engine/`)는 **DirectX 11 순수 구현** 기반으로 직접 설계하였습니다.  
-외부 라이브러리(XTK 등)에 의존하지 않는 직접 구현을 통해 그래픽스 및 엔진 구조에 대한 이해를 높이는 것을 목표로 합니다.
+엔진 코어(`Engine/`)는 **DirectX 11** 기반으로 설계하였습니다.  
+그래픽스 및 엔진 구조에 대한 이해를 높이는 것을 목표로 합니다.
 
-에디터 시스템(`Tool/`)의 **ImGui 기반 멀티 윈도우 UI** 구현은 AI 어시스턴트(Google Gemini)와의 협업을 통해 설계 및 개발되었습니다.
+에디터 시스템(`Tool/`)의 **ImGui 기반 멀티 윈도우 UI** 구현은 AI 에이전트를 통해 설계 및 개발되었습니다.
 
 ---
 
